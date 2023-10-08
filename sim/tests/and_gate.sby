@@ -1,0 +1,13 @@
+[options]
+mode bmc
+depth 50
+
+[engines]
+smtbmc
+
+[script]
+read -formal and_gate.v
+prep -top and_gate
+
+[files]
+../../rtl/and_gate.v

@@ -6,7 +6,7 @@
 # SymbiYosys configuration files #
 ##################################
 list(APPEND SBY_CONFIGS
-    counter.sby
+    and_gate.sby
 )
 
 #########################################

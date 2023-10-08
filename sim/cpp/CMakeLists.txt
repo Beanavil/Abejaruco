@@ -6,7 +6,7 @@
 # Verilator simulation source files #
 #####################################
 list(APPEND VERILATOR_SOURCES
-    top_tb.cpp
+    and_tb.cpp
 )
 
 ############################

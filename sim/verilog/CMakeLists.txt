@@ -6,7 +6,7 @@
 # Verilog module source files #
 ###############################
 list(APPEND VERILOG_MODULES
-    top_tb.v
+    and_gate_tb.v
 )
 
 ############################

@@ -6,7 +6,7 @@
 # Verilog module source files #
 ###############################
 list(APPEND VERILOG_MODULES
-    counter.v
+    and_gate.v
 )
 
 ############################
