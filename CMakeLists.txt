@@ -23,7 +23,6 @@ list(APPEND VERILATOR_ARGS "-Wall" "--trace" "--stats")
 
 # Available build options
 option(BUILD_SIM     "Build testbench simulations"  ON)
-option(BUILD_DOC     "Build the core documentation" OFF)
 option(ENABLE_FORMAL "Enable formal verification"   ON)
 
 ##################################
@@ -35,11 +34,6 @@ find_package(verilator)
 # Project sub-directories #
 ###########################
 add_subdirectory(rtl)
-
-if(BUILD_DOC)
-    message(STATUS "Generating the documentation")
-    add_subdirectory(docs)
-endif()
 
 if(BUILD_SIM)
     message(STATUS "Building testbenches and simulations")
