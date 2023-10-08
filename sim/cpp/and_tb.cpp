@@ -1,50 +1,40 @@
 #include <verilated.h>
 #include <verilated_vcd_c.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 
 #include "Vand_gate_tb.h"
 
-int main (int argc, char* argv[])
-{
-    Verilated::commandArgs(argc, argv);
-    Verilated::traceEverOn(true);
-
-    vluint64_t num_ticks = 4;
-    vluint64_t sim_tick = 1;
-
+void test_and_gate(int a, int b, int expected_y) {
     Vand_gate_tb and_gate_tb;
 
     VerilatedVcdC vcd;
-
     and_gate_tb.trace(&vcd, 99);
-    and_gate_tb.a = 0;
-    and_gate_tb.b = 0;
+    vcd.open("and_gate.vcd");
 
-    vcd.open("counter.vcd");
+    std::cout << "Started Verilator simulation of and_gate" << std::endl;
 
-    printf("Started verilator simulation of and_gate\n");  
-
+    and_gate_tb.a = a;
+    and_gate_tb.b = b;
     and_gate_tb.eval();
-    if (and_gate_tb.y != 0) return EXIT_FAILURE;
-    
-    and_gate_tb.a = 1;
-    and_gate_tb.eval();
-    if (and_gate_tb.y != 0) return EXIT_FAILURE;
+    if (and_gate_tb.y != expected_y) {
+        std::cerr << "Test failed: a=" << a << ", b=" << b << ", y=" << and_gate_tb.y << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-    and_gate_tb.b = 1;;
-    and_gate_tb.eval();
-    if (and_gate_tb.y != 1) return EXIT_FAILURE;
-
-    and_gate_tb.b = 0;
-    and_gate_tb.eval();
-    if (and_gate_tb.y != 0) return EXIT_FAILURE;
-    printf("Exited simulation\n");
+    std::cout << "Exited simulation" << std::endl;
 
     and_gate_tb.final();
-
     vcd.close();
+}
+
+int main(int argc, char* argv[]) {
+    Verilated::commandArgs(argc, argv);
+    Verilated::traceEverOn(true);
+
+    test_and_gate(0, 0, 0);
+    test_and_gate(1, 0, 0);
+    test_and_gate(1, 1, 1);
+    test_and_gate(1, 0, 0);
 
     return EXIT_SUCCESS;
 }
