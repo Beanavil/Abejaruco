@@ -1,5 +1,7 @@
 `default_nettype none
 
+`include "../../src/common/half_adder.v"
+
 module Half_adder_tb();
 
     reg a, b;
@@ -13,7 +15,7 @@ module Half_adder_tb();
     ); 
 
     initial begin
-        $display("Testing AND gate functionality");
+        $display("Testing half_adder");
         $display("-------------------------------");
 
         a = 0; b = 0;
