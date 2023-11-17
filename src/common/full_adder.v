@@ -1,4 +1,3 @@
-`default_nettype none
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
