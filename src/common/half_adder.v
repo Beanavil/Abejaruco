@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
@@ -35,10 +34,5 @@ module Half_adder(input a,
                   input b,
                   output sum,
                   output carry_out);
-<<<<<<< HEAD
-    assign {sum, carry_out} = a ^ b;
-=======
-  assign sum       = a ^ b;
-  assign carry_out = a & b;
->>>>>>> b197705 (format all)
+    assign {sum, carry_out} = {a ^ b, a & b};
 endmodule

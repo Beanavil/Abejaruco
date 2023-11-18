@@ -1,3 +1,4 @@
+
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
@@ -18,54 +19,66 @@
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
+`default_nettype none
 
-`include "src/common/adder.v"
+`include "../../src/common/adder.v"
+`include "../../src/common/full_adder.v"
+`include "../../src/common/half_adder.v"
 
-`timescale 1ns / 1ps
+module Adder_tb();
+    
+    reg [3:0] a, b;
+    reg carry_in;
+    wire [3:0] sum;
+    wire carry_out;
+    
+    Adder #(.WIDTH(4)) adder_instance_4_bit (
+    .a(a),
+    .b(b),
+    .carry_in(carry_in),
+    .sum(sum),
+    .carry_out(carry_out)
+    );
+    
+    initial begin
+        $display("Testing 4bit Adder");
+        $display("-------------------------------");
+        
+        a = 4'b0000; b = 4'b0000; carry_in = 0;
+        #1
+        $display("Test case 1: assert when a = 0000, b = 0000, carry_in = 0, sum = 0000, carry_out = 0");
+        if (sum != 4'b0000) $display("Failed. Expected sum: 0000, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        
+        a = 4'b0100; b = 4'b0000; carry_in = 0;
+        #1
+        $display("Test case 2: assert when a = 0100, b = 0000, carry_in = 0, sum = 0100, carry_out = 0");
+        if (sum != 4'b0100) $display("Failed. Expected sum: 0100, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
 
-module tb_adder();
-  reg [3:0] a;
-  reg [3:0] b;
+        a = 4'b0100; b = 4'b0100; carry_in = 0;
+        #1
+        $display("Test case 3: assert when a = 0100, b = 0100, carry_in = 0, sum = 1000, carry_out = 0");
+        if (sum != 4'b1000) $display("Failed. Expected sum: 1000, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
 
-  wire [3:0] sol;
-  wire c_out;
+        a = 4'b1000; b = 4'b1000; carry_in = 0;
+        #1
+        $display("Test case 4: assert when a = 1000, b = 1000, carry_in = 0, sum = 0000, carry_out = 1");
+        if (sum != 4'b0000) $display("Failed. Expected sum: 0000, Actual: %b", sum);
+        if (carry_out != 1) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
 
-  adder #(n = 4) add (.a(a), .b(b), .sol(sol), .c_out(c_out));
+        a = 4'b0000; b = 4'b0000; carry_in = 1;
+        #1
+        $display("Test case 5: assert when a = 0000, b = 0000, carry_in = 1, sum = 0001, carry_out = 0");
+        if (sum != 4'b0001) $display("Failed. Expected sum: 0001, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
 
-  initial
-  begin
-    a = 4'b0;
-    b = 4'b0;
-
-    // Wait for global reset to finish
-    #100;
-
-    // Test the add with all possible combinations of values for a, b and c_in
-    reg [2:0] i = 3'd0;
-    for(i = 0; i < 8; i = 1 + 1'b1)
-    begin
-      repeat(32)
-      begin
-        {a, b} = {$random, $random};
-        // Wait for add to complete
-        #20;
-        // Display results
-        $display("a = %d, b = %d, c_in = %d -> decimal_sum = %d",
-                 a, b, c_in,{c_out,sum});
-        $display("a = %b, b = %b, c_in = %b -> binary_sum = %b",
-                 a, b, c_in,{c_out,sum});
-      end
-
-      {a, b} = {5, -5};
-
-      // Wait for add to complete
-      #20;
-
-      // Display results
-      $display("a = %d, b = %d, c_in = %d -> decimal_sum = %d",
-               a, b, c_in,{c_out,sum});
-      $display("a = %b, b = %b, c_in = %b -> binary_sum = %b",
-               a, b, c_in,{c_out,sum});
+        a = 4'b0001; b = 4'b0000; carry_in = 1;
+        #1
+        $display("Test case 6: assert when a = 0001, b = 0000, carry_in = 1, sum = 0010, carry_out = 0");
+        if (sum != 4'b0010) $display("Failed. Expected sum: 0001, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        $finish;
     end
-  end
 endmodule
