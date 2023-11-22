@@ -18,5 +18,10 @@
 # Abejaruco placed on the LICENSE.md file of the root folder. If not, see
 # <https://www.gnu.org/licenses/>.
 
+include(AddModule)
+
+list(APPEND MAIN_MODULE abejaruco)
+
+add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}/src")
+
 add_subdirectory(common)
-add_subdirectory(decode)

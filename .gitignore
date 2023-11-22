@@ -1,2 +1,5 @@
-# Binaries
-*.out
+# VS code
+.vscode
+# Build files
+build/*
+Makefile

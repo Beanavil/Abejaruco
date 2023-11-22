@@ -18,31 +18,10 @@
 # Abejaruco placed on the LICENSE.md file of the root folder. If not, see
 # <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.25.3 FATAL_ERROR)
-project(Abejaruco)
+include(AddModule)
 
-# Configuration options
-option(BUILD_TESTS "Enable (ON) or disable (OFF) tests" ON)
-option(BUILD_SIM "Build testbench simulations" ON)
-option(DEPENDENCIES_FORCE_DOWNLOAD
-       "Download dependencies instead of trying to find them locally" OFF)
+list(APPEND VERILOG_MODULES adder full_adder multiplier)
 
-# CMake project configuration
-cmake_policy(SET CMP0144 NEW)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake
-     ${PROJECT_SOURCE_DIR}/cmake/Modules)
-include(Dependencies)
-
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
-if(NOT IVERILOG_COMMAND)
-  set(IVERILOG_COMMAND "iverilog")
-  message(STATUS "Setting Icarus Verilog command from path")
-endif()
-
-# Add subdirectories
-add_subdirectory(src)
-
-if(BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
+# foreach(MODULE IN ITEMS ${VERILOG_MODULES})
+#   add_module(TARGET "${MODULE}.tb")
+# endforeach()

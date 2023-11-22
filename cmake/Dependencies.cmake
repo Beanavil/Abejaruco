@@ -18,31 +18,18 @@
 # Abejaruco placed on the LICENSE.md file of the root folder. If not, see
 # <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.25.3 FATAL_ERROR)
-project(Abejaruco)
+# Fetch dependencies
+foreach(DEP IN ITEMS iverilog)
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/Dependencies/${DEP}")
+  include(${DEP})
+endforeach()
 
-# Configuration options
-option(BUILD_TESTS "Enable (ON) or disable (OFF) tests" ON)
-option(BUILD_SIM "Build testbench simulations" ON)
-option(DEPENDENCIES_FORCE_DOWNLOAD
-       "Download dependencies instead of trying to find them locally" OFF)
+# Fetch tests dependencies TODO when using verilator
+# if(BUILD_TESTS)
+#   foreach(DEP IN ITEMS verilator)
+#     list(APPEND CMAKE_MODULE_PATH
+#          "${CMAKE_CURRENT_LIST_DIR}/Dependencies/${DEP}")
+#     include(${DEP})
+#   endforeach()
+# endif(BUILD_TESTS)
 
-# CMake project configuration
-cmake_policy(SET CMP0144 NEW)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake
-     ${PROJECT_SOURCE_DIR}/cmake/Modules)
-include(Dependencies)
-
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
-if(NOT IVERILOG_COMMAND)
-  set(IVERILOG_COMMAND "iverilog")
-  message(STATUS "Setting Icarus Verilog command from path")
-endif()
-
-# Add subdirectories
-add_subdirectory(src)
-
-if(BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
