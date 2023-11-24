@@ -1,16 +1,13 @@
 `default_nettype none
 
-`include "../../src/common/adder.v"
-`include "../../src/common/multiplier.v"
-`include "../../src/common/full_adder.v"
-`include "../../src/common/half_adder.v"
+`include "src/common/base_multiplier.v"
 
-module Multiplier_tb();
+module BaseMultiplier_tb();
     
     reg [3:0] a, b;
     wire [7:0] result;
     
-    Multiplier #(.WIDTH(4)) multiplier (
+    BaseMultiplier #(.WIDTH(4)) multiplier (
     .a(a),
     .b(b),
     .result(result)
