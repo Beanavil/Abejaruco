@@ -19,10 +19,21 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
+// 1-bit adder.
+// Performs addition of 1-bit inputs.
+// Input arguments:
+// - a: first 1-bit input
+// - b: second 1-bit input
+// Output arguments:
+// - sol: 1-bit binary number with the result of the operation
+// - c_out: carry of the operation
 
-module abejaruco(input a,
-                 input b,
-                 output y);
-    //
+module half_adder(input a,
+                    input b,
+                    output reg sol,
+                    output reg c_out);
+  always @(a or b)
+  begin
+    {sol, c_out} = {a ^ b, a & b};
+  end
 endmodule
