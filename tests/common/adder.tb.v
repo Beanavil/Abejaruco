@@ -21,9 +21,7 @@
 // If not, see <https:// www.gnu.org/licenses/>.
 `default_nettype none
 
-`include "../../src/common/adder.v"
-`include "../../src/common/full_adder.v"
-`include "../../src/common/half_adder.v"
+`include "src/common/adder.v"
 
 module Adder_tb();
     

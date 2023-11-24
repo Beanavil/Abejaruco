@@ -18,7 +18,7 @@
 # Abejaruco placed on the LICENSE.md file of the root folder. If not, see
 # <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.25.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 project(Abejaruco)
 
 # Configuration options
@@ -28,7 +28,7 @@ option(DEPENDENCIES_FORCE_DOWNLOAD
        "Download dependencies instead of trying to find them locally" OFF)
 
 # CMake project configuration
-cmake_policy(SET CMP0144 NEW)
+# cmake_policy(SET CMP0144 NEW)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake
      ${PROJECT_SOURCE_DIR}/cmake/Modules)
 include(Dependencies)

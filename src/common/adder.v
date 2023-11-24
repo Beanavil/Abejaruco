@@ -21,6 +21,8 @@
 
 `default_nettype none
 
+`include "src/common/full_adder.v"
+
 module Adder #(parameter WIDTH = 8)
               (input [WIDTH-1:0] a,
                input [WIDTH-1:0] b,

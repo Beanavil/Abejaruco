@@ -20,6 +20,10 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
+`default_nettype none
+
+`include "src/common/half_adder.v"
+
 module Full_adder(input a, input b, input carry_in, output sum, output carry_out);
     wire operands_sum, operands_carry, carry_carry;
     
