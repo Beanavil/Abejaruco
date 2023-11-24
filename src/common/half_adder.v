@@ -21,9 +21,9 @@
 
 `default_nettype none
 
-module Half_adder(input a,
-                  input b,
-                  output sum,
-                  output carry_out);
-    assign {sum, carry_out} = {a ^ b, a & b};
+module HalfAdder(input a,
+                   input b,
+                   output sum,
+                   output carry_out);
+  assign {sum, carry_out} = {a ^ b, a & b};
 endmodule

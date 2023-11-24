@@ -19,30 +19,30 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
+module FlipFlop #(
+    parameter N = 32    // Default bit width
+  )(
+    input clk,
+    input reset,
+    input [N-1:0] d,
+    output reg [N-1:0] q
+  );
 
-`include "src/common/full_adder.v"
-
-module Adder #(parameter WIDTH = 8)
-  (input [WIDTH-1:0] a,
-   input [WIDTH-1:0] b,
-   input carry_in,
-   output [WIDTH-1:0] sum,
-   output carry_out);
-
-  wire [WIDTH - 1:0] carry;
-
-  genvar i;
-  generate
-    for (i = 0; i < WIDTH - 1; i = i + 1)
-    begin : bit_loop
-      FullAdder full_adder_instance (
-                  .a(a[i]),
-                  .b(b[i]),
-                  .carry_in(i == 0 ? carry_in : carry[i-1]),
-                  .sum(sum[i]),
-                  .carry_out(carry[i])
-                );
+  // Sequential logic for the register
+  /*
+      1. Sensitive to posedge of clock
+      2. Sensitive to posedge of reset (asynchronous reset)
+  */
+  always @(posedge clk or posedge reset)
+  begin
+    if (reset)
+    begin
+      q <= {N{1'b0}};  // Reset the register to 0 (N bits)
     end
-  endgenerate
+    else
+    begin
+      q <= d;          // On each clock cycle, store the input data in the register
+    end
+  end
+
 endmodule

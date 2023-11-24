@@ -1,7 +1,7 @@
 `default_nettype none
 
-module abejaruco(input a,
-                 input b,
-                 output y);
-  // 
+module Abejaruco_tb(input a,
+                   input b,
+                   output y);
+  //
 endmodule

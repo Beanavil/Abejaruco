@@ -24,59 +24,108 @@
 `include "src/common/adder.v"
 
 module Adder_tb();
-    
-    reg [3:0] a, b;
-    reg carry_in;
-    wire [3:0] sum;
-    wire carry_out;
-    
-    Adder #(.WIDTH(4)) adder_instance_4_bit (
-    .a(a),
-    .b(b),
-    .carry_in(carry_in),
-    .sum(sum),
-    .carry_out(carry_out)
-    );
-    
-    initial begin
-        $display("Testing 4bit Adder");
-        $display("-------------------------------");
-        
-        a = 4'b0000; b = 4'b0000; carry_in = 0;
-        #1
-        $display("Test case 1: assert when a = 0000, b = 0000, carry_in = 0, sum = 0000, carry_out = 0");
-        if (sum != 4'b0000) $display("Failed. Expected sum: 0000, Actual: %b", sum);
-        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
-        
-        a = 4'b0100; b = 4'b0000; carry_in = 0;
-        #1
-        $display("Test case 2: assert when a = 0100, b = 0000, carry_in = 0, sum = 0100, carry_out = 0");
-        if (sum != 4'b0100) $display("Failed. Expected sum: 0100, Actual: %b", sum);
-        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
 
-        a = 4'b0100; b = 4'b0100; carry_in = 0;
-        #1
-        $display("Test case 3: assert when a = 0100, b = 0100, carry_in = 0, sum = 1000, carry_out = 0");
-        if (sum != 4'b1000) $display("Failed. Expected sum: 1000, Actual: %b", sum);
-        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+  reg [3:0] a, b;
+  reg carry_in;
+  wire [3:0] sum;
+  wire carry_out;
 
-        a = 4'b1000; b = 4'b1000; carry_in = 0;
-        #1
-        $display("Test case 4: assert when a = 1000, b = 1000, carry_in = 0, sum = 0000, carry_out = 1");
-        if (sum != 4'b0000) $display("Failed. Expected sum: 0000, Actual: %b", sum);
-        if (carry_out != 1) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+  Adder #(.WIDTH(4)) adder_instance_4_bit (
+          .a(a),
+          .b(b),
+          .carry_in(carry_in),
+          .sum(sum),
+          .carry_out(carry_out)
+        );
 
-        a = 4'b0000; b = 4'b0000; carry_in = 1;
-        #1
-        $display("Test case 5: assert when a = 0000, b = 0000, carry_in = 1, sum = 0001, carry_out = 0");
-        if (sum != 4'b0001) $display("Failed. Expected sum: 0001, Actual: %b", sum);
-        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+  initial
+  begin
+    $display("Testing 4bit Adder");
+    $display("-------------------------------");
 
-        a = 4'b0001; b = 4'b0000; carry_in = 1;
-        #1
-        $display("Test case 6: assert when a = 0001, b = 0000, carry_in = 1, sum = 0010, carry_out = 0");
-        if (sum != 4'b0010) $display("Failed. Expected sum: 0001, Actual: %b", sum);
-        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
-        $finish;
+    a = 4'b0000;
+    b = 4'b0000;
+    carry_in = 0;
+    #1
+     $display("Test case 1: assert when a = 0000, b = 0000, carry_in = 0, sum = 0000, carry_out = 0");
+    if (sum != 4'b0000)
+    begin
+      $display("Failed. Expected sum: 0000, Actual: %b", sum);
     end
+    if (carry_out != 0)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+
+    a = 4'b0100;
+    b = 4'b0000;
+    carry_in = 0;
+    #1
+     $display("Test case 2: assert when a = 0100, b = 0000, carry_in = 0, sum = 0100, carry_out = 0");
+    if (sum != 4'b0100)
+    begin
+      $display("Failed. Expected sum: 0100, Actual: %b", sum);
+    end
+    if (carry_out != 0)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+
+    a = 4'b0100;
+    b = 4'b0100;
+    carry_in = 0;
+    #1
+     $display("Test case 3: assert when a = 0100, b = 0100, carry_in = 0, sum = 1000, carry_out = 0");
+    if (sum != 4'b1000)
+    begin
+      $display("Failed. Expected sum: 1000, Actual: %b", sum);
+    end
+    if (carry_out != 0)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+
+    a = 4'b1000;
+    b = 4'b1000;
+    carry_in = 0;
+    #1
+     $display("Test case 4: assert when a = 1000, b = 1000, carry_in = 0, sum = 0000, carry_out = 1");
+    if (sum != 4'b0000)
+    begin
+      $display("Failed. Expected sum: 0000, Actual: %b", sum);
+    end
+    if (carry_out != 1)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+
+    a = 4'b0000;
+    b = 4'b0000;
+    carry_in = 1;
+    #1
+     $display("Test case 5: assert when a = 0000, b = 0000, carry_in = 1, sum = 0001, carry_out = 0");
+    if (sum != 4'b0001)
+    begin
+      $display("Failed. Expected sum: 0001, Actual: %b", sum);
+    end
+    if (carry_out != 0)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+
+    a = 4'b0001;
+    b = 4'b0000;
+    carry_in = 1;
+    #1
+     $display("Test case 6: assert when a = 0001, b = 0000, carry_in = 1, sum = 0010, carry_out = 0");
+    if (sum != 4'b0010)
+    begin
+      $display("Failed. Expected sum: 0001, Actual: %b", sum);
+    end
+    if (carry_out != 0)
+    begin
+      $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+    end
+    $finish;
+  end
 endmodule

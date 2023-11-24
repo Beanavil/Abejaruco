@@ -23,22 +23,22 @@
 
 `include "src/common/half_adder.v"
 
-module Full_adder(input a, input b, input carry_in, output sum, output carry_out);
-    wire operands_sum, operands_carry, carry_carry;
-    
-    Half_adder half_adder_operands (
-        .a(a),
-        .b(b),
-        .sum(operands_sum),
-        .carry_out(operands_carry)
-    );
+module FullAdder(input a, input b, input carry_in, output sum, output carry_out);
+  wire operands_sum, operands_carry, carry_carry;
 
-    Half_adder half_adder_carry (
-        .a(operands_sum),
-        .b(carry_in),
-        .sum(sum),
-        .carry_out(carry_carry) 
-    );
+  HalfAdder half_adder_operands (
+              .a(a),
+              .b(b),
+              .sum(operands_sum),
+              .carry_out(operands_carry)
+            );
 
-    assign carry_out = operands_carry | carry_carry;
+  HalfAdder half_adder_carry (
+              .a(operands_sum),
+              .b(carry_in),
+              .sum(sum),
+              .carry_out(carry_carry)
+            );
+
+  assign carry_out = operands_carry | carry_carry;
 endmodule
