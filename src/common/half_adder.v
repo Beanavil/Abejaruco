@@ -28,12 +28,11 @@
 // - sol: 1-bit binary number with the result of the operation
 // - c_out: carry of the operation
 
-module half_adder(input a,
-                    input b,
-                    output reg sol,
-                    output reg c_out);
-  always @(a or b)
-  begin
-    {sol, c_out} = {a ^ b, a & b};
-  end
+`default_nettype none
+
+module Half_adder(input a,
+                  input b,
+                  output sum,
+                  output carry_out);
+    assign {sum, carry_out} = {a ^ b, a & b};
 endmodule

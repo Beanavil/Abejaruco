@@ -1,3 +1,4 @@
+`default_nettype none
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
@@ -19,24 +20,26 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-// 1-bit adder/subtracter.
-// Performs addition/subtraction of 1-bit inputs. The c_in argument determines
-// which operation is computed.
-// Input arguments:
-// - a: first 1-bit input
-// - b: second 1-bit input
-// - c_in: bit indicating wheter the operation is sum (0) or subtraction (1)
-// Output arguments:
-// - sol: 1-bit binary number with the result of the operation
-// - c_out: carry of the operation
+`default_nettype none
 
-module full_adder(input a,
-                    input b,
-                    input c_in,
-                    output reg sol,
-                    output reg c_out);
-  always @(a or b or c_in)
-  begin
-    {sol, c_out} = {a ^ b ^ c_in, (a & b) | (a & c_in) | (b & c_in)};
-  end
+`include "src/common/half_adder.v"
+
+module Full_adder(input a, input b, input carry_in, output sum, output carry_out);
+    wire operands_sum, operands_carry, carry_carry;
+    
+    Half_adder half_adder_operands (
+        .a(a),
+        .b(b),
+        .sum(operands_sum),
+        .carry_out(operands_carry)
+    );
+
+    Half_adder half_adder_carry (
+        .a(operands_sum),
+        .b(carry_in),
+        .sum(sum),
+        .carry_out(carry_carry) 
+    );
+
+    assign carry_out = operands_carry | carry_carry;
 endmodule

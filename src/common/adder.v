@@ -19,26 +19,30 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
+`default_nettype none
+
 `include "src/common/full_adder.v"
 
-module adder #(parameter n = 4)
-  (input [n-1:0] a,
-   input [n-1:0] b,
-   input c_in,
-   output [n-1:0] sol,
-   output c_out);
-
-  wire [n-1:0] c_part;
-
-  full_adder fa_base(a[0], b[0] ^ c_in, c_in, sol[0], c_part[0]);
-
-  genvar i;
-  generate
-    for(i = 1; i < n; i = i + 1'b1)
-    begin
-      full_adder fa(a[i], b[i] ^ c_in, c_part[i-1], sol[i], c_part[i]);
+module Adder #(parameter WIDTH = 8)
+              (input [WIDTH-1:0] a,
+               input [WIDTH-1:0] b,
+               input carry_in,
+               output [WIDTH-1:0] sum,
+               output carry_out);
+    
+    wire [WIDTH - 1:0] carry;
+    
+    genvar i;
+    generate
+    for (i = 0; i < WIDTH - 1; i = i + 1)
+        begin : bit_loop
+        Full_adder full_adder_instance (
+        .a(a[i]),
+        .b(b[i]),
+        .carry_in(i == 0 ? carry_in : carry[i-1]),
+        .sum(sum[i]),
+        .carry_out(carry[i])
+        );
     end
-  endgenerate
-
-  assign c_out = c_part[n-1];
+    endgenerate
 endmodule

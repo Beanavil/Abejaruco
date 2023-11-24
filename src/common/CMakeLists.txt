@@ -20,7 +20,7 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES adder full_adder half_adder multiplier)
+list(APPEND VERILOG_MODULES adder full_adder half_adder)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")

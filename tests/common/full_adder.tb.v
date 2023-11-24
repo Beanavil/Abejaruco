@@ -19,43 +19,75 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
+`timescale 1ns / 1ps
+`default_nettype none
+
 `include "src/common/full_adder.v"
 
-`timescale 1ns / 1ps
-
-module tb_full_adder();
-  reg a;
-  reg b;
-  reg c_in;
-
-  wire sol;
-  wire c_out;
-
-  full_adder uut(.a(a), .b(b), .c_in(c_in), .sol(sol), .c_out(c_out));
-
-  initial
-  begin
-    a    = 1'b0;
-    b    = 1'b0;
-    c_in = 1'b0;
-
-    // Wait for global reset to finish
-    #100;
-
-    // Test the add with all possible combinations of values for a, b and c_in
-    reg [2:0] i = 3'd0;
-    for(i = 0; i < 8; i = 1 + 1'b1)
-    begin
-      {a, b, c_in} = {a, b, c_in} + 1'b1;
-
-      // Wait for add to complete
-      #20;
-
-      // Display results
-      $display("a = %d, b = %d, c_in = %d -> decimal_sum = %d",
-               a, b, c_in,{c_out,sum});
-      $display("a = %b, b = %b, c_in = %b -> binary_sum = %b",
-               a, b, c_in,{c_out,sum});
+module Half_adder_tb();
+    
+    reg a, b, carry_in;
+    wire sum, carry_out;
+    
+    Full_adder full_adder(
+    .a(a),
+    .b(b),
+    .carry_in(carry_in),
+    .sum(sum),
+    .carry_out(carry_out)
+    );
+    
+    initial begin
+        $display("Testing full_adder");
+        $display("-------------------------------");
+        
+        a = 0; b = 0; carry_in = 0;
+        #1
+        $display("Test case 1: assert when a = 0, b = 0, carry_in = 0, sum = 0, carry_out = 0");
+        if (sum != 0) $display("Failed. Expected sum: 0, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        
+        a = 0; b = 0; carry_in = 1;
+        #1
+        $display("Test case 2: assert when a = 0, b = 0, carry_in = 1, sum = 1, carry_out = 0");
+        if (sum != 1) $display("Failed. Expected sum: 1, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        
+        a = 0; b = 1; carry_in = 0;
+        #1
+        $display("Test case 3: assert when a = 0, b = 1, carry_in = 0, sum = 1, carry_out = 0");
+        if (sum != 1) $display("Failed. Expected sum: 1, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        
+        a = 0; b = 1; carry_in = 1;
+        #1
+        $display("Test case 4: assert when a = 0, b = 1, carry_in = 1, sum = 0, carry_out = 1");
+        if (sum != 0) $display("Failed. Expected sum: 0, Actual: %b", sum);
+        if (carry_out != 1) $display("Failed. Expected carry_out: 1, Actual: %b", carry_out);
+        
+        a = 1; b = 0; carry_in = 0;
+        #1
+        $display("Test case 5: assert when a = 1, b = 0, carry_in = 0, sum = 1, carry_out = 0");
+        if (sum != 1) $display("Failed. Expected sum: 1, Actual: %b", sum);
+        if (carry_out != 0) $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
+        
+        a = 1; b = 0; carry_in = 1;
+        #1
+        $display("Test case 6: assert when a = 1, b = 0, carry_in = 1, sum = 0, carry_out = 1");
+        if (sum != 0) $display("Failed. Expected sum: 0, Actual: %b", sum);
+        if (carry_out != 1) $display("Failed. Expected carry_out: 1, Actual: %b", carry_out);
+        
+        a = 1; b = 1; carry_in = 0;
+        #1
+        $display("Test case 7: assert when a = 1, b = 1, carry_in = 0, sum = 0, carry_out = 1");
+        if (sum != 0) $display("Failed. Expected sum: 0, Actual: %b", sum);
+        if (carry_out != 1) $display("Failed. Expected carry_out: 1, Actual: %b", carry_out);
+        
+        a = 1; b = 1; carry_in = 1;
+        #1
+        $display("Test case 8: assert when a = 1, b = 1, carry_in = 1, sum = 1, carry_out = 1");
+        if (sum != 1) $display("Failed. Expected sum: 1, Actual: %b", sum);
+        if (carry_out != 1) $display("Failed. Expected carry_out: 1, Actual: %b", carry_out);
+        $finish;
     end
-  end
 endmodule
