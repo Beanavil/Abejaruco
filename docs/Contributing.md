@@ -10,15 +10,16 @@ The formatting rules of the modules are enforced by [istyle-verilog-formatter](h
 ## Code Style Conventions
 - Keep a minimal amount of comments. Only add comments when it's really necessary to clarify some part of the code.
 
-## Variable Naming Conventions
-- Use `snake_case` style to name variables and functions (e.g. and_gate, n_mux and 2_complement).
-- Use `PascalCase` for `module`, `struct` and "template" argument definitions.
+## Module and Variable Naming Conventions
+- Use `PascalCase` for modules definitions.
+- Use `PascalCase` ended in `_tb` for testbenches (e.g. `BaseMultiplier_tb`).
+- Use `CAPSLOCK` to name parameters.
+- Use `snake_case` to name variables and functions.
 
 ## File and Directory Naming Conventions
 - Top-level directories use `snake_case`.
 - Modules names use `snake_case` and with `.v` extension.
 - Test modules names use `snake_case` and with `.tb.v` extension.
-- Module and test binaries should keep the module `snake_case` name and switch the `.v` extension for the `.out` one.
 - Documents names, either in PDF or Markdown format, should use `PascalCase`.
 - Files for which a convention already exists (e.g. `README.md`, `LICENSE.md`, `CMakeLists.txt`, etc) should follow that convention.
 - CMake dependencies that are automatically downloaded should be configured with an individual file in the `cmake/Dependencies` folder. The file name should correspond to the package name that we need (e.g. if we want to find the package `verilator`, the file name should be that one, not `Verilator`, which is the name that appears in the main README at the github repository) or the name of the utility we want to install (e.g. `iverilog`). The name of the dependency to be fetched should be included where corresponds inside the `Dependencies.cmake` file.
