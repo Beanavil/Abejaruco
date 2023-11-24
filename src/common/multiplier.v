@@ -19,26 +19,42 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/common/full_adder.v"
+`include "src/common/adder.v"
 
-module adder #(parameter n = 4)
+module multiplier4x4
+  (input [3:0] a,
+   input [3:0] b,
+   output [3:0] sol);
+  // if(n < 4)
+  wire [7:0] sol_part;
+  wire [7:0] c_part;
+
+  genvar i, j;
+  generate
+    for(i = 0; i < 4; i = i + 1'b1)
+    begin
+      full_adder fa_base(a[4*(i+1)-1], b[4*(i+1)-1], b[3], sol[0], c_part[0]);
+      for(j = 0; j < 3; j = j + 1'b1)
+      begin
+        full_adder fa(a[4*(j+1)-1], b[4*(j+1)-1], b[3], sol[0], c_part[0]);
+      end
+    end
+  endgenerate
+endmodule
+
+module multiplier #(parameter n = 32)
   (input [n-1:0] a,
    input [n-1:0] b,
-   input c_in,
-   output [n-1:0] sol,
-   output c_out);
-
+   output [n-1:0] sol);
+  // if(n < 4)
+  wire [n-1:0] sol_part;
   wire [n-1:0] c_part;
-
-  full_adder fa_base(a[0], b[0] ^ c_in, c_in, sol[0], c_part[0]);
 
   genvar i;
   generate
-    for(i = 1; i < n; i = i + 1'b1)
+    for(i = 0; i < n; i = i + 1'b1)
     begin
-      full_adder fa(a[i], b[i] ^ c_in, c_part[i-1], sol[i], c_part[i]);
+      // adder partial_adder #(n = 4) (a[4*(i+1)-1:4*i], b[4*(i+1)-1:4*i], b[n-1], sol[0], c_part[0]);
     end
   endgenerate
-
-  assign c_out = c_part[n-1];
 endmodule

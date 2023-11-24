@@ -23,5 +23,5 @@ include(AddModule)
 list(APPEND VERILOG_MODULES adder full_adder half_adder multiplier)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
-  add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}/src/common")
+  add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
 endforeach()

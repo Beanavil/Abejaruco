@@ -22,6 +22,6 @@ include(AddModule)
 
 list(APPEND MAIN_MODULE abejaruco)
 
-add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}/src")
+add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
 
 add_subdirectory(common)

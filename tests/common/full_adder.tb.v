@@ -4,7 +4,7 @@
 // : (c) 2023 Beatriz Navidad Vilches
 // : (c) 2023 Stefano Petrili
 //
-// This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
+// Thclkis file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
 // Abejaruco is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -21,24 +21,41 @@
 
 `include "src/common/full_adder.v"
 
-module adder #(parameter n = 4)
-  (input [n-1:0] a,
-   input [n-1:0] b,
-   input c_in,
-   output [n-1:0] sol,
-   output c_out);
+`timescale 1ns / 1ps
 
-  wire [n-1:0] c_part;
+module tb_full_adder();
+  reg a;
+  reg b;
+  reg c_in;
 
-  full_adder fa_base(a[0], b[0] ^ c_in, c_in, sol[0], c_part[0]);
+  wire sol;
+  wire c_out;
 
-  genvar i;
-  generate
-    for(i = 1; i < n; i = i + 1'b1)
+  full_adder uut(.a(a), .b(b), .c_in(c_in), .sol(sol), .c_out(c_out));
+
+  initial
+  begin
+    a    = 1'b0;
+    b    = 1'b0;
+    c_in = 1'b0;
+
+    // Wait for global reset to finish
+    #100;
+
+    // Test the add with all possible combinations of values for a, b and c_in
+    reg [2:0] i = 3'd0;
+    for(i = 0; i < 8; i = 1 + 1'b1)
     begin
-      full_adder fa(a[i], b[i] ^ c_in, c_part[i-1], sol[i], c_part[i]);
-    end
-  endgenerate
+      {a, b, c_in} = {a, b, c_in} + 1'b1;
 
-  assign c_out = c_part[n-1];
+      // Wait for add to complete
+      #20;
+
+      // Display results
+      $display("a = %d, b = %d, c_in = %d -> decimal_sum = %d",
+               a, b, c_in,{c_out,sum});
+      $display("a = %b, b = %b, c_in = %b -> binary_sum = %b",
+               a, b, c_in,{c_out,sum});
+    end
+  end
 endmodule
