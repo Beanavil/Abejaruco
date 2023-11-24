@@ -21,24 +21,36 @@
 
 `default_nettype none
 
-`include "src/common/half_adder.v"
+`include "src/common/adder.v"
 
-module Full_adder(input a, input b, input carry_in, output sum, output carry_out);
-    wire operands_sum, operands_carry, carry_carry;
+module BaseMultiplier #(parameter WIDTH = 4)
+                   (input [WIDTH - 1:0] a,
+                    input [WIDTH - 1:0] b,
+                    output [WIDTH * 2 - 1:0] result);
     
-    Half_adder half_adder_operands (
-        .a(a),
-        .b(b),
-        .sum(operands_sum),
-        .carry_out(operands_carry)
-    );
-
-    Half_adder half_adder_carry (
-        .a(operands_sum),
-        .b(carry_in),
-        .sum(sum),
-        .carry_out(carry_carry) 
-    );
-
-    assign carry_out = operands_carry | carry_carry;
+    initial begin
+        if (WIDTH > 4) begin
+            $display("\033[31mMultiplier instantiated with WIDTH > 4. WIDTH = %0d\033[0m", WIDTH);
+        end
+    end
+    
+    wire [WIDTH - 1:0] previous_stage;
+    wire carry_out;
+    
+    genvar i;
+    generate
+    for (i = 0; i < WIDTH - 2; i = i + 1)
+        begin : bit_loop
+        Adder #(.WIDTH(4))
+        adder_instance (
+        .a(i == 0 ? a & b[i] >> 1 : previous_stage),
+        .b(a & b[i + 1]),
+        .carry_in(1'b0),
+        .sum({carry_out, previous_stage[WIDTH - 1:1]}),
+        .carry_out(carry_out)
+        );
+    end
+    assign result = {carry_out, previous_stage, result[WIDTH - 2:0]};
+    endgenerate
+    
 endmodule

@@ -24,7 +24,7 @@
 
 `include "src/common/full_adder.v"
 
-module Half_adder_tb();
+module HalfAdder_tb();
     
     reg a, b, carry_in;
     wire sum, carry_out;
