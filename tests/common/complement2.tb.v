@@ -43,7 +43,7 @@ module Complement2_tb;
     // Test Case 1: Zero input
     #10;
     $display("Test Case 1: Zero input");
-    in = 0; // Zero in N bits
+    in = 0;
     #10;
     if (out !== 0)
     begin
