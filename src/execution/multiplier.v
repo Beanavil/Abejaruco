@@ -24,6 +24,7 @@
 `timescale 1ns / 1ps
 
 `include "src/common/base_multiplier.v"
+`include "src/execution/sum_partial_products.v"
 
 module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
                    (input wire clock,
@@ -35,7 +36,6 @@ module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
     reg [WIDTH-1:0] partialProduct1 [0:64-1];
     reg [WIDTH-1:0] partialProduct2 [0:32-1];
     reg [WIDTH-1:0] partialProduct3 [0:16-1];
-    reg [WIDTH-1:0] partialProduct4 [0:16-1];
     reg [WIDTH-1:0] multiplierReg;
     reg [WIDTH-1:0] multiplicandReg;
     integer i, j;
@@ -68,11 +68,5 @@ module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
         end
     end
 
-    always @(posedge clock) begin
-        result = 32'b0;
-        for (i = 0; i < 8; i = i + 1) begin
-            result = result + partialProduct3[i];
-        end
-    end
-    
+    SumPartialProducts #(WIDTH) sumPartialProducts (.clock(clock), .partialProduct3(partialProduct3), .result(result));    
 endmodule
