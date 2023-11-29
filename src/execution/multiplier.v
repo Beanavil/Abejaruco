@@ -43,7 +43,6 @@ module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
     always @(posedge clock) begin
         multiplicandReg <= multiplicand;
         multiplierReg <= multiplier;
-        #10;
         for (i = 0; i < WIDTH/NIBBLE_WIDTH; i = i + 1) begin
             for (j = 0; j < WIDTH/NIBBLE_WIDTH; j = j + 1) begin
                 partialProduct1[i*WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
