@@ -76,7 +76,6 @@ module Multiplier_tb();
         $display("Test case 3: assert when multiplicand = 32'h00001FFF, multiplier = 32'h00001FFF, result should be 32'h03ffc001");
         if (result !== 32'h03ffc001) $display("Failed. Expected result: 32'h03ffc001, Actual: %h", result);
         else $display("Passed. Expected result: 32'h03ffc001, Actual: %h", result);
-        
         $finish;
     end
 endmodule

@@ -26,7 +26,8 @@
 `include "src/common/base_multiplier.v"
 `include "src/execution/sum_partial_products.v"
 
-module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
+module Multiplier #(parameter WIDTH = 32,
+                    NIBBLE_WIDTH = 4)
                    (input wire clock,
                     input wire start_multiplication,
                     input wire [WIDTH-1:0] multiplicand,
@@ -36,13 +37,14 @@ module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
     reg [WIDTH-1:0] partialProduct1 [0:64-1];
     reg [WIDTH-1:0] partialProduct2 [0:32-1];
     reg [WIDTH-1:0] partialProduct3 [0:16-1];
+    reg [WIDTH-1:0] partialProduct4 [0:8-1];
     reg [WIDTH-1:0] multiplierReg;
     reg [WIDTH-1:0] multiplicandReg;
     integer i, j;
     
     always @(posedge clock) begin
         multiplicandReg <= multiplicand;
-        multiplierReg <= multiplier;
+        multiplierReg   <= multiplier;
         for (i = 0; i < WIDTH/NIBBLE_WIDTH; i = i + 1) begin
             for (j = 0; j < WIDTH/NIBBLE_WIDTH; j = j + 1) begin
                 partialProduct1[i*WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
@@ -61,12 +63,18 @@ module Multiplier #(parameter WIDTH = 32, NIBBLE_WIDTH = 4)
             partialProduct3[i] = partialProduct2[i * 2] + partialProduct2[(i * 2) + 1];
         end
     end
-        
+    
     always @(posedge clock) begin
         for (i = 0; i < 8; i = i + 1) begin
             partialProduct3[i] = partialProduct2[i * 2] + partialProduct2[(i * 2) + 1];
         end
     end
-
-    SumPartialProducts #(WIDTH) sumPartialProducts (.clock(clock), .partialProduct3(partialProduct3), .result(result));    
+    
+    always @(posedge clock) begin
+        for (i = 0; i < 4; i = i + 1) begin
+            partialProduct4[i] = partialProduct3[i * 2] + partialProduct3[(i * 2) + 1];
+        end
+    end
+    
+    SumPartialProducts #(WIDTH) sumPartialProducts (.clock(clock), .inputPartialProducts(partialProduct4), .result(result));
 endmodule

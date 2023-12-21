@@ -23,16 +23,16 @@
 
 `timescale 1ns / 1ps
 
-module SumPartialProducts #(parameter WIDTH = 32)
+module SumPartialProducts #(parameter WIDTH = 32, INPUT_COUNT = 8)
                            (input wire clock,
-                            input wire [WIDTH-1:0] partialProduct3 [0:16-1],
+                            input wire [WIDTH-1:0] inputPartialProducts [0:INPUT_COUNT-1],
                             output reg [WIDTH-1:0] result);
     integer i;
 
     always @(posedge clock) begin
         result = 32'b0;
-        for (i = 0; i < 8; i = i + 1) begin
-            result = result + partialProduct3[i];
+        for (i = 0; i < (INPUT_COUNT / 2); i = i + 1) begin
+            result = result + inputPartialProducts[i];
         end
     end
 endmodule
