@@ -76,6 +76,21 @@ module Multiplier_tb();
         $display("Test case 3: assert when multiplicand = 32'h00001FFF, multiplier = 32'h00001FFF, result should be 32'h03ffc001");
         if (result !== 32'h03ffc001) $display("Failed. Expected result: 32'h03ffc001, Actual: %h", result);
         else $display("Passed. Expected result: 32'h03ffc001, Actual: %h", result);
+
+        clock = 1;
+        start_multiplication = 1;
+        multiplicand = 32'h00007FFF;
+        multiplier = 32'h00007FFF;
+        #1;
+        start_multiplication = 0;
+        clock = 0;
+        for (i = 0; i < 4; i = i + 1) begin
+            #1 clock = ~clock;
+            #1 clock = ~clock;
+        end
+        $display("Test case 4: assert when multiplicand = 32'h00007FFF, multiplier = 32'h00007FFF, result should be 32'h3FFF0001");
+        if (result !== 32'h3FFF0001) $display("Failed. Expected result: 32'3FFF0001, Actual: %h", result);
+        else $display("Passed. Expected result: 32'h3FFF0001, Actual: %h", result);
         $finish;
     end
 endmodule
