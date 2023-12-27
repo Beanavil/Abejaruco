@@ -1,8 +1,7 @@
 # GNU General Public License
 #
-# Copyright : (c) 2023 Javier Beiro Piñón
-#           : (c) 2023 Beatriz Navidad Vilches
-#           : (c) 2023 Stefano Petrili
+# Copyright : (c) 2023 Javier Beiro Piñón : (c) 2023 Beatriz Navidad Vilches :
+# (c) 2023 Stefano Petrili
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #
@@ -21,11 +20,8 @@
 
 include(AddModule)
 
-list(APPEND MAIN_MODULE abejaruco)
+list(APPEND VERILOG_MODULES memory)
 
-add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
-
-add_subdirectory(common)
-add_subdirectory(decode)
-add_subdirectory(execution)
-add_subdirectory(memory)
+foreach(MODULE IN ITEMS ${VERILOG_MODULES})
+  add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
+endforeach()
