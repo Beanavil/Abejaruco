@@ -20,6 +20,7 @@
 
 cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 project(Abejaruco)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Configuration options
 option(BUILD_TESTS "Enable (ON) or disable (OFF) tests" ON)
