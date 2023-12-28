@@ -33,7 +33,7 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
                 input wire [ADDRESS_SIZE-1:0] address,
                 input wire [CACHE_LINE_SIZE-1:0] data_in,
                 output reg [CACHE_LINE_SIZE-1:0] data_out);
-    
+
     reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
     always_ff @(posedge clock) begin
@@ -41,7 +41,7 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
         if (write_enable) begin
             for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
                 memory[address + i] <= data_in[i*8 +: 8];
-            end       
+            end
         end
         else if (read_enable) begin
             for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin

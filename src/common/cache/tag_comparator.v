@@ -25,6 +25,6 @@ module tag_comparator(
     input wire valid,
     output wire hit
 );
-    parameter TAG_WIDTH = 32; // Default value, can be overridden
-    assign hit = valid && (input_tag == stored_tag);
+    parameter TAG_WIDTH = 32;
+    assign hit = valid ? (input_tag == stored_tag) : 1'b0;
 endmodule
