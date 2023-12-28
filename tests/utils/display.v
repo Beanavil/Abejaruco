@@ -4,7 +4,7 @@
 //           : (c) 2023 Beatriz Navidad Vilches
 //           : (c) 2023 Stefano Petrili
 //
-// This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
+// This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
 // Abejaruco is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -17,28 +17,18 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
-// If not, see <https:// www.gnu.org/licenses/>.
+// If not, see <https://www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32          // Default bit
-  )(
-    input [1:0] sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
-  );
+module Display();
+  task end_color_print()
+    $write("%c[0m",27);
+  endtask
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
-  begin
-    case(sel)
-      2'b00:
-        out = in0;           // Select input in0
-      2'b01:
-        out = in1;           // Select input in1
-      default:
-        out = {N{1'b0}};   // Default case (N-bit 0)
-    endcase
-  end
+  task begin_green_print()
+    write("%c[1;32m",27);
+  endtask
 
+  task begin_red_print()
+    write("%c[1;31m",27);
+  endtask
 endmodule

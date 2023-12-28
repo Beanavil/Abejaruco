@@ -19,26 +19,46 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32          // Default bit
-  )(
-    input [1:0] sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
-  );
+`default_nettype none
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
+module ALUControl
+  (input [6:0] inst /*bytes [31,25]*/,
+   input [1:0] ctrl_alu_op,
+   output reg [1:0] alu_op);
+
+  always @(*)
   begin
-    case(sel)
-      2'b00:
-        out = in0;           // Select input in0
-      2'b01:
-        out = in1;           // Select input in1
-      default:
-        out = {N{1'b0}};   // Default case (N-bit 0)
+    case (ctrl_alu_op)
+      2'b10: /*R-type*/
+      begin
+        case (inst)
+          7'b0000000: /*add*/
+            alu_op = 2'b00;
+          7'b0100000: /*sub*/
+            alu_op = 2'b01;
+          7'b0000001: /*mul*/
+            alu_op = 2'b10;
+          default:
+          begin
+            // TODO: que hacer aqui
+          end
+        endcase
+      end
+
+      2'b00: /*I-type & S-type*/
+      begin
+        alu_op = 2'b00;
+      end
+
+      2'b01: /*branch*/
+      begin
+        alu_op = 2'b01;
+      end
+
+      2'b11: /*jump*/
+      begin
+        alu_op = 2'b00;
+      end
     endcase
   end
-
 endmodule

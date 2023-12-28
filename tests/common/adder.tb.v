@@ -2,8 +2,8 @@
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
-// : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrili
+//           : (c) 2023 Beatriz Navidad Vilches
+//           : (c) 2023 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -49,11 +49,11 @@ module Adder_tb();
     carry_in = 0;
     #1
      $display("Test case 1: assert when a = 0000, b = 0000, carry_in = 0, sum = 0000, carry_out = 0");
-    if (sum != 4'b0000)
+    if (sum !== 4'b0000)
     begin
       $display("Failed. Expected sum: 0000, Actual: %b", sum);
     end
-    if (carry_out != 0)
+    if (carry_out !== 0)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end
@@ -63,11 +63,11 @@ module Adder_tb();
     carry_in = 0;
     #1
      $display("Test case 2: assert when a = 0100, b = 0000, carry_in = 0, sum = 0100, carry_out = 0");
-    if (sum != 4'b0100)
+    if (sum !== 4'b0100)
     begin
       $display("Failed. Expected sum: 0100, Actual: %b", sum);
     end
-    if (carry_out != 0)
+    if (carry_out !== 0)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end
@@ -77,11 +77,11 @@ module Adder_tb();
     carry_in = 0;
     #1
      $display("Test case 3: assert when a = 0100, b = 0100, carry_in = 0, sum = 1000, carry_out = 0");
-    if (sum != 4'b1000)
+    if (sum !== 4'b1000)
     begin
       $display("Failed. Expected sum: 1000, Actual: %b", sum);
     end
-    if (carry_out != 0)
+    if (carry_out !== 0)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end
@@ -91,11 +91,11 @@ module Adder_tb();
     carry_in = 0;
     #1
      $display("Test case 4: assert when a = 1000, b = 1000, carry_in = 0, sum = 0000, carry_out = 1");
-    if (sum != 4'b0000)
+    if (sum !== 4'b0000)
     begin
       $display("Failed. Expected sum: 0000, Actual: %b", sum);
     end
-    if (carry_out != 1)
+    if (carry_out !== 1)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end
@@ -105,11 +105,11 @@ module Adder_tb();
     carry_in = 1;
     #1
      $display("Test case 5: assert when a = 0000, b = 0000, carry_in = 1, sum = 0001, carry_out = 0");
-    if (sum != 4'b0001)
+    if (sum !== 4'b0001)
     begin
       $display("Failed. Expected sum: 0001, Actual: %b", sum);
     end
-    if (carry_out != 0)
+    if (carry_out !== 0)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end
@@ -119,11 +119,11 @@ module Adder_tb();
     carry_in = 1;
     #1
      $display("Test case 6: assert when a = 0001, b = 0000, carry_in = 1, sum = 0010, carry_out = 0");
-    if (sum != 4'b0010)
+    if (sum !== 4'b0010)
     begin
       $display("Failed. Expected sum: 0001, Actual: %b", sum);
     end
-    if (carry_out != 0)
+    if (carry_out !== 0)
     begin
       $display("Failed. Expected carry_out: 0, Actual: %b", carry_out);
     end

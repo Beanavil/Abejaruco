@@ -1,3 +1,5 @@
-indent=spaces=2
 brackets=break
+convert-tabs
+indent=spaces=2
+indent-preprocessor
 pad=block

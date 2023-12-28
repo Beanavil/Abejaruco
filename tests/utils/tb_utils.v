@@ -4,7 +4,7 @@
 //           : (c) 2023 Beatriz Navidad Vilches
 //           : (c) 2023 Stefano Petrili
 //
-// This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
+// This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
 // Abejaruco is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -17,28 +17,34 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
-// If not, see <https:// www.gnu.org/licenses/>.
+// If not, see <https://www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32          // Default bit
-  )(
-    input [1:0] sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
-  );
+// `include "tests/utils/display.v"
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
+task automatic check_err;
+  input integer err;
+  input string test_name;
   begin
-    case(sel)
-      2'b00:
-        out = in0;           // Select input in0
-      2'b01:
-        out = in1;           // Select input in1
-      default:
-        out = {N{1'b0}};   // Default case (N-bit 0)
-    endcase
+    if (!err)
+    begin
+      // begin_green_print();
+      $display("TEST %s PASSED.", test_name);
+      // end_color_print();
+    end
+    else
+    begin
+      // begin_red_print();
+      $display("TEST %s FAILED.", test_name);
+      // end_color_print();
+    end
   end
+endtask
 
-endmodule
+task automatic print_info;
+  input string str; /*max string length 32 characters (256 bytes)*/
+  begin
+    $display("-------------------------------");
+    $display("%s", str);
+    $display("-------------------------------");
+  end
+endtask
