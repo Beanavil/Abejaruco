@@ -34,7 +34,7 @@ module Adder #(parameter WIDTH = 8)
 
   genvar i;
   generate
-    for (i = 0; i < WIDTH - 1; i = i + 1)
+    for (i = 0; i < WIDTH; i = i + 1)
     begin : bit_loop
       FullAdder full_adder_instance (
                   .a(a[i]),
@@ -45,4 +45,5 @@ module Adder #(parameter WIDTH = 8)
                 );
     end
   endgenerate
+  assign carry_out = carry[WIDTH - 1];
 endmodule
