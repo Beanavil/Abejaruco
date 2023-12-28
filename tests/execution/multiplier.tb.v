@@ -129,6 +129,7 @@ module Multiplier_tb();
     #1;
     start_multiplication = 0;
     clock = 0;
+
     for (i = 0; i < 4; i = i + 1)
     begin
       #1 clock = ~clock;
@@ -156,7 +157,7 @@ module Multiplier_tb();
       #1 clock = ~clock;
       #1 clock = ~clock;
     end
-    $display("Test case 4: assert when multiplicand = 32'h0001FFFF, multiplier = 32'h0000FFFF, overflow should be 1");
+    $display("Test case 5: assert when multiplicand = 32'h0001FFFF, multiplier = 32'h0000FFFF, overflow should be 1");
     if (overflow !== 1)
     begin
       $display("Failed. Expected overflow 1, Actual: 0");
@@ -165,6 +166,31 @@ module Multiplier_tb();
     begin
       $display("Passed. Overflow set to 1");
     end
+
+
+    $display("Test case 6: assert that the multiplication finishes after five clock cycles");
+    clock = 1;
+    start_multiplication = 1;
+    multiplicand = 32'h0000000;
+    multiplier = 32'h000000;
+    #1;
+    start_multiplication = 0;
+    clock = 0;
+
+    for (i = 0; i < 4; i = i + 1)
+    begin
+      #1 clock = ~clock;
+        if (overflow === 0 && result === 32'h00000000)
+        begin
+          $display("Failed. Result available before five clock cycles");
+          $finish;
+        end
+      #1 clock = ~clock;
+    end
+
+    if (overflow === 0 && result === 32'h00000000)
+    $display("Passed. Result available at fifth clock cycle");
+    
     $finish;
   end
 endmodule

@@ -52,42 +52,30 @@ module Multiplier #(parameter WIDTH = 32,
         partialProduct1[i*WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
       end
     end
-  end
 
-  always @(posedge clock)
-  begin
     for (i = 0; i < 32; i = i + 1)
     begin
-      partialProduct2[i] = partialProduct1[i * 2] + partialProduct1[(i * 2) + 1];
+      partialProduct2[i] <= partialProduct1[i * 2] + partialProduct1[(i * 2) + 1];
     end
-  end
 
-  always @(posedge clock)
-  begin
     for (i = 0; i < 16; i = i + 1)
     begin
-      partialProduct3[i] = partialProduct2[i * 2] + partialProduct2[(i * 2) + 1];
+      partialProduct3[i] <= partialProduct2[i * 2] + partialProduct2[(i * 2) + 1];
     end
-  end
 
-  always @(posedge clock)
-  begin
     for (i = 0; i < 8; i = i + 1)
     begin
-      partialProduct4[i] = partialProduct3[i * 2] + partialProduct3[(i * 2) + 1];
+      partialProduct4[i] <= partialProduct3[i * 2] + partialProduct3[(i * 2) + 1];
     end
-  end
 
-  always @(posedge clock)
-  begin
     internalResult = 32'b0;
     for (i = 0; i < 8; i = i + 1)
     begin
       internalResult = internalResult + partialProduct4[i];
     end
 
-    overflow = |internalResult[63:32];
-    result = internalResult[31:0];
+    overflow <= |internalResult[63:32];
+    result <= internalResult[31:0];
   end
 
 endmodule
