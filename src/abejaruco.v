@@ -32,9 +32,9 @@ reg [31:0] r [0:31];
 reg [31:0] rm0 = 32'h1000;
 reg [31:0] rm1;
 reg [31:0] rm2;
-wire clock = 0;
+wire clk = 0;
 
-// always #1 clock = ~clock;
+// always #1 clk = ~clk;
 
 // wire instruction_cache_reset = 0;
 // wire [31:0] instruction_cache_address = 32'h1000;
@@ -47,7 +47,7 @@ wire clock = 0;
 // wire instruction_cache_miss
 
 // cache instruction_cache(
-//     .clk(clock),
+//     .clk(clk),
 //     .reset(1'b0),
 //     .address(32'h1000),
 //     .data_in(32'h1000),
@@ -59,7 +59,7 @@ wire clock = 0;
 //     .miss(instruction_cache_miss)
 // );
 
-always @(posedge clock) begin
+always @(posedge clk) begin
 
 end
 endmodule

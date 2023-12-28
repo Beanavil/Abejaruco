@@ -26,14 +26,14 @@
 `include "src/execution/multiplier.v"
 
 module Multiplier_tb();
-  reg clock;
+  reg clk;
   reg [31:0] multiplicand, multiplier;
   wire [31:0] result;
   wire overflow;
   integer i;
 
   Multiplier #(32) uut (
-               .clock(clock),
+               .clk(clk),
                .multiplicand(multiplicand),
                .multiplier(multiplier),
                .result(result),
@@ -44,23 +44,23 @@ module Multiplier_tb();
   begin
     $display("Testing multiple stage Multiplier");
     $display("-------------------------------");
-    clock = 0;
+    clk = 0;
 
     multiplicand = 0;
     multiplier = 0;
 
     #1;
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h000000FF;
     multiplier = 32'h00000083;
 
     #1;
-    clock = 0;
+    clk = 0;
 
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      #1 clk = ~clk;
+      #1 clk = ~clk;
     end
 
     $display("Test case 1: assert when multiplicand = 32'h000000FF, multiplier = 32'h00000083, result should be 32'h0000827D");
@@ -73,15 +73,15 @@ module Multiplier_tb();
       $display("Passed. Expected result: 32'h0000827D, Actual: %h", result);
     end
 
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h000000AA;
     multiplier = 32'h000000BB;
     #1;
-    clock = 0;
+    clk = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      #1 clk = ~clk;
+      #1 clk = ~clk;
     end
     $display("Test case 2: assert when multiplicand = 32'h000000AA, multiplier = 32'h000000BB, result should be 32'h00007c2e");
     if (result !== 32'h00007c2e)
@@ -93,15 +93,15 @@ module Multiplier_tb();
       $display("Passed. Expected result: 32'h00007c2e, Actual: %h", result);
     end
 
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h00001FFF;
     multiplier = 32'h00001FFF;
     #1;
-    clock = 0;
+    clk = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      #1 clk = ~clk;
+      #1 clk = ~clk;
     end
     $display("Test case 3: assert when multiplicand = 32'h00001FFF, multiplier = 32'h00001FFF, result should be 32'h03ffc001");
     if (result !== 32'h03ffc001)
@@ -113,16 +113,16 @@ module Multiplier_tb();
       $display("Passed. Expected result: 32'h03ffc001, Actual: %h", result);
     end
 
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h00007FFF;
     multiplier = 32'h00007FFF;
     #1;
-    clock = 0;
+    clk = 0;
 
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      #1 clk = ~clk;
+      #1 clk = ~clk;
     end
     $display("Test case 4: assert when multiplicand = 32'h00007FFF, multiplier = 32'h00007FFF, result should be 32'h3FFF0001");
     if (result !== 32'h3FFF0001)
@@ -134,15 +134,15 @@ module Multiplier_tb();
       $display("Passed. Expected result: 32'h3FFF0001, Actual: %h", result);
     end
 
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h0001FFFF;
     multiplier = 32'h000FFFF;
     #1;
-    clock = 0;
+    clk = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      #1 clk = ~clk;
+      #1 clk = ~clk;
     end
     $display("Test case 5: assert when multiplicand = 32'h0001FFFF, multiplier = 32'h0000FFFF, overflow should be 1");
     if (overflow !== 1)
@@ -156,21 +156,21 @@ module Multiplier_tb();
 
 
     $display("Test case 6: assert that the multiplication finishes after five clock cycles");
-    clock = 1;
+    clk = 1;
     multiplicand = 32'h0000000;
     multiplier = 32'h000000;
     #1;
-    clock = 0;
+    clk = 0;
 
     for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
+      #1 clk = ~clk;
         if (overflow === 0 && result === 32'h00000000)
         begin
           $display("Failed. Result available before five clock cycles");
           $finish;
         end
-      #1 clock = ~clock;
+      #1 clk = ~clk;
     end
 
     if (overflow === 0 && result === 32'h00000000)

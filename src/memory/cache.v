@@ -86,7 +86,7 @@ module cache (
 
     // Instantiate the Memory module
     Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(ADDRESS_WIDTH), .CACHE_LINE_SIZE(LINE_SIZE)) memory_instance (
-        .clock(clk),
+        .clk(clk),
         .write_enable(mem_write_enable),
         .read_enable(mem_read_enable),
         .address(mem_address),

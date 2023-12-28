@@ -28,7 +28,7 @@
 module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
                 ADDRESS_SIZE = 12,
                 CACHE_LINE_SIZE = 128) ();
-    reg clock;
+    reg clk;
     reg write_enable;
     reg read_enable;
     reg [ADDRESS_SIZE-1:0] address;
@@ -36,7 +36,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
     wire [CACHE_LINE_SIZE-1:0] data_out;
     
     Memory #(MEMORY_LOCATIONS, ADDRESS_SIZE, CACHE_LINE_SIZE) uut (
-    .clock(clock),
+    .clk(clk),
     .write_enable(write_enable),
     .read_enable(read_enable),
     .address(address),
@@ -48,7 +48,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
     initial begin
         $display("Testing memory");
         $display("-------------------------------");
-        clock = 0;
+        clk = 0;
         write_enable = 0;
         read_enable = 0;
         address = 0;
@@ -56,21 +56,21 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
         #1;     
 
         $display("Test case 1: Load 128'h00FF00FF 00FF00FF 00FF00FF 00FF00FF into memory location 0 and then read it");
-        clock = 1;
+        clk = 1;
         write_enable = 1;
         data_in = 128'h00FF00FF00FF00FF00FF00FF00FF00FF;
         address = 0;
         #1;
 
-        clock = 0;
+        clk = 0;
         write_enable = 0;
         #1;
 
-        clock = 1;
+        clk = 1;
         read_enable = 1;
         #1;
 
-        clock = 0;
+        clk = 0;
         read_enable = 0;
         #1;
         
@@ -80,11 +80,11 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
         $display("Test case 1: Read cache line starting from address 1");
 
         address = 1;
-        clock = 1;
+        clk = 1;
         read_enable = 1;
         #1;
 
-        clock = 0;
+        clk = 0;
         read_enable = 0;
         #1;
         

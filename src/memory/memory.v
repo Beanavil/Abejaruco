@@ -27,7 +27,7 @@
 module Memory #(parameter MEMORY_LOCATIONS = 4096,
                 ADDRESS_SIZE = 12,
                 CACHE_LINE_SIZE = 128)
-               (input wire clock,
+               (input wire clk,
                 input wire write_enable,
                 input wire read_enable,
                 input wire [ADDRESS_SIZE-1:0] address,
@@ -36,7 +36,7 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
 
     reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
-    always_ff @(posedge clock) begin
+    always_ff @(posedge clk) begin
         integer i;
         if (write_enable) begin
             for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
