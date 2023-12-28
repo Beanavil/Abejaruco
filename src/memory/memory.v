@@ -39,12 +39,12 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
     always_ff @(posedge clock) begin
         integer i;
         if (write_enable) begin
-            for (i = 0; i < 16; i = i + 1) begin
-                    memory[address + i] <= data_in[i*8 +: 8];
+            for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
+                memory[address + i] <= data_in[i*8 +: 8];
             end       
         end
         else if (read_enable) begin
-            for (i = 0; i < 16; i = i + 1) begin
+            for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
                 data_out[i*8 +: 8] = memory[address + i];
             end
         end
