@@ -39,4 +39,5 @@ list(APPEND MAIN_MODULE abejaruco)
 add_module(TARGET "${MAIN_MODULE}.tb" INCLUDES "${PROJECT_SOURCE_DIR}")
 
 add_subdirectory(common)
+add_subdirectory(decode)
 add_subdirectory(execution)
