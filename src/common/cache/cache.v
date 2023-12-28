@@ -28,6 +28,7 @@ module cache (
     input wire [ADDRESS_WIDTH-1:0] address,
     input wire [WORD_WIDTH-1:0] data_in,
     input wire op,
+    input wire byteOP,
     input wire access,
     output reg [WORD_WIDTH-1:0] data_out,
     output reg hit,
@@ -35,13 +36,21 @@ module cache (
 );
 
     // Parameter definitions
-    parameter ADDRESS_WIDTH = 32;                                  // Memory address width
-    parameter WORD_WIDTH = 32;                                     // Size of words
-    parameter LINE_SIZE = 128;                                     // Size of each cache block in bytes
-    parameter WORDS_PER_LINE = LINE_SIZE / (WORD_WIDTH);           // Number of words in each cache block
-    parameter NUM_LINES = 4;                                       // Number of lines in the cache
-    parameter DATA_ADDR = $clog2(WORDS_PER_LINE);
-    parameter TAG_WIDTH = ADDRESS_WIDTH - $clog2(WORDS_PER_LINE);  // Calculate tag width
+    parameter ADDRESS_WIDTH = 32;                                           // Memory address width
+    parameter WORD_WIDTH = 32;                                              // Size of words
+    parameter LINE_SIZE = 128;                                              // Size of each cache line in bytes
+    parameter NUM_LINES = 4;                                                // Number of lines in the cache
+
+    parameter WORDS_PER_LINE = LINE_SIZE / (WORD_WIDTH);                    // Number of words in each cache line
+    parameter FULL_OFFSET_WIDTH = $clog2(WORDS_PER_LINE) + $clog2(WORD_WIDTH/8);    // Calculate offset width
+    parameter TAG_WIDTH = ADDRESS_WIDTH - FULL_OFFSET_WIDTH;                // Calculate tag width
+
+    parameter INIT_TAG = ADDRESS_WIDTH - 1;
+    parameter END_TAG = ADDRESS_WIDTH - TAG_WIDTH;
+    parameter INIT_WORD_OFFSET = END_TAG - 1;
+    parameter END_WORD_OFFSET = INIT_WORD_OFFSET - ($clog2(WORDS_PER_LINE)-1);
+    parameter INIT_BYTE_OFFSET = END_WORD_OFFSET - 1;
+    parameter END_BYTE_OFFSET = 0;
 
     // Declare internal signals for tag comparators
     wire [3:0] hit_signals;
@@ -54,10 +63,10 @@ module cache (
     reg [1:0] lru_counters[NUM_LINES-1:0];  // For LRU policy
 
     // Instantiate tag comparators
-    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp0 (.input_tag(address[ADDRESS_WIDTH-1:DATA_ADDR]), .stored_tag(tag_array[0]), .valid(valid_array[0]), .hit(hit0));
-    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp1 (.input_tag(address[ADDRESS_WIDTH-1:DATA_ADDR]), .stored_tag(tag_array[1]), .valid(valid_array[1]), .hit(hit1));
-    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp2 (.input_tag(address[ADDRESS_WIDTH-1:DATA_ADDR]), .stored_tag(tag_array[2]), .valid(valid_array[2]), .hit(hit2));
-    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp3 (.input_tag(address[ADDRESS_WIDTH-1:DATA_ADDR]), .stored_tag(tag_array[3]), .valid(valid_array[3]), .hit(hit3));
+    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp0 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[0]), .valid(valid_array[0]), .hit(hit0));
+    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp1 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[1]), .valid(valid_array[1]), .hit(hit1));
+    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp2 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[2]), .valid(valid_array[2]), .hit(hit2));
+    tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp3 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[3]), .valid(valid_array[3]), .hit(hit3));
 
     // Combine hit signals
     assign hit_signals = {hit0, hit1, hit2, hit3};
@@ -96,13 +105,19 @@ module cache (
                     tag_array[i] <= 0;
                 end
             end else if (op == 1'b0) begin
-                // Write logic
+                // Write word logic
                 miss = ~|hit_signals; // Miss if all hit signals are 0
                 hit = |hit_signals;   // Hit if any hit signal is 1
 
                 if (hit) begin
-                    // Use line_number to access the cache
-                    data_array[line_number][address[$clog2(WORDS_PER_LINE)-1:0]] <= data_in;
+                    if (byteOP) begin
+                        // Use line_number to access the cache
+                        data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] <= data_in[7:0];
+                    end else begin
+                        // Use line_number to access the cache
+                        data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] <= data_in;
+                    end
+
                     // Update LRU for line_number
                     update_lru(line_number);
 
@@ -115,14 +130,22 @@ module cache (
                         end
                     end
 
-                    // Replace the line and update LRU
-                    tag_array[replace_index] <= address[ADDRESS_WIDTH-1:DATA_ADDR];
-                    data_array[replace_index][address[$clog2(WORDS_PER_LINE)-1:0]] <= data_in;
+                    if (byteOP) begin
+                        // Implement the write logic for byte access
+                        data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] <= data_in[7:0];
+                    end else begin
+                        // Use line_number to access the cache
+                        data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] <= data_in;
+                    end
+
+                    // Update line control information
+                    tag_array[replace_index] <= address[INIT_TAG:END_TAG];
                     valid_array[replace_index] <= 1;
                     update_lru(replace_index);
 
-                    //Store the data in memory at the address
-                    // ...
+                    //TODO: when ram is implemented
+                    // 1. Store the sustituted data in memory at the address
+                    // 2. Bring the data from memory to the cache
                 end
 
             end else if (op == 1'b1) begin
@@ -131,13 +154,32 @@ module cache (
                 miss <= ~|hit_signals; // Miss if all hit signals are 0
 
                 if (hit) begin
-                    // Use line_number to retrieve the cache data
-                    data_out <= data_array[line_number][address[$clog2(WORDS_PER_LINE)-1:0]];
+
+                    if (byteOP) begin
+                        // Implement the write logic for byte access
+                        data_out[WORD_WIDTH:8] <= 0;
+                        data_out[7:0] <= data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
+                    end else begin
+                        // Use line_number to retrieve the cache data //TODO 
+                        data_out <= data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+                    end
                     update_lru(line_number);
+
                 end else if (miss) begin
-                    //Implement the read logic for memory access
-                    // ...
-                    data_out <= 'hx;
+
+                    //TODO: when ram is implemented
+                    // 1. Bring the data from memory to the caches
+
+                    // Find the line to replace based on LRU
+                    replace_index = 0;
+                    for (j = 0; j < NUM_LINES; j = j + 1) begin
+                        if (lru_counters[j] < lru_counters[replace_index]) begin
+                            replace_index = j;
+                        end
+                    end
+
+                    //... (add byte logic too when ram is implemented)
+                    valid_array[line_number] <= 0;
                 end
             end
 
