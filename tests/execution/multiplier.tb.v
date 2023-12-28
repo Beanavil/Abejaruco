@@ -27,7 +27,6 @@
 
 module Multiplier_tb();
   reg clock;
-  reg start_multiplication;
   reg [31:0] multiplicand, multiplier;
   wire [31:0] result;
   wire overflow;
@@ -35,7 +34,6 @@ module Multiplier_tb();
 
   Multiplier #(32) uut (
                .clock(clock),
-               .start_multiplication(start_multiplication),
                .multiplicand(multiplicand),
                .multiplier(multiplier),
                .result(result),
@@ -48,18 +46,15 @@ module Multiplier_tb();
     $display("-------------------------------");
     clock = 0;
 
-    start_multiplication = 0;
     multiplicand = 0;
     multiplier = 0;
 
     #1;
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h000000FF;
     multiplier = 32'h00000083;
 
     #1;
-    start_multiplication = 0;
     clock = 0;
 
     for (i = 0; i < 4; i = i + 1)
@@ -79,11 +74,9 @@ module Multiplier_tb();
     end
 
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h000000AA;
     multiplier = 32'h000000BB;
     #1;
-    start_multiplication = 0;
     clock = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
@@ -101,11 +94,9 @@ module Multiplier_tb();
     end
 
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h00001FFF;
     multiplier = 32'h00001FFF;
     #1;
-    start_multiplication = 0;
     clock = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
@@ -123,11 +114,9 @@ module Multiplier_tb();
     end
 
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h00007FFF;
     multiplier = 32'h00007FFF;
     #1;
-    start_multiplication = 0;
     clock = 0;
 
     for (i = 0; i < 4; i = i + 1)
@@ -146,11 +135,9 @@ module Multiplier_tb();
     end
 
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h0001FFFF;
     multiplier = 32'h000FFFF;
     #1;
-    start_multiplication = 0;
     clock = 0;
     for (i = 0; i < 4; i = i + 1)
     begin
@@ -170,11 +157,9 @@ module Multiplier_tb();
 
     $display("Test case 6: assert that the multiplication finishes after five clock cycles");
     clock = 1;
-    start_multiplication = 1;
     multiplicand = 32'h0000000;
     multiplier = 32'h000000;
     #1;
-    start_multiplication = 0;
     clock = 0;
 
     for (i = 0; i < 4; i = i + 1)
@@ -190,7 +175,7 @@ module Multiplier_tb();
 
     if (overflow === 0 && result === 32'h00000000)
     $display("Passed. Result available at fifth clock cycle");
-    
+
     $finish;
   end
 endmodule

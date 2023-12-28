@@ -48,7 +48,6 @@ module ALU
 
   Multiplier #(.WIDTH(32), .NIBBLE_WIDTH(4)) multiplier (
                .clock(clk),
-               .start_multiplication(1'b1), /*?*/
                .multiplicand(input_first),
                .multiplier(input_second),
                .result(tmp_mul_result)
