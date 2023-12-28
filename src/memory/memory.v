@@ -26,47 +26,27 @@
 
 module Memory #(parameter MEMORY_LOCATIONS = 4096,
                 ADDRESS_SIZE = 12,
-                WORD_SIZE = 32)
+                CACHE_LINE_SIZE = 128)
                (input wire clock,
                 input wire write_enable,
                 input wire read_enable,
-                input wire byte_enable,
-                input wire half_word_enable,
-                input wire word_enable,
-                input wire [ADDRESS_SIZE:0] address,
-                input wire [WORD_SIZE:0] data_in,
-                output reg [WORD_SIZE-1:0] data_out);
+                input wire [ADDRESS_SIZE-1:0] address,
+                input wire [CACHE_LINE_SIZE-1:0] data_in,
+                output reg [CACHE_LINE_SIZE-1:0] data_out);
     
-    logic [MEMORY_LOCATIONS-1:0] memory [7:0];
+    reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
     always_ff @(posedge clock) begin
+        integer i;
         if (write_enable) begin
-            if (byte_enable) begin
-                memory[address] <= data_in[7:0];
-            end
-            else if (half_word_enable) begin
-                memory[address] <= data_in[7:0];
-                memory[address + 1] <= data_in[15:8];
-            end
-            else if (word_enable) begin
-                memory[address] <= data_in[7:0];
-                memory[address + 1] <= data_in[15:8];
-                memory[address + 2] <= data_in[23:16];
-                memory[address + 3] <= data_in[31:24];
-            end
+            for (i = 0; i < 16; i = i + 1) begin
+                    memory[address + i] <= data_in[i*8 +: 8];
+            end       
         end
         else if (read_enable) begin
-            if (byte_enable) begin
-                data_out[7:0] <= memory[address][7:0];
-            end
-            else if (half_word_enable) begin
-                data_out[15:0] <= {memory[address + 1][7:0], memory[address][7:0]};
-            end 
-            else if (word_enable) begin
-                data_out <= {memory[address + 3][7:0], memory[address + 2][7:0],
-                             memory[address + 1][7:0], memory[address][7:0]};
+            for (i = 0; i < 16; i = i + 1) begin
+                data_out[i*8 +: 8] = memory[address + i];
             end
         end
     end
-
 endmodule
