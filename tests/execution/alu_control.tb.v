@@ -24,7 +24,6 @@
 `timescale 1ns / 1ps
 
 `include "tests/utils/tb_utils.v"
-
 `include "src/execution/alu_control.v"
 
 module ALUControl_tb();
