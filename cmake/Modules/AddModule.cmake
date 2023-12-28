@@ -41,6 +41,7 @@ function(add_module)
       "${IVERILOG_COMMAND}" "-I" "${MODULE_INCLUDES}" "-o"
       "${CMAKE_CURRENT_BINARY_DIR}/${MODULE_TARGET}.vvp"
       "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_TARGET}.v"
+      "-g2012"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_TARGET}.v"
     COMMENT
       "Synthesizing Verilog file ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_TARGET}"

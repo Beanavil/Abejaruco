@@ -1,10 +1,10 @@
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
-// : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrili
+//           : (c) 2023 Beatriz Navidad Vilches
+//           : (c) 2023 Stefano Petrili
 //
-// Thclkis file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
+// This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
 // Abejaruco is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -17,7 +17,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
-// If not, see <https:// www.gnu.org/licenses/>.
+// If not, see <https://www.gnu.org/licenses/>.
 
 `default_nettype none
 

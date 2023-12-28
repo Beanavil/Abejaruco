@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
+
 `default_nettype none
 
 `include "src/common/adder.v"

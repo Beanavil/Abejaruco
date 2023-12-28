@@ -1,10 +1,10 @@
 // GNU General Public License
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
-// : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrili
+//           : (c) 2023 Beatriz Navidad Vilches
+//           : (c) 2023 Stefano Petrili
 //
-// This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
+// This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
 // Abejaruco is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -17,31 +17,26 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
-// If not, see <https:// www.gnu.org/licenses/>.
+// If not, see <https://www.gnu.org/licenses/>.
 
-module Demux1to2 #(
-    parameter N = 32          // Default bit width
-  )(
-    input [N-1:0] in,
-    input sel,
-    output reg [N-1:0] out0,
-    output reg [N-1:0] out1
-  );
+`default_nettype none
 
-  // Always block to update outputs based on selection
-  always @(in or sel)
-  begin
-    if (sel == 1'b0)
-    begin
-      out0 = in;           // Route input to out0
-      out1 = {N{1'b0}};    // Set out1 to 0 (N bits)
+module flipFlop #(
+    parameter N = 32
+)(
+    input clk,
+    input reset,
+    input [N-1:0] d,
+    output reg [N-1:0] q
+);
+
+// Sequential logic for the register
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        q <= {N{1'b0}};
+    end else begin
+        q <= d;
     end
-    else
-    begin
-      out0 = {N{1'b0}};    // Set out0 to 0 (N bits)
-      out1 = in;           // Route input to out1
-    end
-  end
+end
 
 endmodule
-

@@ -20,9 +20,8 @@
 
 include(AddModule)
 
-list(APPEND MAIN_MODULE abejaruco)
+list(APPEND VERILOG_MODULES multiplier)
 
-add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
-
-add_subdirectory(common)
-add_subdirectory(execution)
+foreach(MODULE IN ITEMS ${VERILOG_MODULES})
+  add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
+endforeach()
