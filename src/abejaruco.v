@@ -24,7 +24,7 @@
 `timescale 1ns / 1ps
 
 `include "src/decode/control_unit.v"
-`include "src/common/cache/cache.v"
+// `include "src/common/cache/cache.v"
 
 module Abejaruco();
 
@@ -34,7 +34,7 @@ reg [31:0] rm1;
 reg [31:0] rm2;
 wire clock = 0;
 
-always #1 clock = ~clock;
+// always #1 clock = ~clock;
 
 // wire instruction_cache_reset = 0;
 // wire [31:0] instruction_cache_address = 32'h1000;

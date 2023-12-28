@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "src/common/cache/cache.v"
+`include "src/memory/cache.v"
 
 module cache_tb;
 

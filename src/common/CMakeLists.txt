@@ -31,7 +31,10 @@ list(
   flip_flop
   full_adder
   half_adder
-  mux2to1)
+  mux2to1
+  priority_encoder
+  tag_comparator
+  )
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
