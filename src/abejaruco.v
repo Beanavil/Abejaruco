@@ -26,9 +26,9 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 
-module Abejaruco();
+module Abejaruco(input wire reset);
   reg [31:0] r [0:31];
-  reg [31:0] rm0 = 32'h1000;
+  reg [31:0] rm0 = 32'b1000;
   reg [31:0] rm1;
   reg [31:0] rm2;
   reg clk = 0;
@@ -70,14 +70,12 @@ module Abejaruco();
   assign data_cache_miss = 0;
 
   // Common wires
-  wire reset;
   wire [31:0] mem_address;
   wire mem_read_enable;
   wire mem_write_enable;
   wire [127:0] mem_data_in;
   wire [127:0] mem_data_out;
 
-  assign reset = 0;
   assign mem_address = rm0;
   assign mem_read_enable = 0;
   assign mem_write_enable = 0;
@@ -128,6 +126,6 @@ module Abejaruco();
 
   always @(posedge clk)
   begin
-
+    // $display("Instruction cache hit: %b", instruction_cache_hit);
   end
 endmodule
