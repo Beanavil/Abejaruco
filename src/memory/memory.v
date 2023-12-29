@@ -37,7 +37,7 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
-  always_ff @(posedge clk)
+  always @(*)
             begin
               integer i;
               if (write_enable)
