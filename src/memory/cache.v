@@ -212,8 +212,18 @@ module Cache (
             end
           end
 
+          // FIXME
+          data_array[replace_index][0][31:0] = mem_data_out[31:0]; 
+          data_array[replace_index][1][31:0] = mem_data_out[63:32];
+          data_array[replace_index][2][31:0] = mem_data_out[95:64];
+          data_array[replace_index][3][31:0] = mem_data_out[127:96];
 
-
+          // data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][95:64] = mem_data_out[95:64];
+          // data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][127:96] = mem_data_out[127:96];
+          // // Update line control information
+          tag_array[replace_index] = address[INIT_TAG:END_TAG];
+          //valid_array[replace_index] = 1;
+          // update_lru(replace_index);
           //... (add byte logic too when ram is implemented)
           valid_array[line_number] = 0;
         end

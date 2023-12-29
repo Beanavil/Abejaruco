@@ -26,7 +26,8 @@
 // TODO: handle synchronization between caches
 module Memory #(parameter MEMORY_LOCATIONS = 4096,
                   ADDRESS_SIZE = 12,
-                  CACHE_LINE_SIZE = 128)
+                  CACHE_LINE_SIZE = 128,
+                  PROGRAM = "../../programs/random_binary.o")
   (input wire clk,
    input wire write_enable,
    input wire read_enable,
@@ -36,10 +37,11 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
    output reg data_ready);
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
-
-  initial begin
-    memory[address] = 8'b0;
-  end
+  
+initial begin
+    integer i;
+    $readmemh(PROGRAM, memory);
+end
 
 always @(posedge write_enable)
   begin

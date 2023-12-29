@@ -26,7 +26,7 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 
-module Abejaruco(input wire reset);
+module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input wire reset);
   reg [31:0] r [0:31];
   reg [31:0] rm0 = 32'b1000;
   reg [31:0] rm1;
@@ -107,22 +107,22 @@ module Abejaruco(input wire reset);
           .miss(instruction_cache_miss)
         );
 
-  Cache data_cache(
-          .clk(clk),
-          .reset(reset),
-          .address(mem_address),
-          .data_in(data_cache_data_in),
-          .op(data_cache_op),
-          .byte_op(data_cache_byte_op),
-          .access(data_cache_access),
-          .mem_data_out(mem_data_out),
-          .data_out(data_cache_data_out),
-          .mem_data_in(mem_data_in),
-          .mem_read_enable(mem_read_enable),
-          .mem_write_enable(mem_write_enable),
-          .hit(data_cache_hit),
-          .miss(data_cache_miss)
-        );
+  // Cache data_cache(
+  //         .clk(clk),
+  //         .reset(reset),
+  //         .address(mem_address),
+  //         .data_in(data_cache_data_in),
+  //         .op(data_cache_op),
+  //         .byte_op(data_cache_byte_op),
+  //         .access(data_cache_access),
+  //         .mem_data_out(mem_data_out),
+  //         .data_out(data_cache_data_out),
+  //         .mem_data_in(mem_data_in),
+  //         .mem_read_enable(mem_read_enable),
+  //         .mem_write_enable(mem_write_enable),
+  //         .hit(data_cache_hit),
+  //         .miss(data_cache_miss)
+  //       );
 
   always @(posedge clk)
   begin
