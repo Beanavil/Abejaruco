@@ -26,13 +26,13 @@ module Cache (
     input wire clk,
     input wire reset,
     input wire [ADDRESS_WIDTH-1:0] address,
-    input wire [WORD_WIDTH-1:0] data_in,
     input wire op,
     input wire byte_op,
     input wire access,
-    input reg [LINE_SIZE-1:0] mem_data_out,
+    input wire [LINE_SIZE-1:0] mem_data_out,
     output reg [WORD_WIDTH-1:0] data_out,
     output wire [LINE_SIZE-1:0] mem_data_in,
+    input wire [WORD_WIDTH-1:0] data_in,
     output reg mem_read_enable,
     output reg mem_write_enable,
     output reg hit,
@@ -90,10 +90,10 @@ module Cache (
       begin
         if (lru_counters[i] >= lru_counters[accessed_line])
         begin
-          lru_counters[i] <= lru_counters[i] - 1;
+          lru_counters[i] = lru_counters[i] - 1;
         end
       end
-      lru_counters[accessed_line] <= NUM_LINES - 1;  // Most recently used
+      lru_counters[accessed_line] = NUM_LINES - 1;  // Most recently used
     end
   endtask
 
@@ -111,11 +111,11 @@ module Cache (
       begin
         for (i = 0; i < NUM_LINES; i = i + 1)
         begin
-          valid_array[i] <= 0;
-          lru_counters[i] <= i;
-          dirty_array[i] <= 0;
+          valid_array[i] = 0;
+          lru_counters[i] = i;
+          dirty_array[i] = 0;
 
-          mem_read_enable = 0; // TODO: may be <=
+          mem_read_enable = 0;
           mem_write_enable = 0;
         end
       end
@@ -128,11 +128,11 @@ module Cache (
         begin
           if (byte_op)
           begin
-            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] <= data_in[7:0];
+            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
           end
           else
           begin
-            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] <= data_in;
+            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
           end
           update_lru(line_number);
 
@@ -151,7 +151,7 @@ module Cache (
 
           if (valid_array[replace_index] && dirty_array[replace_index])
           begin
-            mem_write_enable <= 1;
+            mem_write_enable = 1;
             //TODO the ram has to answer with the write of the data (no only the data
             // but a bit telling me this is the data )
 
@@ -162,34 +162,34 @@ module Cache (
 
           if (byte_op)
           begin
-            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] <= data_in[7:0];
+            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
           end
           else
           begin
-            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] <= data_in;
+            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
           end
 
           // Update line control information
-          tag_array[replace_index] <= address[INIT_TAG:END_TAG];
-          valid_array[replace_index] <= 1;
+          tag_array[replace_index] = address[INIT_TAG:END_TAG];
+          valid_array[replace_index] = 1;
           update_lru(replace_index);
         end
       end
       else if (op == 1'b1) /* read*/
       begin
-        hit <= |hit_signals;
-        miss <= ~|hit_signals;
+        hit = |hit_signals;
+        miss = ~|hit_signals;
 
         if (hit)
         begin
           if (byte_op)
           begin
-            data_out[WORD_WIDTH:8] <= 0;
-            data_out[7:0] <= data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
+            data_out[WORD_WIDTH:8] = 0;
+            data_out[7:0] = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
           end
           else
           begin
-            data_out <= data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+            data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
           update_lru(line_number);
 
@@ -198,6 +198,9 @@ module Cache (
         begin
           //TODO: when ram is implemented
           // 1. Bring the data from memory to the caches
+
+          mem_read_enable = 1;
+          //$display("The memory from ram is: %h", mem_data_out);
 
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -209,8 +212,10 @@ module Cache (
             end
           end
 
+
+
           //... (add byte logic too when ram is implemented)
-          valid_array[line_number] <= 0;
+          valid_array[line_number] = 0;
         end
       end
 
@@ -226,7 +231,6 @@ module Cache (
         $display(" ");
       end
       $display("\n");
-
     end
   end
 endmodule

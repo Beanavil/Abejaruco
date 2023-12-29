@@ -4,36 +4,49 @@
 
 module cache_tb;
 
+  parameter LINE_SIZE = 128;
   parameter ADDRESS_WIDTH = 32;
   parameter WORD_WIDTH = 32;
-  parameter WORDS_PER_LINE = 4; // 4 words per line, 32 bits each
+  parameter WORDS_PER_LINE = 4;
 
   reg clk;
   reg reset;
   reg access;
   reg [ADDRESS_WIDTH-1:0] address;
   reg [WORD_WIDTH-1:0] data_in;
-  reg op;  // 0 for write, 1 for read
+  reg op;
   reg byteOP;
   wire [WORD_WIDTH-1:0] data_out;
   wire hit, miss;
+  reg [LINE_SIZE-1:0] mem_data_out;
+  reg [LINE_SIZE-1:0] mem_data_in;
+  reg mem_read_enable;
+  reg mem_write_enable;
 
-  // Instantiate the cache module
-  cache uut (
+  Cache uut (
           .clk(clk),
           .reset(reset),
-          .access(access),
           .address(address),
-          .byteOP(byteOP),
-          .data_in(data_in),
           .op(op),
+          .byte_op(byteOP),
+          .access(access),
+          .mem_data_out(mem_data_out),
           .data_out(data_out),
+          .mem_data_in(mem_data_in),
+          .data_in(data_in),
+          .mem_read_enable(mem_read_enable),
+          .mem_write_enable(mem_write_enable),
           .hit(hit),
           .miss(miss)
         );
 
   // Clock generation
-  always #20 clk = ~clk;  // Generate a clock with a period of 10ns
+  // TODO: I think that in the tests it would be better to control the clock manually
+  //       by setting it to 0 and 1 instead of using a clock generator.
+  //       This way we can control that the modules actually take the number
+  //       of cycles that we expect them to take. If we use a clock generator
+  //       it's harder to know at any given point what the state of the system is.
+  always #1 clk = ~clk;  // Generate a clock with a period of 10ns
 
   initial
   begin
@@ -47,63 +60,39 @@ module cache_tb;
     data_in = 0;
     op = 0;
     byteOP = 0;
+    #2;
 
     // Start the test
-    #40;
-    access = 0;
-    reset = 0;
 
     // Test Case 1: Write to an address
-    #80;
-    $display("\n------Test Case 1: Write to an address----");
+    $display("\n------Test Case 1: Write to an address then read----");
     address = 32'h00000004;
     data_in = 32'h00000011;
     op = 1'b0;  // Write operation
     access = 1;
+    reset = 0;
     byteOP = 0;
-    #80;
+    #2;
+
+    op = 1'b1;  // Read operation
+    byteOP = 1;
+    #2;
+
+    if (data_out !== 32'h00000011)
+    begin
+      $display("Failed. Expected result: 32'h00000011, Actual: %h", data_out);
+    end
+    else
+    begin
+      $display("Passed. Expected result: 32'h00000011, Actual: %h", data_out);
+    end
+    #2;
     access = 0;
 
-    // // Test Case 2: Read from the same address
-    // $display("\n------Test Case 2: Read from the same address-----");
-    // op = 1'b1;  // Read operation
-    // access = 1;
-    // byteOP = 1;
+    // Test Case 2: Write to the same memory address
     // #80;
-    // $display("Data in memory: %h", data_out);
-    // #80;
-    // access = 0;
-
-
-    // #80;
-    // $display("\n------Test Case 1: Write to an address----");
-    // address = 32'h00000002;
-    // data_in = 32'h00000022;
-    // op = 1'b0;  // Write operation
-    // access = 1;
-    // byteOP = 1;
-    // #80;
-    // access = 0;
-
-    // // Test Case 2: Read from the same address
-    // #80;
-    // $display("\nTest Case 2: Read from the same address");
-    // op = 1'b1;  // Read operation
-    // access = 1;
-    // #80;
-    // if (hit !== 1'b1 || data_out !== 32'hDEADBEEF)
-    // begin
-    //     $display("Error in Test Case 2 at time %0d", $time);
-    // end else begin
-    //     $display("Data in memory: %h", data_out);
-    // end
-    // #80;
-    // access = 0;
-
-    // // Test Case 3: Write to the same memory address
-    // #80;
-    // $display("\n------Test Case 3: Write to same address----");
-    // address = 32'h00000001;
+    // $display("\n------Test Case 2: Write to same address----");
+    // address = 32'h00000004;
     // data_in = 32'h11111111;
     // op = 1'b0;  // Write operation
     // access = 1;
