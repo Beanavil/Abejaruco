@@ -21,32 +21,38 @@
 
 `default_nettype none
 
-
 `timescale 1ns / 1ps
 
+// TODO: handle synchronization between caches
 module Memory #(parameter MEMORY_LOCATIONS = 4096,
-                ADDRESS_SIZE = 12,
-                CACHE_LINE_SIZE = 128)
-               (input wire clk,
-                input wire write_enable,
-                input wire read_enable,
-                input wire [ADDRESS_SIZE-1:0] address,
-                input wire [CACHE_LINE_SIZE-1:0] data_in,
-                output reg [CACHE_LINE_SIZE-1:0] data_out);
+                  ADDRESS_SIZE = 12,
+                  CACHE_LINE_SIZE = 128)
+  (input wire clk,
+   input wire write_enable,
+   input wire read_enable,
+   input wire [ADDRESS_SIZE-1:0] address,
+   input wire [CACHE_LINE_SIZE-1:0] data_in,
+   output reg [CACHE_LINE_SIZE-1:0] data_out,
+   output reg data_ready);
 
-    reg [7:0] memory [0:MEMORY_LOCATIONS-1];
+  reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
-    always_ff @(posedge clk) begin
-        integer i;
-        if (write_enable) begin
-            for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
-                memory[address + i] <= data_in[i*8 +: 8];
+  always_ff @(posedge clk)
+            begin
+              integer i;
+              if (write_enable)
+              begin
+                for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+                begin
+                  memory[address + i] <= data_in[i*8 +: 8];
+                end
+              end
+              else if (read_enable)
+              begin
+                for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+                begin
+                  data_out[i*8 +: 8] = memory[address + i];
+                end
+              end
             end
-        end
-        else if (read_enable) begin
-            for (i = 0; i < CACHE_LINE_SIZE/8; i = i + 1) begin
-                data_out[i*8 +: 8] = memory[address + i];
-            end
-        end
-    end
-endmodule
+          endmodule

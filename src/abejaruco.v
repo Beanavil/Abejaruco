@@ -23,43 +23,111 @@
 
 `timescale 1ns / 1ps
 
-`include "src/decode/control_unit.v"
-// `include "src/common/cache/cache.v"
+`include "src/memory/cache.v"
+`include "src/memory/memory.v"
 
 module Abejaruco();
+  reg [31:0] r [0:31];
+  reg [31:0] rm0 = 32'h1000;
+  reg [31:0] rm1;
+  reg [31:0] rm2;
+  reg clk = 0;
 
-reg [31:0] r [0:31];
-reg [31:0] rm0 = 32'h1000;
-reg [31:0] rm1;
-reg [31:0] rm2;
-wire clk = 0;
+  always #1 clk = ~clk;
 
-// always #1 clk = ~clk;
+  // Instruction cache wires
+  wire instruction_cache_op;
+  wire instruction_cache_byte_op;
+  wire instruction_cache_access;
+  wire [31:0] instruction_cache_data_out;
+  wire [127:0] instruction_mem_data_in;
+  wire instruction_cache_hit;
+  wire instruction_cache_miss;
 
-// wire instruction_cache_reset = 0;
-// wire [31:0] instruction_cache_address = 32'h1000;
-// wire [31:0] instruction_cache_data_in = 32'h1000;
-// wire instruction_cache_op = 0;
-// wire instruction_cache_byteOP = 0;
-// wire instruction_cache_access = 0;
-// wire [31:0] instruction_cache_data_out;
-// wire instruction_cache_hit;
-// wire instruction_cache_miss
+  assign instruction_cache_op = 1;
+  assign instruction_cache_byte_op = 0;
+  assign instruction_cache_access = 1;
+  assign instruction_mem_data_in = 0;
+  assign instruction_cache_hit = 0;
+  assign instruction_cache_miss = 0;
 
-// cache instruction_cache(
-//     .clk(clk),
-//     .reset(1'b0),
-//     .address(32'h1000),
-//     .data_in(32'h1000),
-//     .op(1'b1),
-//     .byteOP(1'b0),
-//     .access(1'b1),
-//     .data_out(instruction_cache_data_out),
-//     .hit(instruction_cache_hit),
-//     .miss(instruction_cache_miss)
-// );
+  // Data cache wires
+  wire [31:0] data_cache_data_in;
+  wire data_cache_op;
+  wire data_cache_byte_op;
+  wire data_cache_access;
+  wire [127:0] data_mem_out;
+  wire [31:0] data_cache_data_out;
+  wire [127:0] data_mem_in;
+  wire data_cache_hit;
+  wire data_cache_miss;
 
-always @(posedge clk) begin
+  assign data_cache_op = 1;
+  assign data_cache_byte_op = 0;
+  assign data_cache_access = 1;
+  assign data_mem_in = 0;
+  assign data_cache_hit = 0;
+  assign data_cache_miss = 0;
 
-end
+  // Common wires
+  wire reset;
+  wire [31:0] mem_address;
+  wire mem_read_enable;
+  wire mem_write_enable;
+  wire [127:0] mem_data_in;
+  wire [127:0] mem_data_out;
+
+  assign reset = 0;
+  assign mem_address = rm0;
+  assign mem_read_enable = 0;
+  assign mem_write_enable = 0;
+
+  // Instantiations
+  Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
+           .clk(clk),
+           .write_enable(mem_write_enable),
+           .read_enable(mem_read_enable),
+           .address(mem_address),
+           .data_in(mem_data_in),
+           .data_out(mem_data_out)
+         );
+
+  Cache instruction_cache(
+          .clk(clk),
+          .reset(reset),
+          .address(mem_address),
+          .data_in('b0),
+          .op(instruction_cache_op),
+          .byte_op(instruction_cache_byte_op),
+          .access(instruction_cache_access),
+          .mem_data_out(mem_data_out),
+          .data_out(instruction_cache_data_out),
+          .mem_data_in(mem_data_in),
+          .mem_read_enable(mem_read_enable),
+          .mem_write_enable(mem_write_enable),
+          .hit(instruction_cache_hit),
+          .miss(instruction_cache_miss)
+        );
+
+  Cache data_cache(
+          .clk(clk),
+          .reset(reset),
+          .address(mem_address),
+          .data_in(data_cache_data_in),
+          .op(data_cache_op),
+          .byte_op(data_cache_byte_op),
+          .access(data_cache_access),
+          .mem_data_out(mem_data_out),
+          .data_out(data_cache_data_out),
+          .mem_data_in(mem_data_in),
+          .mem_read_enable(mem_read_enable),
+          .mem_write_enable(mem_write_enable),
+          .hit(data_cache_hit),
+          .miss(data_cache_miss)
+        );
+
+  always @(posedge clk)
+  begin
+
+  end
 endmodule
