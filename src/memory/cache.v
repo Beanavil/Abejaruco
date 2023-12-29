@@ -123,6 +123,9 @@ module cache (
                     valid_array[i] <= 0;
                     lru_counters[i] <= i;  // Initialize LRU
                     dirty_array[i] <= 0;
+
+                    mem_write_enable <= 0;
+                    mem_read_enable <= 0;
                 end
             end else if (op == 1'b0) begin
                 // Write word logic
@@ -152,15 +155,11 @@ module cache (
 
                     // If the line to replace is valid and dirty, write back to memory
                     if (valid_array[replace_index] && dirty_array[replace_index]) begin
-                        // Write back logic
-                        // Loop over each word in the line
-                        // for (int k = 0; k < WORDS_PER_LINE; k++) begin
-                        //     // Calculate the memory address to write back
-                        //     mem_address = // calculate based on tag_array[replace_index] and offsets
-                        //     mem_data_in = data_array[replace_index][k];
-                        //     // Assert write signal to Memory module
-                        //     // ...
-                        // end
+                        
+                        mem_address <= address;
+                        //TODO the ram has to answer with the write of the data (no only the data
+                        // but a bit telling me this is the data )
+                        
                     end
 
                     //TODO bring the line of address from memory to the cache
