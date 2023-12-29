@@ -37,22 +37,25 @@ module Memory #(parameter MEMORY_LOCATIONS = 4096,
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
-  always @(*)
-            begin
-              integer i;
-              if (write_enable)
-              begin
-                for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
-                begin
-                  memory[address + i] <= data_in[i*8 +: 8];
-                end
-              end
-              else if (read_enable)
-              begin
-                for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
-                begin
-                  data_out[i*8 +: 8] = memory[address + i];
-                end
-              end
-            end
-          endmodule
+  initial begin
+    memory[address] = 8'b0;
+  end
+
+always @(posedge write_enable)
+  begin
+    integer i;
+    for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+    begin
+      memory[address + i] <= data_in[i*8 +: 8];
+    end
+  end
+
+always @(posedge read_enable)
+  begin
+    integer i;
+      for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+      begin
+        data_out[i*8 +: 8] = memory[address + i];
+      end
+  end
+endmodule

@@ -44,7 +44,6 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
            .data_out(data_out)
          );
 
-
   initial
   begin
     $display("Testing memory");
