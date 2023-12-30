@@ -4,19 +4,30 @@
 
 `include "src/abejaruco.v"
 
-module Abejaruco_tb();  
+module Abejaruco_tb();
   reg reset;
   reg clk;
 
   Abejaruco uut(.reset(reset), .clk(clk));
 
-  initial begin
+  initial
+  begin
     clk = 1'b0;
     reset = 1'b1;
 
     #10 reset = 1'b0;
     clk = 1'b1;
 
+    #10 clk = 1'b0;
+    #10 clk = 1'b1;
+    #10 clk = 1'b0;
+    #10 clk = 1'b1;
+    #10 clk = 1'b0;
+    #10 clk = 1'b1;
+    #10 clk = 1'b0;
+    #10 clk = 1'b1;
+    #10 clk = 1'b0;
+    #10 clk = 1'b1;
     #10 clk = 1'b0;
     #10 clk = 1'b1;
     #10 clk = 1'b0;

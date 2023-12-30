@@ -28,6 +28,7 @@ module Cache (
     input wire [ADDRESS_WIDTH-1:0] address,
     input wire op,
     input wire byte_op,
+    output reg op_done,
     input wire access,
     input mem_data_ready,
     input wire [LINE_SIZE-1:0] mem_data_out,
@@ -107,7 +108,7 @@ module Cache (
     if (access)
     begin
       // FOR TESTING --- Print input values
-      $display("In values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, miss=%d", clk, reset, address, data_in, op, ~hit);
+      $display("In values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, ~hit, mem_data_ready);
 
       if (reset)
       begin
@@ -193,7 +194,6 @@ module Cache (
             data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
           update_lru(line_number);
-
         end
         else /*miss*/
         begin
@@ -212,16 +212,19 @@ module Cache (
             end
           end
 
-          //TODO for Javi, is it good?
-          data_array[replace_index][0][31:0] = mem_data_out[31:0];
-          data_array[replace_index][1][31:0] = mem_data_out[63:32];
-          data_array[replace_index][2][31:0] = mem_data_out[95:64];
-          data_array[replace_index][3][31:0] = mem_data_out[127:96];
+          // When memory returns data, store it in the cache
+          if(data_ready) begin
+            data_array[replace_index][0] = mem_data_out[31:0];
+            data_array[replace_index][1] = mem_data_out[63:32];
+            data_array[replace_index][2] = mem_data_out[95:64];
+            data_array[replace_index][3] = mem_data_out[127:96];
+          end
 
           // Update line control information
           tag_array[replace_index] = address[INIT_TAG:END_TAG];
-          // valid_array[replace_index] = 1'b1;
+          // valid_array[replace_index] = 1;
           // update_lru(replace_index);
+          op_done = 1;
         end
       end
 

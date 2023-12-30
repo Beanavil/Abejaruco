@@ -33,6 +33,7 @@ module Memory #(parameter ADDRESS_SIZE = 12,
    input wire op,
    input wire [ADDRESS_SIZE-1:0] address,
    input wire [CACHE_LINE_SIZE-1:0] data_in,
+   input wire op_done,
    output reg [CACHE_LINE_SIZE-1:0] data_out,
    output reg data_ready);
 
@@ -50,6 +51,10 @@ module Memory #(parameter ADDRESS_SIZE = 12,
   // State definitions
   reg [1:0] state = 2'b00;
   reg [2:0] counter = 0; // 3-bit counter for 5-cycle delay
+
+  always @(negedge op_done) begin
+    data_ready = 1'b0;
+  end
 
   always @(posedge clk)
   begin
@@ -80,26 +85,33 @@ module Memory #(parameter ADDRESS_SIZE = 12,
           $display("op = %b", op);
           if (op) /*write*/
           begin
-              $display("Entra en write");
-          for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
-          begin
-              memory[address + i] = data_in[i*8 +: 8];
-          end
+            $display("Entra en write");
+            for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+            begin
+                memory[address + i] = data_in[i*8 +: 8];
+            end
           end
           else /*read*/
           begin
-          $display("Entra en read");
-          for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
-          begin
-              data_out[i*8 +: 8] = memory[address + i];
+            $display("Entra en read");
+            for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+            begin
+                data_out[i*8 +: 8] = memory[address + i];
+            end
           end
-          end
-          state <= 2'b00;
+          data_ready = 1'b1;
+          state = 2'b00;
       end
       endcase
     // $display("Address: %h", address);
     // $display("Data written: %h", data_in);
     // $display("Data read: %h", data_out);
+    end
+
+    // End memory op
+    if (op_done)
+    begin
+      data_ready = 1'0;
     end
   end
 endmodule

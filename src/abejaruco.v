@@ -73,6 +73,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
   wire [127:0] mem_data_in;
   wire [127:0] mem_data_out;
   wire mem_data_ready;
+  wire op_done;
 
   assign mem_enable = 0;
   assign mem_op = 0;
@@ -86,6 +87,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
            .op(mem_op),
            .address(mem_address),
            .data_in(mem_data_in),
+           .op_done(op_done),
            .data_out(mem_data_out),
            .data_ready(mem_data_ready)
          );
@@ -97,6 +99,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
           .data_in('b0),
           .op(instruction_cache_op),
           .byte_op(instruction_cache_byte_op),
+          .op_done(op_done),
           .access(instruction_cache_access),
           .mem_data_ready(mem_data_ready),
           .mem_data_out(mem_data_out),
@@ -133,9 +136,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
     //$display("The mem_address is: %h", mem_address);
   end
 
-  // always @(*) begin
-  //   mem_address = rm0;
-  // end
+  always @(*)
+  begin
+    $display("The mem_data_ready is: %h", mem_data_ready);
+  end
 
   always @(mem_op)
   begin
