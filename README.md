@@ -23,7 +23,7 @@ cmake -G Ninja -B build -S . -DDEPENDENCIES_FORCE_DOWNLOAD=ON
 ### Build
 Once the project is configured, just run
 ```
-cmake --build build
+cmake --build build --clean-first
 ```
 
 ## Contribute

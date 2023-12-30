@@ -17,11 +17,11 @@ module cache_tb;
   reg op;
   reg byteOP;
   wire [WORD_WIDTH-1:0] data_out;
-  wire hit, miss;
+  wire hit, data_ready;
   reg [LINE_SIZE-1:0] mem_data_out;
   reg [LINE_SIZE-1:0] mem_data_in;
-  reg mem_read_enable;
-  reg mem_write_enable;
+  reg mem_enable;
+  reg mem_op;
 
   Cache uut (
           .clk(clk),
@@ -34,10 +34,10 @@ module cache_tb;
           .data_out(data_out),
           .mem_data_in(mem_data_in),
           .data_in(data_in),
-          .mem_read_enable(mem_read_enable),
-          .mem_write_enable(mem_write_enable),
+          .mem_enable(mem_enable),
+          .mem_op(mem_op),
           .hit(hit),
-          .miss(miss)
+          .data_ready(data_ready)
         );
 
   // Clock generation

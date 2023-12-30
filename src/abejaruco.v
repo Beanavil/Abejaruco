@@ -26,14 +26,11 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input wire reset);
+module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input wire reset, input wire clk);
   reg [31:0] r [0:31];
   reg [31:0] rm0 = 32'b1000;
   reg [31:0] rm1;
   reg [31:0] rm2;
-  reg clk = 0;
-
-  always #1 clk = ~clk;
 
   // Instruction cache wires
   wire instruction_cache_op;
@@ -42,14 +39,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
   wire [31:0] instruction_cache_data_out;
   wire [127:0] instruction_mem_data_in;
   wire instruction_cache_hit;
-  wire instruction_cache_miss;
+  wire instruction_cache_data_ready;
 
   assign instruction_cache_op = 1;
   assign instruction_cache_byte_op = 0;
   assign instruction_cache_access = 1;
   assign instruction_mem_data_in = 0;
   assign instruction_cache_hit = 0;
-  assign instruction_cache_miss = 0;
+  assign instruction_cache_data_ready = 0;
 
   // Data cache wires
   wire [31:0] data_cache_data_in;
@@ -60,34 +57,37 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
   wire [31:0] data_cache_data_out;
   wire [127:0] data_mem_in;
   wire data_cache_hit;
-  wire data_cache_miss;
+  wire data_cache_data_ready;
 
   assign data_cache_op = 1;
   assign data_cache_byte_op = 0;
   assign data_cache_access = 1;
   assign data_mem_in = 0;
   assign data_cache_hit = 0;
-  assign data_cache_miss = 0;
+  assign data_cache_data_ready = 0;
 
   // Common wires
+  wire mem_enable;
+  wire mem_op;
   wire [31:0] mem_address;
-  wire mem_read_enable;
-  wire mem_write_enable;
   wire [127:0] mem_data_in;
   wire [127:0] mem_data_out;
+  wire mem_data_ready;
 
+  assign mem_enable = 0;
+  assign mem_op = 0;
   assign mem_address = rm0;
-  assign mem_read_enable = 0;
-  assign mem_write_enable = 0;
+  assign mem_data_ready = 0;
 
   // Instantiations
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
            .clk(clk),
-           .write_enable(mem_write_enable),
-           .read_enable(mem_read_enable),
+           .enable(mem_enable),
+           .op(mem_op),
            .address(mem_address),
            .data_in(mem_data_in),
-           .data_out(mem_data_out)
+           .data_out(mem_data_out),
+           .data_ready(mem_data_ready)
          );
 
   Cache instruction_cache(
@@ -98,13 +98,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
           .op(instruction_cache_op),
           .byte_op(instruction_cache_byte_op),
           .access(instruction_cache_access),
+          .mem_data_ready(mem_data_ready),
           .mem_data_out(mem_data_out),
           .data_out(instruction_cache_data_out),
           .mem_data_in(mem_data_in),
-          .mem_read_enable(mem_read_enable),
-          .mem_write_enable(mem_write_enable),
+          .mem_enable(mem_enable),
+          .mem_op(mem_op),
           .hit(instruction_cache_hit),
-          .miss(instruction_cache_miss)
+          .data_ready(instruction_cache_data_ready)
         );
 
   // Cache data_cache(
@@ -115,17 +116,33 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(input w
   //         .op(data_cache_op),
   //         .byte_op(data_cache_byte_op),
   //         .access(data_cache_access),
+  //         .mem_data_ready(mem_data_ready),
   //         .mem_data_out(mem_data_out),
   //         .data_out(data_cache_data_out),
   //         .mem_data_in(mem_data_in),
-  //         .mem_read_enable(mem_read_enable),
-  //         .mem_write_enable(mem_write_enable),
+  //         .mem_op(mem_op),
+  //         .mem_enable(mem_enable),
   //         .hit(data_cache_hit),
-  //         .miss(data_cache_miss)
+  //         .data_ready(data_cache_data_ready)
   //       );
 
-  always @(posedge clk)
+  initial
   begin
-    // $display("Instruction cache hit: %b", instruction_cache_hit);
+    //#10 rm0 = rm0 + 32'b01000;
+    //$display("The memory address inside ram is: %h", rm0);
+    //$display("The mem_address is: %h", mem_address);
   end
+
+  // always @(*) begin
+  //   mem_address = rm0;
+  // end
+
+  always @(mem_op)
+  begin
+    $display("Activate reading %b", mem_op);
+  end
+  // always @(*)
+  // begin
+  //   //rm0 <= rm0 + 2'b10;
+  // end
 endmodule

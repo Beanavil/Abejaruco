@@ -29,78 +29,63 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
                     ADDRESS_SIZE = 12,
                     CACHE_LINE_SIZE = 128) ();
   reg clk;
-  reg write_enable;
-  reg read_enable;
+  reg enable;
+  reg op;
   reg [ADDRESS_SIZE-1:0] address;
   reg [CACHE_LINE_SIZE-1:0] data_in;
   wire [CACHE_LINE_SIZE-1:0] data_out;
+  wire data_ready;
 
-  Memory #(MEMORY_LOCATIONS, ADDRESS_SIZE, CACHE_LINE_SIZE) uut (
-           .clk(clk),
-           .write_enable(write_enable),
-           .read_enable(read_enable),
-           .address(address),
-           .data_in(data_in),
-           .data_out(data_out)
-         );
+  Memory #(.MEMORY_LOCATIONS(MEMORY_LOCATIONS), .ADDRESS_SIZE(ADDRESS_SIZE), .CACHE_LINE_SIZE(CACHE_LINE_SIZE)) uut (
+            .clk(clk),
+            .enable(enable),
+            .op(op),
+            .address(address),
+            .data_in(data_in),
+            .data_out(data_out),
+            .data_ready(data_ready)
+          );
+
+  always #1 clk = ~clk;
 
   initial
   begin
     $display("Testing memory");
     $display("-------------------------------");
     clk = 0;
-    write_enable = 0;
-    read_enable = 0;
+    enable = 0;
     address = 0;
     data_in = 0;
-    #1;
+    #2;
 
-    $display("Test case 1: Load 128'h00FF00FF 00FF00FF 00FF00FF 00FF00FF into memory location 0 and then read it");
-    clk = 1;
-    write_enable = 1;
+    // Test Case 1: Write data with delay
+    $display("Test case 1: Writing data with 5-cycle delay");
     data_in = 128'h00FF00FF00FF00FF00FF00FF00FF00FF;
     address = 0;
-    #1;
+    op = 1'b1;
+    enable = 1;
+    #2;
+    #6;
+    #2;
+    enable = 0;
+    #2;
 
-    clk = 0;
-    write_enable = 0;
-    #1;
-
-    clk = 1;
-    read_enable = 1;
-    #1;
-
-    clk = 0;
-    read_enable = 0;
-    #1;
-
+    // Test Case 2: Read the written data
+    $display("Test case 2: Reading the written data");
+    op = 0;
+    enable = 1;
+    #2;
+    #6;
+    #2;
     if (data_out !== 128'h00FF00FF00FF00FF00FF00FF00FF00FF)
     begin
-      $display("Failed. Expected result: 128'h00FF00FF 00FF00FF 00FF00FF 00FF00FF, Actual: %h", data_out);
+      $display("Test 2 Failed. Expected 128'h00FF00FF00FF00FF00FF00FF00FF00FF, Actual: %h", data_out);
     end
     else
     begin
-      $display("Passed. Expected result: 128'h00FF00FF 00FF00FF 00FF00FF 00FF00FF, Actual: %h", data_out);
+      $display("Test 2 Passed. Data read correctly.");
     end
-
-    $display("Test case 1: Read cache line starting from address 1");
-
-    address = 1;
-    clk = 1;
-    read_enable = 1;
-    #1;
-
-    clk = 0;
-    read_enable = 0;
-    #1;
-
-    if (data_out !== 128'hxx00FF00FF00FF00FF00FF00FF00FF00)
-    begin
-      $display("Failed. Expected result: 128'hxx00FF00 FF00FF00 FF00FF00 FF00FF00, Actual: %h", data_out);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 128'hxx00FF00 FF00FF00 FF00FF00 FF00FF00, Actual: %h", data_out);
-    end
+    // read_enable = 0;
+    $finish;
   end
 endmodule

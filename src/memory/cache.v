@@ -29,14 +29,15 @@ module Cache (
     input wire op,
     input wire byte_op,
     input wire access,
+    input mem_data_ready,
     input wire [LINE_SIZE-1:0] mem_data_out,
     output reg [WORD_WIDTH-1:0] data_out,
     output wire [LINE_SIZE-1:0] mem_data_in,
     input wire [WORD_WIDTH-1:0] data_in,
-    output reg mem_read_enable,
-    output reg mem_write_enable,
+    output reg mem_enable,
+    output reg mem_op,
     output reg hit,
-    output reg miss
+    output reg data_ready
   );
 
   // Parameter definitions
@@ -81,6 +82,7 @@ module Cache (
   wire [1:0] line_number;
   priority_encoder encoder(.hit(hit_signals), .line_number(line_number));
 
+  //TODO do we need to use <= instead of = in the following lines?
   // Function to update LRU counters
   task update_lru;
     input [1:0] accessed_line; // Updated the size to match line_number
@@ -105,7 +107,7 @@ module Cache (
     if (access)
     begin
       // FOR TESTING --- Print input values
-      $display("In values: clk=%b, reset=%b, address=%h, data_in=%h, op=%b", clk, reset, address, data_in, op);
+      $display("In values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, miss=%d", clk, reset, address, data_in, op, ~hit);
 
       if (reset)
       begin
@@ -115,13 +117,12 @@ module Cache (
           lru_counters[i] = i;
           dirty_array[i] = 0;
 
-          mem_read_enable = 0;
-          mem_write_enable = 0;
+          mem_enable = 0;
+          mem_op = 0;
         end
       end
       else if (op == 1'b0) /*write*/
       begin
-        miss = ~|hit_signals;
         hit = |hit_signals;
 
         if (hit)
@@ -137,7 +138,7 @@ module Cache (
           update_lru(line_number);
 
         end
-        else if (miss)
+        else /*miss*/
         begin
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -151,7 +152,8 @@ module Cache (
 
           if (valid_array[replace_index] && dirty_array[replace_index])
           begin
-            mem_write_enable = 1;
+            mem_enable = 1;
+            mem_op = 1;
             //TODO the ram has to answer with the write of the data (no only the data
             // but a bit telling me this is the data )
 
@@ -178,7 +180,6 @@ module Cache (
       else if (op == 1'b1) /* read*/
       begin
         hit = |hit_signals;
-        miss = ~|hit_signals;
 
         if (hit)
         begin
@@ -194,13 +195,12 @@ module Cache (
           update_lru(line_number);
 
         end
-        else if (miss)
+        else /*miss*/
         begin
-          //TODO: when ram is implemented
-          // 1. Bring the data from memory to the caches
-
-          mem_read_enable = 1;
-          //$display("The memory from ram is: %h", mem_data_out);
+          mem_enable = 1;
+          mem_op = 0;
+          $display("The memory address is: %b", address);
+          $display("The memory address value is: %h", mem_data_out);
 
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -212,20 +212,16 @@ module Cache (
             end
           end
 
-          // FIXME
-          data_array[replace_index][0][31:0] = mem_data_out[31:0]; 
+          //TODO for Javi, is it good?
+          data_array[replace_index][0][31:0] = mem_data_out[31:0];
           data_array[replace_index][1][31:0] = mem_data_out[63:32];
           data_array[replace_index][2][31:0] = mem_data_out[95:64];
           data_array[replace_index][3][31:0] = mem_data_out[127:96];
 
-          // data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][95:64] = mem_data_out[95:64];
-          // data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][127:96] = mem_data_out[127:96];
-          // // Update line control information
+          // Update line control information
           tag_array[replace_index] = address[INIT_TAG:END_TAG];
-          //valid_array[replace_index] = 1;
+          // valid_array[replace_index] = 1'b1;
           // update_lru(replace_index);
-          //... (add byte logic too when ram is implemented)
-          valid_array[line_number] = 0;
         end
       end
 

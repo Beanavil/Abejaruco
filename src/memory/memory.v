@@ -23,41 +23,83 @@
 
 `timescale 1ns / 1ps
 
-// TODO: handle synchronization between caches
-module Memory #(parameter MEMORY_LOCATIONS = 4096,
-                  ADDRESS_SIZE = 12,
-                  CACHE_LINE_SIZE = 128,
-                  PROGRAM = "../../programs/random_binary.o")
+module Memory #(parameter ADDRESS_SIZE = 12,
+                   CACHE_LINE_SIZE = 128,
+                   MEMORY_LOCATIONS = 4096,
+                   OP_DELAY_CYCLES = 3,
+                   PROGRAM = "../../programs/random_binary.o")
   (input wire clk,
-   input wire write_enable,
-   input wire read_enable,
+   input wire enable,
+   input wire op,
    input wire [ADDRESS_SIZE-1:0] address,
    input wire [CACHE_LINE_SIZE-1:0] data_in,
    output reg [CACHE_LINE_SIZE-1:0] data_out,
    output reg data_ready);
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
-  
-initial begin
-    integer i;
-    $readmemh(PROGRAM, memory);
-end
 
-always @(posedge write_enable)
+  initial
   begin
-    integer i;
-    for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+    for(integer i = 0; i < MEMORY_LOCATIONS; i = i + 1)
     begin
-      memory[address + i] <= data_in[i*8 +: 8];
+      memory[i] = 0;
     end
+    // $readmemh(PROGRAM, memory);
   end
 
-always @(posedge read_enable)
+  // State definitions
+  reg [1:0] state = 2'b00;
+  reg [2:0] counter = 0; // 3-bit counter for 5-cycle delay
+
+  always @(posedge clk)
   begin
-    integer i;
-      for (i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+    if (enable)
+    begin
+      case (state)
+      2'b00: /*IDLE*/
       begin
-        data_out[i*8 +: 8] = memory[address + i];
+          state = 2'b01;
+          counter = 0;
       end
+
+      2'b01: /*WAIT*/
+      begin
+          $display("Entra en wait %d", counter);
+          if (counter < OP_DELAY_CYCLES-1)
+          begin
+          counter = counter + 1;
+          end
+          else
+          begin
+          state = 2'b10;
+          end
+      end
+
+      2'b10: /*WRITE or READ*/
+      begin
+          $display("op = %b", op);
+          if (op) /*write*/
+          begin
+              $display("Entra en write");
+          for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+          begin
+              memory[address + i] = data_in[i*8 +: 8];
+          end
+          end
+          else /*read*/
+          begin
+          $display("Entra en read");
+          for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
+          begin
+              data_out[i*8 +: 8] = memory[address + i];
+          end
+          end
+          state <= 2'b00;
+      end
+      endcase
+    // $display("Address: %h", address);
+    // $display("Data written: %h", data_in);
+    // $display("Data read: %h", data_out);
+    end
   end
 endmodule
