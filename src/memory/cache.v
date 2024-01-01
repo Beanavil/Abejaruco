@@ -23,22 +23,31 @@
 `include "src/common/priority_encoder.v"
 
 module Cache (
+    // In wires (from CPU)
     input wire clk,
+    input reg access,
     input wire reset,
-    input wire [ADDRESS_WIDTH-1:0] address,
-    input wire op,
-    input wire byte_op,
-    output reg op_done,
-    input wire access,
-    input mem_data_ready,
-    input wire [LINE_SIZE-1:0] mem_data_out,
-    output reg [WORD_WIDTH-1:0] data_out,
-    output wire [LINE_SIZE-1:0] mem_data_in,
-    input wire [WORD_WIDTH-1:0] data_in,
-    output reg mem_enable,
-    output reg mem_op,
-    output reg hit,
-    output reg data_ready
+    input reg [ADDRESS_WIDTH-1:0] address,
+    input reg [WORD_WIDTH-1:0] data_in,
+    input reg op,
+    input reg byte_op,
+
+    // In wires (from memory)
+    input wire mem_data_ready,
+    input reg [LINE_SIZE-1:0] mem_data_out,
+    input wire memory_in_use,
+
+    // Out wires (to CPU)
+    output reg [WORD_WIDTH-1:0] data_out,     // Data returned by the cache
+    output wire data_ready,                    // Data in the output is valid or write operation finished
+
+    // Out wires (to memory)
+    output reg mem_enable,                      // Enable the memory module to read/write
+    output reg mem_op,                          // Select read/write operation
+    output reg mem_op_init,                     // Tell memory that we are going to use it
+    output reg mem_op_done,                    // The caché finished reading the returned data
+    output reg [LINE_SIZE-1:0] mem_data_in,    // Data to be written in memory
+    output reg [ADDRESS_WIDTH-1:0] mem_address                   // Address to be read/written in memory
   );
 
   // Parameter definitions
@@ -60,6 +69,7 @@ module Cache (
   parameter END_BYTE_OFFSET = 0;
 
   // Declare internal signals for tag comparators
+  reg hit;
   wire [3:0] hit_signals;
   wire hit0, hit1, hit2, hit3;
 
@@ -100,9 +110,24 @@ module Cache (
     end
   endtask
 
-  // Tag comparison, read/write logic, and LRU update
   integer i;
   integer j, replace_index;
+
+  initial begin
+    for (i = 0; i < NUM_LINES; i = i + 1)
+    begin
+      valid_array[i] = 0;
+      lru_counters[i] = i;
+      dirty_array[i] = 0;
+    end 
+
+    mem_op_init = 0;
+    mem_op_done = 0;
+    mem_enable = 0;
+    mem_op = 0;
+  end
+
+  
   always @(posedge clk or posedge reset)
   begin
     if (access)
@@ -117,10 +142,11 @@ module Cache (
           valid_array[i] = 0;
           lru_counters[i] = i;
           dirty_array[i] = 0;
-
-          mem_enable = 0;
-          mem_op = 0;
         end
+        mem_op_init = 0;
+        mem_op_done = 0;
+        mem_enable = 0;
+        mem_op = 0;
       end
       else if (op == 1'b0) /*write*/
       begin
@@ -141,6 +167,7 @@ module Cache (
         end
         else /*miss*/
         begin
+          $display("---->Miss");
           // Find the line to replace based on LRU
           replace_index = 0;
           for (j = 0; j < NUM_LINES; j = j + 1)
@@ -151,31 +178,73 @@ module Cache (
             end
           end
 
+          $display("---->Valid: %b", valid_array[replace_index]);
+          $display("---->Dirty: %b", dirty_array[replace_index]);
+
           if (valid_array[replace_index] && dirty_array[replace_index])
-          begin
-            mem_enable = 1;
-            mem_op = 1;
-            //TODO the ram has to answer with the write of the data (no only the data
-            // but a bit telling me this is the data )
+            begin
+            $display("---->Acceso a memoria para escritura");
+            //Tell memory to write the line
+            if(memory_in_use == 0) //Wait until memory is available
+            begin
+              mem_op_init = 1;
+              mem_data_in[31:0] = data_array[replace_index][0];
+              mem_data_in[63:32] = data_array[replace_index][1];
+              mem_data_in[95:64] = data_array[replace_index][2];
+              mem_data_in[127:96] = data_array[replace_index][3];
 
+              mem_address[INIT_TAG:END_TAG] = tag_array[replace_index];
+              mem_address[INIT_WORD_OFFSET:END_BYTE_OFFSET] = 0;
+              mem_op = 1'b1;
+              mem_enable = 1'b1;
+            end
+            /*If this module inited a memory op and the memory module tell us that it finished
+            we can now read the data of the writen line*/
+            else if (mem_op_init && mem_data_ready)
+            begin
+              //Finish the write operation
+              mem_op_done = 1;
+              valid_array[replace_index] = 0;
+              mem_enable = 1'b0;
+            end
+            end
+          else if (valid_array[replace_index] == 0 && dirty_array[replace_index]) begin
+            $display("---->Acceso a memoria para lectura");
+            //Init the read operation
+            mem_op_done = 0;
+            mem_address = address;
+            mem_op = 1'b0;
+            mem_enable = 1'b1;
+
+            if(mem_op_init && mem_data_ready)begin
+                data_array[replace_index][0] = mem_data_out[31:0];
+                data_array[replace_index][1] = mem_data_out[63:32];
+                data_array[replace_index][2] = mem_data_out[95:64];
+                data_array[replace_index][3] = mem_data_out[127:96];
+
+                // Unblock memory module 
+                mem_enable = 0;
+                mem_op_init = 0;
+                mem_op_done = 1;
+                dirty_array[replace_index] = 0;
+            end
+          end else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0) begin
+            $display("---->Escribir");
+            if (byte_op)
+              begin
+                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
+              end
+              else
+              begin
+                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+              end
+
+              // Update line control information
+              tag_array[replace_index] = address[INIT_TAG:END_TAG];
+              valid_array[replace_index] = 1;
+              dirty_array[replace_index] = 1;
+              update_lru(replace_index);
           end
-
-          //TODO bring the line of address from memory to the cache
-          //...
-
-          if (byte_op)
-          begin
-            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
-          end
-          else
-          begin
-            data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
-          end
-
-          // Update line control information
-          tag_array[replace_index] = address[INIT_TAG:END_TAG];
-          valid_array[replace_index] = 1;
-          update_lru(replace_index);
         end
       end
       else if (op == 1'b1) /* read*/
@@ -224,7 +293,7 @@ module Cache (
           tag_array[replace_index] = address[INIT_TAG:END_TAG];
           // valid_array[replace_index] = 1;
           // update_lru(replace_index);
-          op_done = 1;
+          // op_done = 1;
         end
       end
 

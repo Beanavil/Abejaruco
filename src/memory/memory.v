@@ -33,9 +33,12 @@ module Memory #(parameter ADDRESS_SIZE = 12,
    input wire op,
    input wire [ADDRESS_SIZE-1:0] address,
    input wire [CACHE_LINE_SIZE-1:0] data_in,
-   input wire op_done,
+   input wire op_init,
+   input wire op_done,                        // The module finished reading the returned data
    output reg [CACHE_LINE_SIZE-1:0] data_out,
-   output reg data_ready);
+   output reg data_ready,
+   output reg memory_in_use                   // Memory is use by another module
+   );
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
@@ -52,8 +55,18 @@ module Memory #(parameter ADDRESS_SIZE = 12,
   reg [1:0] state = 2'b00;
   reg [2:0] counter = 0; // 3-bit counter for 5-cycle delay
 
-  always @(negedge op_done) begin
+
+  //TODO: Added the op_init, to distinguish if a memory operation is started by other module
+  always @(posedge op_init) begin
+    memory_in_use = 1'b1;
+  end
+
+  always @(posedge op_done) begin
     data_ready = 1'b0;
+  end
+
+  always @(posedge op_done, negedge op_init) begin
+    memory_in_use = 1'b0;
   end
 
   always @(posedge clk)
@@ -108,10 +121,11 @@ module Memory #(parameter ADDRESS_SIZE = 12,
     // $display("Data read: %h", data_out);
     end
 
+
     // End memory op
     if (op_done)
     begin
-      data_ready = 1'0;
+      data_ready = 1'b0;
     end
   end
 endmodule

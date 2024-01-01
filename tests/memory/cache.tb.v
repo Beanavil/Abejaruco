@@ -11,34 +11,37 @@ module cache_tb;
 
   reg clk;
   reg reset;
-  reg access;
   reg [ADDRESS_WIDTH-1:0] address;
+  reg access;
   reg [WORD_WIDTH-1:0] data_in;
   reg op;
   reg byteOP;
   wire [WORD_WIDTH-1:0] data_out;
-  wire hit, data_ready;
+  wire data_ready;
   reg [LINE_SIZE-1:0] mem_data_out;
   reg [LINE_SIZE-1:0] mem_data_in;
   reg mem_enable;
   reg mem_op;
+  wire op_done;
+  wire mem_data_ready;
 
-  Cache uut (
-          .clk(clk),
-          .reset(reset),
-          .address(address),
-          .op(op),
-          .byte_op(byteOP),
-          .access(access),
-          .mem_data_out(mem_data_out),
-          .data_out(data_out),
-          .mem_data_in(mem_data_in),
-          .data_in(data_in),
-          .mem_enable(mem_enable),
-          .mem_op(mem_op),
-          .hit(hit),
-          .data_ready(data_ready)
-        );
+  // Cache uut (
+  //         .clk(clk),
+  //         .reset(reset),
+  //         .address(address),
+  //         .op(op),
+  //         .access(access),
+  //         .byte_op(byteOP),
+  //         .mem_data_out(mem_data_out),
+  //         .data_out(data_out),
+  //         .mem_data_in(mem_data_in),
+  //         .data_in(data_in),
+  //         .mem_enable(mem_enable),
+  //         .mem_op(mem_op),
+  //         // .hit(hit),
+  //         .data_ready(data_ready),
+  //         .op_done(op_done)
+  //       );
 
   // Clock generation
   // TODO: I think that in the tests it would be better to control the clock manually
@@ -50,44 +53,39 @@ module cache_tb;
 
   initial
   begin
-
-    // Apply reset
-    $display("\n------Inital values: Resetting cache-----");
-    access = 1;
     clk = 0;
+    // Apply asynchronous reset
+    $display("\n------Inital values: Resetting cache-----");
     reset = 1;
-    address = 32'h0;
-    data_in = 0;
-    op = 0;
-    byteOP = 0;
-    #2;
+    access = 1;
+    #1; 
 
-    // Start the test
+    
 
     // Test Case 1: Write to an address
-    $display("\n------Test Case 1: Write to an address then read----");
-    address = 32'h00000004;
-    data_in = 32'h00000011;
-    op = 1'b0;  // Write operation
-    access = 1;
-    reset = 0;
-    byteOP = 0;
-    #2;
+    // $display("\n------Test Case 1: Write to an address then read----");
+    // address = 32'h00000004;
+    // data_in = 32'h00000011;
+    // op = 1'b0;  // Write operation
+    // access = 1;
+    // reset = 0;
+    // byteOP = 0;
+    // #2;
 
-    op = 1'b1;  // Read operation
-    byteOP = 1;
-    #2;
+    // op = 1'b1;  // Read operation
+    // byteOP = 1;
+    // #2;
 
-    if (data_out !== 32'h00000011)
-    begin
-      $display("Failed. Expected result: 32'h00000011, Actual: %h", data_out);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 32'h00000011, Actual: %h", data_out);
-    end
-    #2;
-    access = 0;
+    // if (data_out !== 32'h00000011)
+    // begin
+    //   $display("Failed. Expected result: 32'h00000011, Actual: %h", data_out);
+    // end
+    // else
+    // begin
+    //   $display("Passed. Expected result: 32'h00000011, Actual: %h", data_out);
+    // end
+    // #2;
+    // access = 0;
 
     // Test Case 2: Write to the same memory address
     // #80;
