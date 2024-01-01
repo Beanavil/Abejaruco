@@ -36,18 +36,21 @@ module Cache_tb;
 
   reg clk;
   reg reset;
-  reg access;
   reg [ADDRESS_WIDTH-1:0] address;
+  reg access;
   reg [WORD_WIDTH-1:0] data_in;
   reg op;
   reg byte_op;
   reg [LINE_SIZE-1:0] mem_data_out;
   wire [WORD_WIDTH-1:0] data_out;
-  wire hit, data_ready;
 
+  wire data_ready;
+  reg [LINE_SIZE-1:0] mem_data_out;
   reg [LINE_SIZE-1:0] mem_data_in;
   reg mem_enable;
   reg mem_op;
+  wire op_done;
+  wire mem_data_ready;
 
   parameter CLK_PERIOD = 1;
   parameter D_CLK_PERIOD = 2;

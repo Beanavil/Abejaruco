@@ -35,6 +35,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
   reg op;
   reg [ADDRESS_SIZE-1:0] address;
   reg [CACHE_LINE_SIZE-1:0] data_in;
+  reg memory_in_use;
   wire [CACHE_LINE_SIZE-1:0] data_out;
   wire data_ready;
 
@@ -49,6 +50,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
            .data_in(data_in),
            .data_out(data_out),
            .data_ready(data_ready)
+           .memory_in_use(memory_in_use)
          );
 
   // Clock generation

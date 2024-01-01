@@ -4,34 +4,31 @@
 
 `include "src/abejaruco.v"
 
+//TODO I dont know if i see the point of this class
+//TODO this is not compiling with the CMAKE I did the test compiling manually 
 module Abejaruco_tb();
   reg reset;
   reg clk;
 
-  Abejaruco uut(.reset(reset), .clk(clk));
+  initial begin
+    clk = 0;           // Initialize clk to 0
+    reset = 1;         // Assert reset
+    #5 reset = 0;      // Deassert reset after 5 ns
+  end
 
-  initial
-  begin
-    clk = 1'b0;
-    reset = 1'b1;
+  Abejaruco uut(
+    .reset(reset),
+    .clk(clk)
+  );
 
-    #10 reset = 1'b0;
-    clk = 1'b1;
 
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
-    #10 clk = 1'b0;
-    #10 clk = 1'b1;
+  integer i;
+  initial begin
+      for (i = 0; i < 20; i = i + 1) begin
+          clk = ~clk;  // Toggle clk
+          #5;          // Wait for 5 ns
+      end
   end
 
 endmodule
+
