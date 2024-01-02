@@ -23,10 +23,11 @@
 
 `timescale 1ns / 1ps
 
+`include "src/decode/control_unit.v"
+`include "src/decode/decode_registers.v"
+`include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
-`include "src/fetch/fetch_registers.v"
-`include "src/decode/control_unit.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     input wire reset,
@@ -80,6 +81,18 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   wire cu_mem_to_reg;
   wire cu_mem_write;
   wire cu_alu_src;
+
+  // Decode registers wires
+  // -- Out wires
+  wire [31:0] decode_rm0_out;
+  wire [31:0] decode_instruction_out;
+  wire decode_cu_branch_out;
+  wire decode_cu_reg_write_out;
+  wire decode_cu_mem_read_out;
+  wire decode_cu_mem_to_reg_out;
+  wire [1:0] decode_cu_alu_op_out;
+  wire decode_cu_mem_write_out;
+  wire decode_cu_alu_src_out;
 
   //TODO cuando se implemente la memoria de instrucciones.
   // Common memory wires
@@ -148,30 +161,48 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
         );
 
   FetchRegisters #(.WORD_SIZE(32)) fetch_registers(
-          //IN
-          .clk(clk),
-          .rm0_in(rm0),
-          .instruction_in(dcache_data_out),
-          .active(dcache_op_done),
+                   //IN
+                   .clk(clk),
+                   .rm0_in(rm0),
+                   .instruction_in(dcache_data_out),
+                   .active(dcache_op_done),
 
-          //OUT
-          .rm0_out(fetch_rm0_out),
-          .instruction_out(fetch_instruction_out),
-          .active_out(fetch_active_out)
-        );
+                   //OUT
+                   .rm0_out(fetch_rm0_out),
+                   .instruction_out(fetch_instruction_out),
+                   .active_out(fetch_active_out)
+                 );
 
   ControlUnit control_unit(
-          //IN
-          .opcode(fetch_instruction_out[6:0]),
+                //IN
+                .opcode(fetch_instruction_out[6:0]),
 
-          //OUT
-          .reg_write(cu_reg_write),
-          .mem_read(cu_mem_read),
-          .mem_to_reg(cu_mem_to_reg),
-          .alu_op(cu_alu_op),
-          .mem_write(cu_mem_write),
-          .alu_src(cu_alu_src)
-        );
+                //OUT
+                .reg_write(cu_reg_write),
+                .mem_read(cu_mem_read),
+                .mem_to_reg(cu_mem_to_reg),
+                .alu_op(cu_alu_op),
+                .mem_write(cu_mem_write),
+                .alu_src(cu_alu_src)
+              );
+
+  DecodeRegisters decode_registers(
+                    //IN
+                    .clk(clk),
+                    .rm0_in(fetch_rm0_out),
+                    .instruction_in(fetch_instruction_out),
+
+                    //OUT
+                    .rm0_out(decode_rm0_out),
+                    .instruction_out(decode_instruction_out),
+                    .cu_branch_out(decode_cu_branch_out),
+                    .cu_reg_write_out(decode_cu_reg_write_out),
+                    .cu_mem_read_out(decode_cu_mem_read_out),
+                    .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
+                    .cu_alu_op_out(decode_cu_alu_op_out),
+                    .cu_mem_write_out(decode_cu_mem_write_out),
+                    .cu_alu_src_out(decode_cu_alu_src_out)
+                  );
 
   always @(posedge clk)
   begin
@@ -181,7 +212,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     end
 
     $display("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out);
-    if (fetch_active_out) begin
+    if (fetch_active_out)
+    begin
       $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
     end
   end
