@@ -135,6 +135,11 @@ module Cache (
     $display("The access is: %b", access);
     if (access)
     begin
+      
+      if (mem_op_done === 1'b1) begin
+        mem_op_done = 1'b0;
+      end
+
       if (reset)
       begin
         for (i = 0; i < NUM_LINES; i = i + 1)
@@ -160,7 +165,6 @@ module Cache (
           end
           else if (~byte_op)
           begin
-            $display("We read the value %h", data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]]);
             data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
           end
           else
@@ -278,7 +282,6 @@ module Cache (
           end
           else if (~byte_op)
           begin
-            $display("We read the value %h from data_array[line_number][address[%d:%d]]", data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]], INIT_WORD_OFFSET, END_WORD_OFFSET);
             data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
           else

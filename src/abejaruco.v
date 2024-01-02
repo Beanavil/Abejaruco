@@ -25,6 +25,7 @@
 
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
+`include "src/fetch/fetch_registers.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     input wire reset,
@@ -62,6 +63,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   wire [127:0] data_cache_mem_data_in;
   wire data_cache_op_done;
 
+  // Fetch registers wires
+  // -- Out wires
+  wire [31:0] fetch_rm0_out;
+  wire [31:0] fetch_instruction_out;
 
   //TODO cuando se implemente la memoria de instrucciones.
   // Common memory wires
@@ -126,6 +131,18 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
           .mem_data_in(data_cache_mem_data_in)
         );
 
+  FetchRegisters #(.WORD_SIZE(32)) fetch_registers(
+          //IN
+          .clk(clk),
+          .rm0_in(rm0),
+          .instruction_in(data_cache_data_out),
+          .active(data_cache_op_done),
+
+          //OUT
+          .rm0_out(fetch_rm0_out),
+          .instruction_out(fetch_instruction_out)
+        );
+
   assign data_cache_address = rm0;
   //assign data_cache_mem_address = rm0;
   assign data_cache_op = 1'b1;
@@ -133,32 +150,17 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   assign data_cache_data_in = data_cache_mem_data_out;
   assign data_cache_byte_op = 1'b0;
 
-  always @(data_cache_address)
-  begin
-    $display("The data_cache_address is: %h", data_cache_address);
-  end
-
-  always @(negedge clk)
+  always @(posedge clk)
   begin
     if (data_cache_op_done)
     begin
       rm0 = rm0 + 3'b100;
     end
+
+    $display("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out);
     //data_cache_data_in = 32'h00000011;
     //data_cache_address = 0;
     //data_cache_op = 1'b0;
     //data_cache_access = 1'b1;
   end
-  // always @(*)
-  // begin
-  //   $display("The mem_data_ready is: %h", mem_data_ready);
-  // end
-  // always @(mem_op)
-  // begin
-  //   $display("Activate reading %b", mem_op);
-  // end
-  // always @(*)
-  // begin
-  //   //rm0 <= rm0 + 2'b10;
-  // end
 endmodule
