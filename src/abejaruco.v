@@ -87,7 +87,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
            .clk(clk),
            .enable(data_cache_mem_enable),
            .op(data_cache_mem_op),
-           .address(data_cache_address),
+           .address(data_cache_mem_address),
            .data_in(data_cache_mem_data_in),
            .op_init(data_cache_mem_op_init),
            .op_done(data_cache_op_done),
@@ -131,9 +131,19 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   assign data_cache_op = 1'b1;
   assign data_cache_access = 1'b1;
   assign data_cache_data_in = data_cache_mem_data_out;
+  assign data_cache_byte_op = 1'b0;
 
-  always @(clk)
+  always @(data_cache_address)
   begin
+    $display("The data_cache_address is: %h", data_cache_address);
+  end
+
+  always @(negedge clk)
+  begin
+    if (data_cache_op_done)
+    begin
+      rm0 = rm0 + 3'b100;
+    end
     //data_cache_data_in = 32'h00000011;
     //data_cache_address = 0;
     //data_cache_op = 1'b0;

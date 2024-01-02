@@ -63,13 +63,13 @@ module Cache (
 
   // Auxiliar constants for address decoding based on parameters
   parameter INIT_TAG = ADDRESS_WIDTH - 1;
-  parameter END_TAG = ADDRESS_WIDTH - TAG_WIDTH;
+  parameter END_TAG = ADDRESS_WIDTH - TAG_WIDTH; // TODO: FULL_OFFSET_WIDTH
   parameter INIT_WORD_OFFSET = END_TAG - 1;
   parameter END_WORD_OFFSET = INIT_WORD_OFFSET - ($clog2(WORDS_PER_LINE)-1);
   parameter INIT_BYTE_OFFSET = END_WORD_OFFSET - 1;
   parameter END_BYTE_OFFSET = 0;
 
-  // Declare internal signals for tag comparators
+  // Internal signals for tag comparators
   reg hit;
   wire [3:0] hit_signals;
   wire hit0, hit1, hit2, hit3;
@@ -132,11 +132,9 @@ module Cache (
 
   always @(posedge clk or posedge reset)
   begin
+    $display("The access is: %b", access);
     if (access)
     begin
-      // FOR TESTING --- Print input values
-      $display("In values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, ~hit, mem_data_ready);
-
       if (reset)
       begin
         for (i = 0; i < NUM_LINES; i = i + 1)
@@ -160,9 +158,14 @@ module Cache (
           begin
             data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
           end
+          else if (~byte_op)
+          begin
+            $display("We read the value %h", data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]]);
+            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+          end
           else
           begin
-            data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+            $display("Warning: byte_op is not 0 or 1");
           end
           update_lru(line_number);
 
@@ -170,6 +173,8 @@ module Cache (
         else /*miss*/
         begin
           $display("----> Miss");
+          $display("Miss values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready);
+
           // Find the line to replace based on LRU
           replace_index = 0;
           for (j = 0; j < NUM_LINES; j = j + 1)
@@ -187,7 +192,7 @@ module Cache (
           begin
             $display("----> Memory access to write");
             // Tell memory to write the line
-            if(memory_in_use == 0) //Wait until memory is available
+            if(memory_in_use == 0) // Wait until memory is available
             begin
               mem_op_init = 1;
               mem_data_in[31:0] = data_array[replace_index][0];
@@ -204,7 +209,7 @@ module Cache (
             we can now read the data of the writen line*/
             else if (mem_op_init && mem_data_ready)
             begin
-              //Finish the write operation
+              // Finish the write operation
               mem_op_done = 1;
               valid_array[replace_index] = 0;
               mem_enable = 1'b0;
@@ -213,7 +218,7 @@ module Cache (
           else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
           begin
             $display("----> Memory access to read");
-            //Init the read operation
+            // Init the read operation
             mem_op_done = 0;
             mem_address = address;
             mem_op = 1'b0;
@@ -240,9 +245,13 @@ module Cache (
             begin
               data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
             end
-            else
+            else if (~byte_op)
             begin
               data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+            end
+            else
+            begin
+              $display("Warning: byte_op is not 0 or 1");
             end
 
             // Update line control information
@@ -259,19 +268,29 @@ module Cache (
 
         if (hit)
         begin
+          $display("----> Hit");
+          $display("Hit values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready);
+
           if (byte_op)
           begin
             data_out[WORD_WIDTH:8] = 0;
             data_out[7:0] = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
           end
-          else
+          else if (~byte_op)
           begin
+            $display("We read the value %h from data_array[line_number][address[%d:%d]]", data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]], INIT_WORD_OFFSET, END_WORD_OFFSET);
             data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
+          else
+          begin
+            $display("Warning: byte_op is not 0 or 1");
+          end
+
           update_lru(line_number);
         end
         else /*miss*/
         begin
+          mem_address = {address[31:4], 4'b0000};
           mem_enable = 1;
           mem_op = 0;
           $display("The cache address is: %b", address);
@@ -304,7 +323,7 @@ module Cache (
             update_lru(replace_index);
             mem_op_done = 1;
 
-            data_out = data_array[replace_index][tag_array[replace_index]];
+            data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
         end
       end

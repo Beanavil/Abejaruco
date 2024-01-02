@@ -61,6 +61,9 @@ module Abejaruco_tb();
       test_1(err);
       check_err(err, "1");
 
+      test_2(err);
+      check_err(err, "2");
+
       $display("Done");
     end
   endtask
@@ -80,35 +83,47 @@ module Abejaruco_tb();
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] data_cache_data_out_expected;
 
-    clk = 1'b0;
-    reset = 1'b1;
+    begin
+      clk = 1'b0;
+      reset = 1'b1;
 
-    #2;
-    reset = 1'b0;
+      #2;
+      reset = 1'b0;
 
-    clk = 1'b1;
+      clk = 1'b1;
 
-    for (integer i = 0; i < 5; i = i + 1)
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
+
+      #CLK_PERIOD;
+
+      data_cache_data_out_expected = 32'h00000003;
+      print_tb_info("1", "Load first instruction", data_cache_data_out_expected);
+
+      err = (data_cache_data_out !== data_cache_data_out_expected);
+    end
+  endtask
+
+  // Test 2: Test that after 6 clock cycles we also have the second instruction
+  task automatic test_2;
+    output integer err;
+    reg [CACHE_LINE_SIZE-1:0] data_cache_data_out_expected;
+
     begin
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+
+      #CLK_PERIOD;
+      #CLK_PERIOD;
+
+      data_cache_data_out_expected = 32'h00000004;
+      print_tb_info("2", "Load second instruction", data_cache_data_out_expected);
+      err = (data_cache_data_out !== data_cache_data_out_expected);
     end
-
-    #CLK_PERIOD;
-
-    data_cache_data_out_expected = 32'h00000003;
-    print_tb_info("1", "Load first instruction", data_cache_data_out_expected);
-
-    err = (data_cache_data_out !== data_cache_data_out_expected);
-
-    #CLK_PERIOD clk = 1'b0;
-    #CLK_PERIOD clk = 1'b1;
   endtask
-
-  initial
-  begin
-
-  end
 
   initial
   begin
