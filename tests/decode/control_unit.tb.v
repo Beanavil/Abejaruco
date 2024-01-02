@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -50,9 +50,9 @@ module ControlUnit_tb();
                .mem_write(mem_write),
                .alu_src(alu_src));
 
-  task automatic reset;
+  task automatic reset_input;
     begin
-      $display("*** Reset signals ***");
+      $display("*** Resetting input ***");
       clk = 1'b0;
       opcode = 7'd0;
       #CLK_PERIOD;
@@ -294,10 +294,11 @@ module ControlUnit_tb();
   begin
     print_info("Testing ControlUnit");
 
-    reset();
+    reset_input();
     run_tests();
 
-    print_info("Done");
+    print_info("Testing finised");
 
+    $finish;
   end
 endmodule
