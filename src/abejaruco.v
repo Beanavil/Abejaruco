@@ -26,13 +26,16 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/fetch/fetch_registers.v"
+`include "src/decode/control_unit.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     input wire reset,
     input wire clk,
-    output wire [31:0] data_cache_data_out
+    output wire [31:0] data_cache_data_out,
+    output wire [1:0] cu_alu_op
   );
 
+  reg [31:0] x0 = 0; /*zero*/
   reg [31:0] r [0:31];
   reg [31:0] rm0 = 32'b1000;
   reg [31:0] rm1;
@@ -67,6 +70,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   // -- Out wires
   wire [31:0] fetch_rm0_out;
   wire [31:0] fetch_instruction_out;
+  wire fetch_active_out;
+
+  // Control unit wires
+  // -- Out wires
+  wire cu_branch;
+  wire cu_reg_write;
+  wire cu_mem_read;
+  wire cu_mem_to_reg;
+  wire cu_mem_write;
+  wire cu_alu_src;
 
   //TODO cuando se implemente la memoria de instrucciones.
   // Common memory wires
@@ -81,10 +94,13 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   // wire mem_data_ready;
   wire memory_in_use;
 
-  // Inital values values disenablig modules
-  // assign mem_enable = 0;
+  // Inital values modules not active
   assign data_cache_reset = 0;
-
+  assign data_cache_address = rm0;
+  assign data_cache_op = 1'b1;
+  assign data_cache_access = 1'b1;
+  assign data_cache_data_in = data_cache_mem_data_out;
+  assign data_cache_byte_op = 1'b0;
 
   // Instantiations
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
@@ -140,15 +156,22 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
 
           //OUT
           .rm0_out(fetch_rm0_out),
-          .instruction_out(fetch_instruction_out)
+          .instruction_out(fetch_instruction_out),
+          .active_out(fetch_active_out)
         );
 
-  assign data_cache_address = rm0;
-  //assign data_cache_mem_address = rm0;
-  assign data_cache_op = 1'b1;
-  assign data_cache_access = 1'b1;
-  assign data_cache_data_in = data_cache_mem_data_out;
-  assign data_cache_byte_op = 1'b0;
+  ControlUnit control_unit(
+          //IN
+          .opcode(fetch_instruction_out[6:0]),
+
+          //OUT
+          .reg_write(cu_reg_write),
+          .mem_read(cu_mem_read),
+          .mem_to_reg(cu_mem_to_reg),
+          .alu_op(cu_alu_op),
+          .mem_write(cu_mem_write),
+          .alu_src(cu_alu_src)
+        );
 
   always @(posedge clk)
   begin
@@ -158,9 +181,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     end
 
     $display("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out);
-    //data_cache_data_in = 32'h00000011;
-    //data_cache_address = 0;
-    //data_cache_op = 1'b0;
-    //data_cache_access = 1'b1;
+    if (fetch_active_out) begin
+      $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
+    end
   end
 endmodule

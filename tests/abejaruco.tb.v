@@ -31,6 +31,7 @@ module Abejaruco_tb();
   reg clk;
   reg reset;
   wire [WORD_WIDTH-1:0] data_cache_data_out;
+  wire [1:0] cu_alu_op;
 
   parameter CLK_PERIOD = 1;
   parameter RESET_PERIOD = 5;
@@ -40,7 +41,8 @@ module Abejaruco_tb();
   Abejaruco uut(
               .reset(reset),
               .clk(clk),
-              .data_cache_data_out(data_cache_data_out)
+              .data_cache_data_out(data_cache_data_out),
+              .cu_alu_op(cu_alu_op)
             );
 
   task automatic reset_input;
@@ -72,9 +74,11 @@ module Abejaruco_tb();
     input string test_name;
     input string test_description;
     input [WORD_WIDTH-1:0] data_cache_data_out_expected;
+    input [1:0] cu_alu_op_expected;
     begin
       $display("Test case %s: %s", test_name, test_description);
       $display("-- data_cache_data_out should be %h, got %h", data_cache_data_out_expected, data_cache_data_out);
+      $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, cu_alu_op);
     end
   endtask
 
@@ -82,6 +86,7 @@ module Abejaruco_tb();
   task automatic test_1;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] data_cache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
 
     begin
       clk = 1'b0;
@@ -100,17 +105,20 @@ module Abejaruco_tb();
 
       #CLK_PERIOD;
 
-      data_cache_data_out_expected = 32'h00000003;
-      print_tb_info("1", "Load first instruction", data_cache_data_out_expected);
+      data_cache_data_out_expected = 32'h00000033;
+      cu_alu_op_expected = 2'b00;
+
+      print_tb_info("1", "Load first instruction", data_cache_data_out_expected, cu_alu_op_expected);
 
       err = (data_cache_data_out !== data_cache_data_out_expected);
     end
   endtask
 
-  // Test 2: Test that after 6 clock cycles we also have the second instruction
+  // Test 2: Test that after 6 clock cycles we also have the second instruction and the control unit detects an add
   task automatic test_2;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] data_cache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
 
     begin
       #CLK_PERIOD clk = 1'b0;
@@ -120,8 +128,11 @@ module Abejaruco_tb();
       #CLK_PERIOD;
 
       data_cache_data_out_expected = 32'h00000004;
-      print_tb_info("2", "Load second instruction", data_cache_data_out_expected);
-      err = (data_cache_data_out !== data_cache_data_out_expected);
+      cu_alu_op_expected = 2'b10;
+
+      print_tb_info("2", "Load second instruction", data_cache_data_out_expected, cu_alu_op_expected);
+
+      err = ({data_cache_data_out, cu_alu_op} !== {data_cache_data_out_expected, cu_alu_op_expected});
     end
   endtask
 
