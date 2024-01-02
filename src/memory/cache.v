@@ -22,32 +22,33 @@
 `include "src/common/tag_comparator.v"
 `include "src/common/priority_encoder.v"
 
+//TODO add half word operations
 module Cache (
     // In wires (from CPU)
     input wire clk,
-    input reg access,
+    input wire access,
     input wire reset,
-    input reg [ADDRESS_WIDTH-1:0] address,
-    input reg [WORD_WIDTH-1:0] data_in,
-    input reg op,
-    input reg byte_op,
+    input wire [ADDRESS_WIDTH-1:0] address,
+    input wire [WORD_WIDTH-1:0] data_in,
+    input wire op,
+    input wire byte_op,
 
     // In wires (from memory)
     input wire mem_data_ready,
-    input reg [LINE_SIZE-1:0] mem_data_out,
+    input wire [LINE_SIZE-1:0] mem_data_out,
     input wire memory_in_use,
 
     // Out wires (to CPU)
-    output reg [WORD_WIDTH-1:0] data_out,     // Data returned by the cache
-    output wire data_ready,                    // Data in the output is valid or write operation finished
+    output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
+    output wire data_ready,                     // Data in the output is valid or write operation finished
 
     // Out wires (to memory)
     output reg mem_enable,                      // Enable the memory module to read/write
     output reg mem_op,                          // Select read/write operation
     output reg mem_op_init,                     // Tell memory that we are going to use it
-    output reg mem_op_done,                    // The caché finished reading the returned data
-    output reg [LINE_SIZE-1:0] mem_data_in,    // Data to be written in memory
-    output reg [ADDRESS_WIDTH-1:0] mem_address                   // Address to be read/written in memory
+    output reg mem_op_done,                     // The caché finished reading the returned data
+    output reg [LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
+    output reg [ADDRESS_WIDTH-1:0] mem_address  // Address to be read/written in memory
   );
 
   // Parameter definitions
@@ -113,13 +114,14 @@ module Cache (
   integer i;
   integer j, replace_index;
 
-  initial begin
+  initial
+  begin
     for (i = 0; i < NUM_LINES; i = i + 1)
     begin
       valid_array[i] = 0;
       lru_counters[i] = i;
       dirty_array[i] = 0;
-    end 
+    end
 
     mem_op_init = 0;
     mem_op_done = 0;
@@ -127,7 +129,7 @@ module Cache (
     mem_op = 0;
   end
 
-  
+
   always @(posedge clk or posedge reset)
   begin
     if (access)
@@ -182,7 +184,7 @@ module Cache (
           $display("---->Dirty: %b", dirty_array[replace_index]);
 
           if (valid_array[replace_index] && dirty_array[replace_index])
-            begin
+          begin
             $display("---->Acceso a memoria para escritura");
             //Tell memory to write the line
             if(memory_in_use == 0) //Wait until memory is available
@@ -207,8 +209,9 @@ module Cache (
               valid_array[replace_index] = 0;
               mem_enable = 1'b0;
             end
-            end
-          else if (valid_array[replace_index] == 0 && dirty_array[replace_index]) begin
+          end
+          else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
+          begin
             $display("---->Acceso a memoria para lectura");
             //Init the read operation
             mem_op_done = 0;
@@ -216,34 +219,37 @@ module Cache (
             mem_op = 1'b0;
             mem_enable = 1'b1;
 
-            if(mem_op_init && mem_data_ready)begin
-                data_array[replace_index][0] = mem_data_out[31:0];
-                data_array[replace_index][1] = mem_data_out[63:32];
-                data_array[replace_index][2] = mem_data_out[95:64];
-                data_array[replace_index][3] = mem_data_out[127:96];
+            if(mem_op_init && mem_data_ready)
+            begin
+              data_array[replace_index][0] = mem_data_out[31:0];
+              data_array[replace_index][1] = mem_data_out[63:32];
+              data_array[replace_index][2] = mem_data_out[95:64];
+              data_array[replace_index][3] = mem_data_out[127:96];
 
-                // Unblock memory module 
-                mem_enable = 0;
-                mem_op_init = 0;
-                mem_op_done = 1;
-                dirty_array[replace_index] = 0;
+              // Unblock memory module
+              mem_enable = 0;
+              mem_op_init = 0;
+              mem_op_done = 1;
+              dirty_array[replace_index] = 0;
             end
-          end else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0) begin
+          end
+          else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0)
+          begin
             $display("---->Escribir");
             if (byte_op)
-              begin
-                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
-              end
-              else
-              begin
-                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
-              end
+            begin
+              data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
+            end
+            else
+            begin
+              data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+            end
 
-              // Update line control information
-              tag_array[replace_index] = address[INIT_TAG:END_TAG];
-              valid_array[replace_index] = 1;
-              dirty_array[replace_index] = 1;
-              update_lru(replace_index);
+            // Update line control information
+            tag_array[replace_index] = address[INIT_TAG:END_TAG];
+            valid_array[replace_index] = 1;
+            dirty_array[replace_index] = 1;
+            update_lru(replace_index);
           end
         end
       end
@@ -282,7 +288,8 @@ module Cache (
           end
 
           // When memory returns data, store it in the cache
-          if(data_ready) begin
+          if(data_ready)
+          begin
             data_array[replace_index][0] = mem_data_out[31:0];
             data_array[replace_index][1] = mem_data_out[63:32];
             data_array[replace_index][2] = mem_data_out[95:64];
@@ -291,9 +298,9 @@ module Cache (
 
           // Update line control information
           tag_array[replace_index] = address[INIT_TAG:END_TAG];
-          // valid_array[replace_index] = 1;
-          // update_lru(replace_index);
-          // op_done = 1;
+          valid_array[replace_index] = 1;
+          update_lru(replace_index);
+          mem_op_done = 1;
         end
       end
 

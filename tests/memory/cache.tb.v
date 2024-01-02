@@ -34,42 +34,54 @@ module Cache_tb;
   parameter WORD_WIDTH = 32;
   parameter WORDS_PER_LINE = 4;
 
+  // In wires (from CPU)
   reg clk;
+  reg access;
   reg reset;
   reg [ADDRESS_WIDTH-1:0] address;
-  reg access;
   reg [WORD_WIDTH-1:0] data_in;
   reg op;
   reg byte_op;
+  // In wires (from memory)
+  reg mem_data_ready;
   reg [LINE_SIZE-1:0] mem_data_out;
-  wire [WORD_WIDTH-1:0] data_out;
+  reg memory_in_use;
 
+  // Out wires (to CPU)
+  wire [WORD_WIDTH-1:0] data_out;
   wire data_ready;
-  reg [LINE_SIZE-1:0] mem_data_out;
-  reg [LINE_SIZE-1:0] mem_data_in;
-  reg mem_enable;
-  reg mem_op;
-  wire op_done;
-  wire mem_data_ready;
+
+  // Out wires (to memory)
+  wire mem_enable;
+  wire mem_op;
+  wire mem_op_init;
+  wire mem_op_done;
+  wire [LINE_SIZE-1:0] mem_data_in;
+  wire [ADDRESS_WIDTH-1:0] mem_address;
+
 
   parameter CLK_PERIOD = 1;
   parameter D_CLK_PERIOD = 2;
 
   Cache uut (
           .clk(clk),
+          .access(access),
           .reset(reset),
           .address(address),
+          .data_in(data_in),
           .op(op),
           .byte_op(byte_op),
-          .access(access),
+          .mem_data_ready(mem_data_ready),
           .mem_data_out(mem_data_out),
+          .memory_in_use(memory_in_use),
           .data_out(data_out),
-          .mem_data_in(mem_data_in),
-          .data_in(data_in),
+          .data_ready(data_ready),
           .mem_enable(mem_enable),
           .mem_op(mem_op),
-          .hit(hit),
-          .data_ready(data_ready)
+          .mem_op_init(mem_op_init),
+          .mem_op_done(mem_op_done),
+          .mem_data_in(mem_data_in),
+          .mem_address(mem_address)
         );
 
   // Clock generation
@@ -90,7 +102,9 @@ module Cache_tb;
       data_in = 0;
       op = 1'b0;
       byte_op = 0;
+      mem_data_ready = 1'b0;
       mem_data_out = 0;
+      memory_in_use = 1'b0;
       #CLK_PERIOD;
       $display("Done");
     end
@@ -103,23 +117,14 @@ module Cache_tb;
       test_1(err);
       check_err(err, "1");
 
-      // test_2(err);
-      // check_err(err, "2");
+      test_2(err);
+      check_err(err, "2");
 
-      // test_3(err);
-      // check_err(err, "3");
+      test_3(err);
+      check_err(err, "3");
 
-      // test_4(err);
-      // check_err(err, "4");
-
-      // test_5(err);
-      // check_err(err, "5");
-
-      // test_6(err);
-      // check_err(err, "6");
-
-      // test_7(err);
-      // check_err(err, "7");
+      test_4(err);
+      check_err(err, "4");
 
       $display("Done");
     end
@@ -155,8 +160,9 @@ module Cache_tb;
       byte_op = 1;
 
       #D_CLK_PERIOD;
+      #10
 
-      data_out_expected = 32'h00000011;
+       data_out_expected = 32'h00000011;
       print_tb_info("1", "Write to an address then read", data_out_expected);
 
       err = (data_out !== data_out_expected);
@@ -183,11 +189,10 @@ module Cache_tb;
       #D_CLK_PERIOD;
 
       op = 1'b1; /*read*/
-      byte_op = 1;
 
       #D_CLK_PERIOD;
 
-      data_out_expected = 32'h00000011;
+      data_out_expected = 32'h11111111;
       print_tb_info("2", "Write to the same memory address", data_out_expected);
 
       err = (data_out !== data_out_expected);
@@ -197,7 +202,7 @@ module Cache_tb;
     end
   endtask
 
-  // Test Case 3: Write to the follow memory address
+  // Test Case 3: Write to the following memory address
   task automatic test_3;
     output integer err;
     reg [31:0] data_out_expected;
@@ -214,11 +219,10 @@ module Cache_tb;
       #D_CLK_PERIOD;
 
       op = 1'b1; /*read*/
-      byte_op = 1;
 
       #D_CLK_PERIOD;
 
-      data_out_expected = 32'h00000011;
+      data_out_expected = 32'h11111111;
       print_tb_info("3", "Write to another word in the same address", data_out_expected);
 
       err = (data_out !== data_out_expected);
@@ -228,60 +232,28 @@ module Cache_tb;
     end
   endtask
 
-  // Test Case 4: Write to another memory address
+  // Test Case 4: Write and read byte
   task automatic test_4;
     output integer err;
     reg [31:0] data_out_expected;
 
     begin
       #CLK_PERIOD;
-      address = 32'h00000004;
-      data_in = 32'h22222222;
-      op = 1'b0;  /*write*/
-      access = 1;
-      reset = 0;
-      byte_op = 0;
-
-      #D_CLK_PERIOD;
-
-      op = 1'b1; /*read*/
-      byte_op = 1;
-
-      #D_CLK_PERIOD;
-
-      data_out_expected = 32'h00000011;
-      print_tb_info("4", "Write new address", data_out_expected);
-
-      err = (data_out !== data_out_expected);
-
-      #D_CLK_PERIOD;
-      access = 0;
-    end
-  endtask
-
-  // Test Case 5: Full cache and write in a new address
-  task automatic test_5;
-    output integer err;
-    reg [31:0] data_out_expected;
-
-    begin
-      #CLK_PERIOD;
       address = 32'h00000008;
-      data_in = 32'h33333333;
+      data_in = 32'h00000333;
       op = 1'b0;  /*write*/
       access = 1;
       reset = 0;
-      byte_op = 0;
-
-      #D_CLK_PERIOD;
-
-      op = 1'b1; /*read*/
       byte_op = 1;
 
       #D_CLK_PERIOD;
 
-      data_out_expected = 32'h00000011;
-      print_tb_info("5", "Line replacement", data_out_expected);
+      op = 1'b1; /*read*/
+
+      #D_CLK_PERIOD;
+
+      data_out_expected = 32'h00000033;
+      print_tb_info("4", "Write and read byte", data_out_expected);
 
       err = (data_out !== data_out_expected);
 
@@ -290,67 +262,7 @@ module Cache_tb;
     end
   endtask
 
-  // Test Case 6: Read line and write in a new address
-  task automatic test_6;
-    output integer err;
-    reg [31:0] data_out_expected;
-
-    begin
-      #CLK_PERIOD;
-      address = 32'h00000004;
-      // data_in = 32'h00000011;
-      op = 1'b0;  /*write*/
-      access = 1;
-      reset = 0;
-      byte_op = 0;
-
-      #D_CLK_PERIOD;
-
-      op = 1'b1; /*read*/
-      byte_op = 1;
-
-      #D_CLK_PERIOD;
-
-      data_out_expected = 32'h00000011;
-      print_tb_info("6", "Read from existing line", data_out_expected);
-
-      err = (data_out !== data_out_expected);
-
-      #D_CLK_PERIOD;
-      access = 0;
-    end
-  endtask
-
-  // Test Case 7: Write after the effect of read
-  task automatic test_7;
-    output integer err;
-    reg [31:0] data_out_expected;
-
-    begin
-      #CLK_PERIOD;
-      address = 32'h00000014;
-      data_in = 32'h66666666;
-      op = 1'b0;  /*write*/
-      access = 1;
-      reset = 0;
-      byte_op = 0;
-
-      #D_CLK_PERIOD;
-
-      op = 1'b1; /*read*/
-      byte_op = 1;
-
-      #D_CLK_PERIOD;
-
-      data_out_expected = 32'h00000011;
-      print_tb_info("7", "Line replacement", data_out_expected);
-
-      err = (data_out !== data_out_expected);
-
-      #D_CLK_PERIOD;
-      access = 0;
-    end
-  endtask
+  //TODO Test Case 5: Write and read hlf-word
 
   initial
   begin
