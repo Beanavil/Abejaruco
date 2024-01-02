@@ -31,7 +31,7 @@
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
     input wire reset,
     input wire clk,
-    output wire [31:0] data_cache_data_out,
+    output wire [31:0] dcache_data_out,
     output wire [1:0] cu_alu_op
   );
 
@@ -43,28 +43,28 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
 
   // Data cache wires
   // -- In wires (from CPU)
-  reg data_cache_access;               // Enable the cache, to it obey the inputs
-  reg data_cache_reset;
-  reg [31:0] data_cache_address;
-  reg [31:0] data_cache_data_in;
-  reg data_cache_op;
-  reg data_cache_byte_op;
+  reg dcache_access;               // Enable the cache, to it obey the inputs
+  reg dcache_reset;
+  reg [31:0] dcache_address;
+  reg [31:0] dcache_data_in;
+  reg dcache_op;
+  reg dcache_byte_op;
 
   // -- In wires (from memory)
-  wire data_cache_mem_data_ready;
-  wire [127:0] data_cache_mem_data_out;
+  wire dcache_mem_data_ready;
+  wire [127:0] dcache_mem_data_out;
 
   // -- Out wires (to CPU)
-  wire data_cache_data_ready;
-  // wire [31:0] data_cache_data_out;
+  wire dcache_data_ready;
+  // wire [31:0] dcache_data_out;
 
   // -- Out wires (to memory)
-  wire data_cache_mem_enable;
-  wire data_cache_mem_op_init;
-  wire data_cache_mem_op;
-  wire [31:0] data_cache_mem_address;
-  wire [127:0] data_cache_mem_data_in;
-  wire data_cache_op_done;
+  wire dcache_mem_enable;
+  wire dcache_mem_op_init;
+  wire dcache_mem_op;
+  wire [31:0] dcache_mem_address;
+  wire [127:0] dcache_mem_data_in;
+  wire dcache_op_done;
 
   // Fetch registers wires
   // -- Out wires
@@ -95,64 +95,64 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   wire memory_in_use;
 
   // Inital values modules not active
-  assign data_cache_reset = 0;
-  assign data_cache_address = rm0;
-  assign data_cache_op = 1'b1;
-  assign data_cache_access = 1'b1;
-  assign data_cache_data_in = data_cache_mem_data_out;
-  assign data_cache_byte_op = 1'b0;
+  assign dcache_reset = 0;
+  assign dcache_address = rm0;
+  assign dcache_op = 1'b1;
+  assign dcache_access = 1'b1;
+  assign dcache_data_in = dcache_mem_data_out;
+  assign dcache_byte_op = 1'b0;
 
   // Instantiations
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
            //IN
            .clk(clk),
-           .enable(data_cache_mem_enable),
-           .op(data_cache_mem_op),
-           .address(data_cache_mem_address),
-           .data_in(data_cache_mem_data_in),
-           .op_init(data_cache_mem_op_init),
-           .op_done(data_cache_op_done),
+           .enable(dcache_mem_enable),
+           .op(dcache_mem_op),
+           .address(dcache_mem_address),
+           .data_in(dcache_mem_data_in),
+           .op_init(dcache_mem_op_init),
+           .op_done(dcache_op_done),
 
            //OUT
-           .data_out(data_cache_mem_data_out),
-           .data_ready(data_cache_mem_data_ready),
+           .data_out(dcache_mem_data_out),
+           .data_ready(dcache_mem_data_ready),
            .memory_in_use(memory_in_use)
          );
 
   Cache data_cache(
           //IN (from CPU)
           .clk(clk),
-          .reset(data_cache_reset),
-          .access(data_cache_access),
-          .address(data_cache_address),
-          .data_in(data_cache_data_in),
-          .op(data_cache_op),
-          .byte_op(data_cache_byte_op),
+          .reset(dcache_reset),
+          .access(dcache_access),
+          .address(dcache_address),
+          .data_in(dcache_data_in),
+          .op(dcache_op),
+          .byte_op(dcache_byte_op),
 
           //IN (from memory)
-          .mem_data_ready(data_cache_mem_data_ready),
-          .mem_data_out(data_cache_mem_data_out),
+          .mem_data_ready(dcache_mem_data_ready),
+          .mem_data_out(dcache_mem_data_out),
           .memory_in_use(memory_in_use),
 
           //OUT (to CPU)
-          .data_out(data_cache_data_out),
-          .data_ready(data_cache_data_ready),
+          .data_out(dcache_data_out),
+          .data_ready(dcache_data_ready),
 
           //OUT (to memory)
-          .mem_op_init(data_cache_mem_op_init),
-          .mem_enable(data_cache_mem_enable),
-          .mem_op(data_cache_mem_op),
-          .mem_op_done(data_cache_op_done),
-          .mem_address(data_cache_mem_address),
-          .mem_data_in(data_cache_mem_data_in)
+          .mem_op_init(dcache_mem_op_init),
+          .mem_enable(dcache_mem_enable),
+          .mem_op(dcache_mem_op),
+          .mem_op_done(dcache_op_done),
+          .mem_address(dcache_mem_address),
+          .mem_data_in(dcache_mem_data_in)
         );
 
   FetchRegisters #(.WORD_SIZE(32)) fetch_registers(
           //IN
           .clk(clk),
           .rm0_in(rm0),
-          .instruction_in(data_cache_data_out),
-          .active(data_cache_op_done),
+          .instruction_in(dcache_data_out),
+          .active(dcache_op_done),
 
           //OUT
           .rm0_out(fetch_rm0_out),
@@ -175,7 +175,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
 
   always @(posedge clk)
   begin
-    if (data_cache_op_done)
+    if (dcache_op_done)
     begin
       rm0 = rm0 + 3'b100;
     end
