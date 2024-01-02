@@ -24,10 +24,10 @@
 `timescale 1ns / 1ps
 
 module Memory #(parameter ADDRESS_SIZE = 12,
-                   CACHE_LINE_SIZE = 128,
-                   MEMORY_LOCATIONS = 4096,
-                   OP_DELAY_CYCLES = 3,
-                   PROGRAM = "../../programs/random_binary.o")
+                  CACHE_LINE_SIZE = 128,
+                  MEMORY_LOCATIONS = 4096,
+                  OP_DELAY_CYCLES = 3,
+                  PROGRAM = "../../programs/random_binary.o")
   (input wire clk,
    input wire enable,
    input wire op,
@@ -38,17 +38,14 @@ module Memory #(parameter ADDRESS_SIZE = 12,
    output reg [CACHE_LINE_SIZE-1:0] data_out,
    output reg data_ready,
    output reg memory_in_use                   // Memory is use by another module
-   );
+  );
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
   initial
   begin
-    for(integer i = 0; i < MEMORY_LOCATIONS; i = i + 1)
-    begin
-      memory[i] = 0;
-    end
-    // $readmemh(PROGRAM, memory);
+    $readmemh(PROGRAM, memory);
+    data_ready = 1'b0;
   end
 
   // State definitions
@@ -57,51 +54,53 @@ module Memory #(parameter ADDRESS_SIZE = 12,
 
 
   //TODO: Added the op_init, to distinguish if a memory operation is started by other module
-  always @(posedge op_init) begin
+  always @(posedge op_init)
+  begin
     memory_in_use = 1'b1;
   end
 
-  always @(posedge op_done) begin
-    data_ready = 1'b0;
-  end
+  // always @(posedge op_done) begin
+  //   data_ready = 1'b0;
+  // end
 
-  always @(posedge op_done, negedge op_init) begin
-    memory_in_use = 1'b0;
-  end
+  // always @(posedge op_done, negedge op_init) begin
+  //   memory_in_use = 1'b0;
+  // end
 
   always @(posedge clk)
   begin
+    $display("[ MEMORY ] - the address is %h", address);
     if (enable)
     begin
       case (state)
-      2'b00: /*IDLE*/
-      begin
+        2'b00: /*IDLE*/
+        begin
           state = 2'b01;
           counter = 0;
-      end
+        end
 
-      2'b01: /*WAIT*/
-      begin
+        2'b01: /*WAIT*/
+        begin
           $display("Entra en wait %d", counter);
           if (counter < OP_DELAY_CYCLES-1)
           begin
-          counter = counter + 1;
+            counter = counter + 1;
           end
           else
           begin
-          state = 2'b10;
+            state = 2'b10;
           end
-      end
+        end
 
-      2'b10: /*WRITE or READ*/
-      begin
+        2'b10: /*WRITE or READ*/
+        begin
           $display("op = %b", op);
           if (op) /*write*/
           begin
             $display("Entra en write");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
-                memory[address + i] = data_in[i*8 +: 8];
+              memory[address + i] = data_in[i*8 +: 8];
             end
           end
           else /*read*/
@@ -109,16 +108,16 @@ module Memory #(parameter ADDRESS_SIZE = 12,
             $display("Entra en read");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
-                data_out[i*8 +: 8] = memory[address + i];
+              data_out[i*8 +: 8] = memory[address + i];
             end
           end
           data_ready = 1'b1;
           state = 2'b00;
-      end
+        end
       endcase
-    // $display("Address: %h", address);
-    // $display("Data written: %h", data_in);
-    // $display("Data read: %h", data_out);
+      // $display("Address: %h", address);
+      // $display("Data written: %h", data_in);
+      // $display("Data read: %h", data_out);
     end
 
 

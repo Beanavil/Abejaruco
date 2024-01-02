@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -27,8 +27,9 @@
 `include "src/memory/memory.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
-  input wire reset,
-  input wire clk
+    input wire reset,
+    input wire clk,
+    output wire [31:0] data_cache_data_out
   );
 
   reg [31:0] r [0:31];
@@ -51,7 +52,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
 
   // -- Out wires (to CPU)
   wire data_cache_data_ready;
-  wire [31:0] data_cache_data_out;
+  // wire [31:0] data_cache_data_out;
 
   // -- Out wires (to memory)
   wire data_cache_mem_enable;
@@ -76,7 +77,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   wire memory_in_use;
 
   // Inital values values disenablig modules
-  assign mem_enable = 0;
+  // assign mem_enable = 0;
   assign data_cache_reset = 0;
 
 
@@ -84,9 +85,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
            //IN
            .clk(clk),
-           .enable(mem_enable),
+           .enable(data_cache_mem_enable),
            .op(data_cache_mem_op),
-           .address(data_cache_mem_address),
+           .address(data_cache_address),
            .data_in(data_cache_mem_data_in),
            .op_init(data_cache_mem_op_init),
            .op_done(data_cache_op_done),
@@ -125,14 +126,18 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
           .mem_data_in(data_cache_mem_data_in)
         );
 
-  //     
+  assign data_cache_address = rm0;
+  //assign data_cache_mem_address = rm0;
+  assign data_cache_op = 1'b1;
+  assign data_cache_access = 1'b1;
+  assign data_cache_data_in = data_cache_mem_data_out;
+
   always @(clk)
   begin
-
-    data_cache_data_in = 32'h00000011;
-    data_cache_address = 0;
-    data_cache_op = 1'b0;
-    data_cache_access = 1'b1;
+    //data_cache_data_in = 32'h00000011;
+    //data_cache_address = 0;
+    //data_cache_op = 1'b0;
+    //data_cache_access = 1'b1;
   end
   // always @(*)
   // begin

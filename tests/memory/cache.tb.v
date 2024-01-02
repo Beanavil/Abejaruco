@@ -162,7 +162,7 @@ module Cache_tb;
       #D_CLK_PERIOD;
       #10
 
-       data_out_expected = 32'h00000011;
+      data_out_expected = 32'h00000011;
       print_tb_info("1", "Write to an address then read", data_out_expected);
 
       err = (data_out !== data_out_expected);

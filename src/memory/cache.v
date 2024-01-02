@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-// : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -29,7 +29,7 @@ module Cache (
     input wire access,
     input wire reset,
     input wire [ADDRESS_WIDTH-1:0] address,
-    input wire [WORD_WIDTH-1:0] data_in,
+    input wire [WORD_WIDTH-1:0] data_in,        // Data to be written in the cache
     input wire op,
     input wire byte_op,
 
@@ -169,7 +169,7 @@ module Cache (
         end
         else /*miss*/
         begin
-          $display("---->Miss");
+          $display("----> Miss");
           // Find the line to replace based on LRU
           replace_index = 0;
           for (j = 0; j < NUM_LINES; j = j + 1)
@@ -180,13 +180,13 @@ module Cache (
             end
           end
 
-          $display("---->Valid: %b", valid_array[replace_index]);
-          $display("---->Dirty: %b", dirty_array[replace_index]);
+          $display("----> Valid: %b", valid_array[replace_index]);
+          $display("----> Dirty: %b", dirty_array[replace_index]);
 
           if (valid_array[replace_index] && dirty_array[replace_index])
           begin
-            $display("---->Acceso a memoria para escritura");
-            //Tell memory to write the line
+            $display("----> Memory access to write");
+            // Tell memory to write the line
             if(memory_in_use == 0) //Wait until memory is available
             begin
               mem_op_init = 1;
@@ -212,7 +212,7 @@ module Cache (
           end
           else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
           begin
-            $display("---->Acceso a memoria para lectura");
+            $display("----> Memory access to read");
             //Init the read operation
             mem_op_done = 0;
             mem_address = address;
@@ -235,7 +235,7 @@ module Cache (
           end
           else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0)
           begin
-            $display("---->Escribir");
+            $display("----> Write");
             if (byte_op)
             begin
               data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
@@ -274,7 +274,10 @@ module Cache (
         begin
           mem_enable = 1;
           mem_op = 0;
-          $display("The memory address is: %b", address);
+          $display("The cache address is: %b", address);
+          $display("The cache address value is: %h", data_out);
+
+          $display("The memory address is: %b", mem_address);
           $display("The memory address value is: %h", mem_data_out);
 
           // Find the line to replace based on LRU
@@ -288,19 +291,21 @@ module Cache (
           end
 
           // When memory returns data, store it in the cache
-          if(data_ready)
+          if(mem_data_ready)
           begin
             data_array[replace_index][0] = mem_data_out[31:0];
             data_array[replace_index][1] = mem_data_out[63:32];
             data_array[replace_index][2] = mem_data_out[95:64];
             data_array[replace_index][3] = mem_data_out[127:96];
-          end
 
-          // Update line control information
-          tag_array[replace_index] = address[INIT_TAG:END_TAG];
-          valid_array[replace_index] = 1;
-          update_lru(replace_index);
-          mem_op_done = 1;
+            // Update line control information
+            tag_array[replace_index] = address[INIT_TAG:END_TAG];
+            valid_array[replace_index] = 1;
+            update_lru(replace_index);
+            mem_op_done = 1;
+
+            data_out = data_array[replace_index][tag_array[replace_index]];
+          end
         end
       end
 
