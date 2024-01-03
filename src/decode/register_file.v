@@ -50,6 +50,7 @@ module RegisterFile #(parameter WORD_SIZE = 32,
     else if(write_enable)
     begin
       r[write_idx] <= write_data;
+      $display("---->Register %d has been written with %b", write_idx, write_data);
     end
   end
 

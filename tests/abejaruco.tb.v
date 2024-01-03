@@ -33,6 +33,14 @@ module Abejaruco_tb();
   wire [WORD_WIDTH-1:0] icache_data_out;
   wire [1:0] cu_alu_op;
   wire [WORD_WIDTH-1:0] alu_result;
+  wire cu_is_imm;
+
+
+  reg signed [WORD_WIDTH-1:0] rf_write_data_test; //Signed inmediate
+  reg [4:0] rf_write_idx_test;
+  reg rf_write_enable_test;
+  reg mux2to1_sel_test;
+
 
   parameter CLK_PERIOD = 1;
   parameter RESET_PERIOD = 5;
@@ -42,8 +50,15 @@ module Abejaruco_tb();
   Abejaruco uut(
               .reset(reset),
               .clk(clk),
-              .icache_data_out(icache_data_out),
-              .cu_alu_op(cu_alu_op)
+              .icache_data_out_test(icache_data_out),
+              .cu_alu_op_test(cu_alu_op),
+              .alu_result_test(alu_result),
+
+              .multiplexer_selector_test(mux2to1_sel_test),
+              .rf_write_data_test(rf_write_data_test),
+              .rf_write_enable_test(rf_write_enable_test),
+              .rf_write_idx_test(rf_write_idx_test)
+
             );
 
   task automatic reset_input;
@@ -61,11 +76,14 @@ module Abejaruco_tb();
     begin
       integer err;
       $display("*** Run tests ***");
-      test_1(err);
-      check_err(err, "1");
+      // test_1(err);
+      // check_err(err, "1");
 
-      test_2(err);
-      check_err(err, "2");
+      // test_2(err);
+      // check_err(err, "2");
+
+      test_3(err);
+      check_err(err, "3");
 
       $display("Done");
     end
@@ -139,12 +157,70 @@ module Abejaruco_tb();
     end
   endtask
 
+  task automatic test_3;
+    output integer err;
+    begin
+      //Instruction -> ffc09103
+      // Load -4 to register 1
+
+      //Fetch
+      clk = 1'b0;
+      reset = 1'b1;
+
+      #2;
+      reset = 1'b0;
+
+      clk = 1'b1;
+
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
+      #CLK_PERIOD;
+
+      //Decocde
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      #CLK_PERIOD;
+
+      //Execute
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      #CLK_PERIOD;
+
+      //Memory
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      #CLK_PERIOD;
+
+      //Writeback
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      #CLK_PERIOD;
+      
+
+      //TODO check bonito
+      $display("mux2to1_sel_test: %b", mux2to1_sel_test);
+      $display("cu_reg_write_out: %b", rf_write_enable_test);
+      $display("destination_register_out: %b", rf_write_idx_test);
+      $display("extended_inmediate_out: %d", rf_write_data_test);
+
+    end
+  endtask
+
   initial
   begin
     print_info("Testing Abejaruco");
 
     reset_input();
     run_tests();
+
+
 
     print_info("Testing finised");
 

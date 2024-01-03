@@ -30,20 +30,30 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/execution/alu.v"
+`include "src/common/sign_extend.v"
+`include "src/execution/execution_registers.v"
+`include "src/memory/memory_registers.v"
+`include "src/common/mux2to1.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                      parameter NUM_REGS = 32,
                      parameter INDEX_WIDTH = $clog2(NUM_REGS))(
                        input wire clk,
                        input wire reset,
-                       output wire [31:0] icache_data_out,
-                       output wire [1:0] cu_alu_op,
-                       output wire [31:0] alu_result
+                       output reg [31:0] icache_data_out_test,
+                       output reg [1:0] cu_alu_op_test,
+                       output reg [31:0] alu_result_test,
+                       output reg [31:0] sign_extend_out_test,
+
+                      output reg multiplexer_selector_test,
+                      output reg [31:0] rf_write_data_test,
+                      output reg rf_write_enable_test,
+                      output reg [INDEX_WIDTH-1:0] rf_write_idx_test
                      );
 
   // Special registers
   // TODO change rm0 to 32'h1000, also in tests
-  reg [31:0] rm0 = 32'b1000; /*return PC on exception*/
+  reg [31:0] rm0 = 32'b0000; /*return PC on exception*/
   reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
   reg [31:0] rm2; /*exception type info*/
   reg [31:0] x0 = 32'h0; /*zero*/
@@ -57,6 +67,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   reg [INDEX_WIDTH-1:0] rf_read_idx_2;
   reg [31:0] rf_read_data_1;
   reg [31:0] rf_read_data_2;
+  
+  // assign rf_write_enable = 1'b0;
 
   // Main memory wires
   // -- In wires from icache
@@ -82,7 +94,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
 
   // -- Out wires to CPU
   wire icache_data_ready;
-  // wire [31:0] icache_data_out;
+  wire [31:0] icache_data_out;
 
   // -- Inital values
   assign icache_access = 1'b1;
@@ -106,6 +118,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire cu_mem_write;
   wire cu_alu_src;
   wire cu_is_imm;
+  wire [1:0] cu_alu_op;
 
   // Decode registers wires
   // -- Out wires
@@ -126,14 +139,25 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire [4:0] decode_dst_address_out;
   wire [11:0] decode_offset_out;
 
+  // Sign extend wires
+  wire [31:0] sign_extend_out;
+
   // ALU wires
   // -- In wires
   wire [31:0] alu_first_register;
   wire [31:0] alu_second_register;
   wire [31:0] alu_address;
+  wire [31:0] alu_result;
 
   // -- Out wires
   wire alu_zero;
+
+  // Execution registers wires
+  wire [31:0] execution_sign_extend_out;
+  wire execution_cu_mem_to_reg_out;
+  wire execution_cu_reg_write_out;
+  wire [4:0] execution_dst_register_out;
+
 
   //TODO cuando se implemente la memoria de datos.
   // Common memory wires
@@ -147,6 +171,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   // wire [127:0] mem_data_out;
   // wire mem_data_ready;
   wire memory_in_use;
+
+  // Memory registers wires
+  wire [31:0] memory_sign_extend_out;
+  wire memory_cu_mem_to_reg_out;
 
   // Instantiations
 
@@ -228,6 +256,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
 
   ControlUnit control_unit(
                 // In
+                .clk(clk),
                 .opcode(fetch_instruction_out[6:0]),
                 .funct3(fetch_instruction_out[14:12]),
 
@@ -285,6 +314,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   //               Execution stage              //
   //--------------------------------------------//
 
+  SignExtend sign_extend(
+        // In (de offset is the same as the immediate)
+        .in(decode_offset_out),
+
+        // Out
+        .out(sign_extend_out)
+      );
+
   // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
   assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
   assign alu_first_register = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
@@ -305,6 +342,67 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
   // assign res = (is_imm) ? offset : alu_result;
 
+  ExecutionRegisters execution_registers(
+        // In
+        .clk(clk),
+        .extended_inmediate_in(sign_extend_out),
+        .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
+        .cu_reg_write_in(decode_cu_reg_write_out),
+        .destination_register_in(decode_dst_register_out),
+
+        // Out
+        .extended_inmediate_out(execution_sign_extend_out),
+        .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
+        .cu_reg_write_out(execution_cu_reg_write_out),
+        .destination_register_out(execution_dst_register_out)
+      );
+
+  //--------------------------------------------//
+  //               Memory stage                 //
+  //--------------------------------------------//
+
+
+  MemoryRegisters memory_registers(
+        // In
+        .clk(clk),
+        .extended_inmediate_in(execution_sign_extend_out),
+        .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
+        .cu_reg_write_in(execution_cu_reg_write_out),
+        .destination_register_in(execution_dst_register_out),
+
+        // Out
+        .extended_inmediate_out(memory_sign_extend_out),
+        .cu_mem_to_reg_out(memory_cu_mem_to_reg_out),
+        .cu_reg_write_out(rf_write_enable),
+        .destination_register_out(rf_write_idx)
+      );
+
+  //TODO: When adding ALU this will change to add the ALU result
+   Mux2to1 reg_write_mux(
+        // In
+        .sel(memory_cu_mem_to_reg_out),
+        .in0(alu_result),
+        .in1(memory_sign_extend_out),
+
+        // Out
+        .out(rf_write_data)
+      );
+
+
+  //Auxiliar control outputs update
+  always @(posedge clk)
+  begin
+      icache_data_out_test = icache_data_out;
+      cu_alu_op_test = cu_alu_op;
+      alu_result_test = alu_result;
+
+      multiplexer_selector_test = memory_cu_mem_to_reg_out;
+      rf_write_data_test = memory_sign_extend_out; 
+      rf_write_enable_test = rf_write_enable;
+      rf_write_idx_test = rf_write_idx;
+  end
+
+  //Main pipeline execution
   always @(posedge clk)
   begin
     if (icache_op_done)

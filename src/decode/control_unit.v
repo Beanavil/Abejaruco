@@ -22,7 +22,8 @@
 `default_nettype none
 
 module ControlUnit
-  (input [6:0] opcode,
+  (input wire clk,
+  input [6:0] opcode,
    input [2:0] funct3,
    output reg branch,
    output reg reg_write,
@@ -33,8 +34,9 @@ module ControlUnit
    output reg alu_src,
    output reg is_imm);
 
-  always @(*)
+  always @(clk)
   begin
+    $display("--------->Opcode: %b", opcode);
     case (opcode)
       7'b0110011: /*R-type*/
       begin
