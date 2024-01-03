@@ -23,7 +23,7 @@
 
 `timescale 1ns / 1ps
 
-module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5)(
+module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5, OFFSET_SIZE = 12)(
     // In
     input wire clk,
     input wire [WORD_SIZE-1:0] rm0_in,
@@ -38,6 +38,10 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5)(
     input wire [1:0] cu_alu_op_in,
     input wire cu_mem_write_in,
     input wire cu_alu_src_in,
+    input wire cu_is_imm_in,
+    input wire [REGISTER_INDEX-1:0] src_address_in,
+    input wire [REGISTER_INDEX-1:0] dst_address_in,
+    input wire [OFFSET_SIZE-1:0] offset_in,
 
     // Out
     output reg [WORD_SIZE-1:0] rm0_out,
@@ -51,7 +55,11 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5)(
     output reg cu_mem_to_reg_out,
     output reg [1:0] cu_alu_op_out,
     output reg cu_mem_write_out,
-    output reg cu_alu_src_out
+    output reg cu_alu_src_out,
+    output reg cu_is_imm_out,
+    output reg [REGISTER_INDEX-1:0] src_address_out,
+    output reg [REGISTER_INDEX-1:0] dst_address_out,
+    output reg [OFFSET_SIZE-1:0] offset_out
   );
 
   initial
@@ -78,5 +86,9 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5)(
     cu_alu_src_out = cu_alu_src_in;
     cu_mem_write_out = cu_mem_write_in;
     cu_alu_src_out = cu_alu_src_in;
+    cu_is_imm_out = cu_is_imm_in;
+    src_address_out = src_address_in;
+    dst_address_out = dst_address_in;
+    offset_out = offset_in;
   end
 endmodule
