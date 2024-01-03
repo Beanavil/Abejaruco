@@ -42,7 +42,7 @@ module RegisterFile #(parameter WORD_SIZE = 32,
   begin
     if(reset)
     begin
-      for(i = 0; i < NUM_REGS; i = i + 1)
+      for(integer i = 0; i < NUM_REGS; i = i + 1)
       begin
         r[i] = 0;
       end

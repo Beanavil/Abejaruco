@@ -30,7 +30,7 @@
 module Abejaruco_tb();
   reg clk;
   reg reset;
-  wire [WORD_WIDTH-1:0] dcache_data_out;
+  wire [WORD_WIDTH-1:0] icache_data_out;
   wire [1:0] cu_alu_op;
   wire [WORD_WIDTH-1:0] alu_result;
 
@@ -42,7 +42,7 @@ module Abejaruco_tb();
   Abejaruco uut(
               .reset(reset),
               .clk(clk),
-              .dcache_data_out(dcache_data_out),
+              .icache_data_out(icache_data_out),
               .cu_alu_op(cu_alu_op)
             );
 
@@ -74,19 +74,19 @@ module Abejaruco_tb();
   task automatic print_tb_info;
     input string test_name;
     input string test_description;
-    input [WORD_WIDTH-1:0] dcache_data_out_expected;
+    input [WORD_WIDTH-1:0] icache_data_out_expected;
     input [1:0] cu_alu_op_expected;
     begin
       $display("Test case %s: %s", test_name, test_description);
-      $display("-- dcache_data_out should be %h, got %h", dcache_data_out_expected, dcache_data_out);
+      $display("-- icache_data_out should be %h, got %h", icache_data_out_expected, icache_data_out);
       $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, cu_alu_op);
     end
   endtask
 
-  // Test 1: Test that after 6 clock cycles we have the first instruction in dcache_data_out
+  // Test 1: Test that after 6 clock cycles we have the first instruction in icache_data_out
   task automatic test_1;
     output integer err;
-    reg [CACHE_LINE_SIZE-1:0] dcache_data_out_expected;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
 
     begin
@@ -106,19 +106,19 @@ module Abejaruco_tb();
 
       #CLK_PERIOD;
 
-      dcache_data_out_expected = 32'h00000033;
+      icache_data_out_expected = 32'h00000033;
       cu_alu_op_expected = 2'b00;
 
-      print_tb_info("1", "Load first instruction", dcache_data_out_expected, cu_alu_op_expected);
+      print_tb_info("1", "Load first instruction", icache_data_out_expected, cu_alu_op_expected);
 
-      err = (dcache_data_out !== dcache_data_out_expected);
+      err = (icache_data_out !== icache_data_out_expected);
     end
   endtask
 
   // Test 2: Test that after 6 clock cycles we also have the second instruction and the control unit detects an add
   task automatic test_2;
     output integer err;
-    reg [CACHE_LINE_SIZE-1:0] dcache_data_out_expected;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
 
     begin
@@ -128,12 +128,12 @@ module Abejaruco_tb();
       #CLK_PERIOD;
       #CLK_PERIOD;
 
-      dcache_data_out_expected = 32'h00000004;
+      icache_data_out_expected = 32'h00000004;
       cu_alu_op_expected = 2'b10;
 
-      print_tb_info("2", "Load second instruction", dcache_data_out_expected, cu_alu_op_expected);
+      print_tb_info("2", "Load second instruction", icache_data_out_expected, cu_alu_op_expected);
 
-      err = ({dcache_data_out, cu_alu_op} !== {dcache_data_out_expected, cu_alu_op_expected});
+      err = ({icache_data_out, cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
     end
   endtask
 
