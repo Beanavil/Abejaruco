@@ -55,6 +55,7 @@ module ALU
 
   always @(*)
   begin
+    $display("[ ALU ] - Value of first register: %d  Value of second register: %d Operation %d", input_first, input_second, alu_op);
     case (alu_op)
       2'b00: /*add*/
       begin

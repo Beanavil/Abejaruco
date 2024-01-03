@@ -32,6 +32,7 @@ module Abejaruco_tb();
   reg reset;
   wire [WORD_WIDTH-1:0] dcache_data_out;
   wire [1:0] cu_alu_op;
+  wire [WORD_WIDTH-1:0] alu_result;
 
   parameter CLK_PERIOD = 1;
   parameter RESET_PERIOD = 5;

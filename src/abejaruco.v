@@ -29,6 +29,7 @@
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
+`include "src/execution/alu.v"
 
 module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                    parameter NUM_REGS = 32,
@@ -36,7 +37,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
     input wire reset,
     input wire clk,
     output wire [31:0] dcache_data_out,
-    output wire [1:0] cu_alu_op
+    output wire [1:0] cu_alu_op,
+    output wire [31:0] alu_result
   );
 
   // Special registers
@@ -120,6 +122,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire [1:0] decode_cu_alu_op_out;
   wire decode_cu_mem_write_out;
   wire decode_cu_alu_src_out;
+
+  // ALU wires
+  // -- Out wires
+  //wire [31:0] alu_result;
+  wire alu_zero;
 
   //TODO cuando se implemente la memoria de instrucciones.
   // Common memory wires
@@ -247,6 +254,19 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .cu_mem_write_out(decode_cu_mem_write_out),
                     .cu_alu_src_out(decode_cu_alu_src_out)
                   );
+
+  ALU alu(
+        //IN
+        .clk(clk),
+        //TODO change this once we have the register file?
+        .input_first(r[first_register_out]),
+        .input_second(r[second_register_out]),
+        .alu_op(decode_cu_alu_op_out),
+
+        //OUT
+        .zero(alu_zero),
+        .result(alu_result)
+      );
 
   always @(posedge clk)
   begin
