@@ -110,6 +110,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   // -- Out wires
   wire [31:0] decode_rm0_out;
   wire [31:0] decode_instruction_out;
+  wire [4:0] destination_register_out;
+  wire [4:0] first_register_out;
+  wire [4:0] second_register_out;
   wire decode_cu_branch_out;
   wire decode_cu_reg_write_out;
   wire decode_cu_mem_read_out;
@@ -205,6 +208,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                 .opcode(fetch_instruction_out[6:0]),
 
                 // Out
+                .branch(cu_branch),
                 .reg_write(cu_reg_write),
                 .mem_read(cu_mem_read),
                 .mem_to_reg(cu_mem_to_reg),
@@ -218,10 +222,23 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .clk(clk),
                     .rm0_in(fetch_rm0_out),
                     .instruction_in(fetch_instruction_out),
+                    .destination_register_in(fetch_instruction_out[11:7]),
+                    .first_register_in(fetch_instruction_out[19:15]),
+                    .second_register_in(fetch_instruction_out[24:20]),
+                    .cu_branch_in(cu_branch),
+                    .cu_reg_write_in(cu_reg_write),
+                    .cu_mem_read_in(cu_mem_read),
+                    .cu_mem_to_reg_in(cu_mem_to_reg),
+                    .cu_alu_op_in(cu_alu_op),
+                    .cu_mem_write_in(cu_mem_write),
+                    .cu_alu_src_in(cu_alu_src),
 
                     // Out
                     .rm0_out(decode_rm0_out),
                     .instruction_out(decode_instruction_out),
+                    .destination_register_out(destination_register_out),
+                    .first_register_out(first_register_out),
+                    .second_register_out(second_register_out),
                     .cu_branch_out(decode_cu_branch_out),
                     .cu_reg_write_out(decode_cu_reg_write_out),
                     .cu_mem_read_out(decode_cu_mem_read_out),
