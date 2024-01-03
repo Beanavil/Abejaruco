@@ -42,14 +42,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                      );
 
   // Special registers
-  reg [31:0] rm0 = 32'h1000; /*return PC on exception*/
+  // TODO change rm0 to 32'h1000, also in tests
+  reg [31:0] rm0 = 32'b1000; /*return PC on exception*/
   reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
   reg [31:0] rm2; /*exception type info*/
   reg [31:0] x0 = 32'h0;/*zero*/
   reg [31:0] x1; /*ra*/
 
   // Register file wires
-  reg rf_enable;
+  reg rf_write_enable; // TODO in WB stage
   reg [INDEX_WIDTH-1:0] rf_write_idx; // TODO in WB stage
   reg [31:0] rf_write_data; // TODO in WB stage
   reg [INDEX_WIDTH-1:0] rf_read_idx_1;
@@ -139,16 +140,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire memory_in_use;
 
   // Instantiations
-  RegisterFile register_file(
-                 .clk(clk),
-                 .enable(rf_enable),
-                 .reset(reset),
-                 .write_idx(rf_write_idx),
-                 .write_data(rf_write_data),
-                 .read_idx_1(rf_read_idx_1),
-                 .read_idx_2(rf_read_idx_2),
-                 .read_data_1(rf_read_data_1),
-                 .read_data_2(rf_read_data_2));
+
+  //----------------------------------------//
+  //              Fetch stage               //
+  //----------------------------------------//
 
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
            // In
@@ -207,6 +202,21 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                    .active_out(fetch_active_out)
                  );
 
+  //----------------------------------------//
+  //             Decode stage               //
+  //----------------------------------------//
+
+  RegisterFile register_file(
+                 .clk(clk),
+                 .write_enable(rf_write_enable),
+                 .reset(reset),
+                 .write_idx(rf_write_idx),
+                 .write_data(rf_write_data),
+                 .read_idx_1(fetch_instruction_out[19:15]),
+                 .read_idx_2(fetch_instruction_out[24:20]),
+                 .read_data_1(rf_read_data_1),
+                 .read_data_2(rf_read_data_2));
+
   ControlUnit control_unit(
                 // In
                 .opcode(fetch_instruction_out[6:0]),
@@ -227,8 +237,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .rm0_in(fetch_rm0_out),
                     .instruction_in(fetch_instruction_out),
                     .destination_register_in(fetch_instruction_out[11:7]),
-                    .first_register_in(fetch_instruction_out[19:15]),
-                    .second_register_in(fetch_instruction_out[24:20]),
+                    .first_register_in(rf_read_data_1),
+                    .second_register_in(rf_read_data_2),
                     .cu_branch_in(cu_branch),
                     .cu_reg_write_in(cu_reg_write),
                     .cu_mem_read_in(cu_mem_read),
@@ -251,6 +261,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .cu_mem_write_out(decode_cu_mem_write_out),
                     .cu_alu_src_out(decode_cu_alu_src_out)
                   );
+
+  //--------------------------------------------//
+  //               Execution stage              //
+  //--------------------------------------------//
 
   ALU alu(
         //IN
