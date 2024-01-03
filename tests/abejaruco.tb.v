@@ -106,7 +106,8 @@ module Abejaruco_tb();
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00000033;
+      icache_data_out_expected = 32'h00201083;
+
       cu_alu_op_expected = 2'b00;
 
       print_tb_info("1", "Load first instruction", icache_data_out_expected, cu_alu_op_expected);
@@ -128,8 +129,9 @@ module Abejaruco_tb();
       #CLK_PERIOD;
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00000004;
-      cu_alu_op_expected = 2'b10;
+
+      icache_data_out_expected = 32'h0000033;
+      cu_alu_op_expected = 2'b00;
 
       print_tb_info("2", "Load second instruction", icache_data_out_expected, cu_alu_op_expected);
 

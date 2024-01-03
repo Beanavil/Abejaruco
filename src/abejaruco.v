@@ -46,7 +46,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   reg [31:0] rm0 = 32'b1000; /*return PC on exception*/
   reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
   reg [31:0] rm2; /*exception type info*/
-  reg [31:0] x0 = 32'h0;/*zero*/
+  reg [31:0] x0 = 32'h0; /*zero*/
   reg [31:0] x1; /*ra*/
 
   // Register file wires
@@ -110,9 +110,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   // -- Out wires
   wire [31:0] decode_rm0_out;
   wire [31:0] decode_instruction_out;
-  wire [4:0] destination_register_out;
-  wire [4:0] first_register_out;
-  wire [4:0] second_register_out;
+  wire [4:0] decode_dst_register_out;
+  wire [31:0] decode_first_register_out;
+  wire [31:0] decode_second_register_out;
   wire decode_cu_branch_out;
   wire decode_cu_reg_write_out;
   wire decode_cu_mem_read_out;
@@ -250,9 +250,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     // Out
                     .rm0_out(decode_rm0_out),
                     .instruction_out(decode_instruction_out),
-                    .destination_register_out(destination_register_out),
-                    .first_register_out(rf_read_idx_1),
-                    .second_register_out(rf_read_idx_2),
+                    .destination_register_out(decode_dst_register_out),
+                    .first_register_out(decode_first_register_out),
+                    .second_register_out(decode_second_register_out),
                     .cu_branch_out(decode_cu_branch_out),
                     .cu_reg_write_out(decode_cu_reg_write_out),
                     .cu_mem_read_out(decode_cu_mem_read_out),
@@ -269,8 +269,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   ALU alu(
         //IN
         .clk(clk),
-        .input_first(rf_read_data_1),
-        .input_second(rf_read_data_2),
+        .input_first(decode_first_register_out),
+        .input_second(decode_second_register_out),
         .alu_op(decode_cu_alu_op_out),
 
         //OUT
