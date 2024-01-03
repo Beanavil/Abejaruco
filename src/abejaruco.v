@@ -105,6 +105,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire cu_mem_to_reg;
   wire cu_mem_write;
   wire cu_alu_src;
+  wire cu_is_imm;
 
   // Decode registers wires
   // -- Out wires
@@ -119,11 +120,19 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   wire decode_cu_mem_to_reg_out;
   wire [1:0] decode_cu_alu_op_out;
   wire decode_cu_mem_write_out;
+  wire decode_cu_is_imm_out;
   wire decode_cu_alu_src_out;
+  wire [4:0] decode_src_address_out;
+  wire [4:0] decode_dst_address_out;
+  wire [11:0] decode_offset_out;
 
   // ALU wires
+  // -- In wires
+  wire [31:0] alu_first_register;
+  wire [31:0] alu_second_register;
+  wire [31:0] alu_address;
+
   // -- Out wires
-  //wire [31:0] alu_result;
   wire alu_zero;
 
   //TODO cuando se implemente la memoria de datos.
@@ -220,6 +229,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   ControlUnit control_unit(
                 // In
                 .opcode(fetch_instruction_out[6:0]),
+                .funct3(fetch_instruction_out[14:12]),
 
                 // Out
                 .branch(cu_branch),
@@ -228,7 +238,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                 .mem_to_reg(cu_mem_to_reg),
                 .alu_op(cu_alu_op),
                 .mem_write(cu_mem_write),
-                .alu_src(cu_alu_src)
+                .alu_src(cu_alu_src),
+                .is_imm(cu_is_imm)
               );
 
   DecodeRegisters decode_registers(
@@ -246,6 +257,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .cu_alu_op_in(cu_alu_op),
                     .cu_mem_write_in(cu_mem_write),
                     .cu_alu_src_in(cu_alu_src),
+                    .cu_is_imm_in(cu_is_imm),
+                    .src_address_in(fetch_instruction_out[19:15]),
+                    .dst_address_in(fetch_instruction_out[11:7]),
+                    .offset_in(fetch_instruction_out[31:20]),
 
                     // Out
                     .rm0_out(decode_rm0_out),
@@ -259,24 +274,36 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
                     .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
                     .cu_alu_op_out(decode_cu_alu_op_out),
                     .cu_mem_write_out(decode_cu_mem_write_out),
-                    .cu_alu_src_out(decode_cu_alu_src_out)
+                    .cu_is_imm_out(decode_cu_is_imm_out),
+                    .cu_alu_src_out(decode_cu_alu_src_out),
+                    .src_address_out(decode_src_address_out),
+                    .dst_address_out(decode_dst_address_out),
+                    .offset_out(decode_offset_out)
                   );
 
   //--------------------------------------------//
   //               Execution stage              //
   //--------------------------------------------//
 
+  // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
+  assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
+  assign alu_first_register = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
+  assign alu_second_register = (decode_cu_alu_src_out) ? decode_offset_out : decode_second_register_out;
+
   ALU alu(
         //IN
         .clk(clk),
-        .input_first(decode_first_register_out),
-        .input_second(decode_second_register_out),
+        .input_first(alu_first_register),
+        .input_second(alu_second_register),
         .alu_op(decode_cu_alu_op_out),
 
         //OUT
         .zero(alu_zero),
         .result(alu_result)
       );
+
+  // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
+  // assign res = (is_imm) ? offset : alu_result;
 
   always @(posedge clk)
   begin
