@@ -23,30 +23,41 @@
 
 `timescale 1ns / 1ps
 
-module DecodeRegisters #(parameter WORD_SIZE = 32)(
+module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5)(
+    // In
     input wire clk,
     input wire [WORD_SIZE-1:0] rm0_in,
-    output reg [WORD_SIZE-1:0] rm0_out,
     input wire [WORD_SIZE-1:0] instruction_in,
+    input wire [REGISTER_INDEX-1:0] destination_register_in,
+    input wire [REGISTER_INDEX-1:0] first_register_in,
+    input wire [REGISTER_INDEX-1:0] second_register_in,
+    input wire cu_branch_in,
+    input wire cu_reg_write_in,
+    input wire cu_mem_read_in,
+    input wire cu_mem_to_reg_in,
+    input wire [1:0] cu_alu_op_in,
+    input wire cu_mem_write_in,
+    input wire cu_alu_src_in,
+
+    // Out
+    output reg [WORD_SIZE-1:0] rm0_out,
     output reg [WORD_SIZE-1:0] instruction_out,
-    input wire cu_branch,
+    output reg [REGISTER_INDEX-1:0] destination_register_out,
+    output reg [REGISTER_INDEX-1:0] first_register_out,
+    output reg [REGISTER_INDEX-1:0] second_register_out,
     output reg cu_branch_out,
-    input wire cu_reg_write,
     output reg cu_reg_write_out,
-    input wire cu_mem_read,
     output reg cu_mem_read_out,
-    input wire cu_mem_to_reg,
     output reg cu_mem_to_reg_out,
-    input wire [1:0] cu_alu_op,
     output reg [1:0] cu_alu_op_out,
-    input wire cu_mem_write,
     output reg cu_mem_write_out,
-    input wire cu_alu_src,
     output reg cu_alu_src_out
   );
 
   initial
   begin
+    rm0_out = 0;
+    instruction_out = 0;
     rm0_out = 0;
     instruction_out = 0;
   end
@@ -56,5 +67,16 @@ module DecodeRegisters #(parameter WORD_SIZE = 32)(
     $display("DecodeRegisters: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
     rm0_out = rm0_in;
     instruction_out = instruction_in;
+    first_register_out = first_register_in;
+    second_register_out = second_register_in;
+    cu_branch_out = cu_branch_in;
+    cu_reg_write_out = cu_reg_write_in;
+    cu_mem_read_out = cu_mem_read_in;
+    cu_mem_to_reg_out = cu_mem_to_reg_in;
+    cu_alu_op_out = cu_alu_op_in;
+    cu_mem_write_out = cu_mem_write_in;
+    cu_alu_src_out = cu_alu_src_in;
+    cu_mem_write_out = cu_mem_write_in;
+    cu_alu_src_out = cu_alu_src_in;
   end
 endmodule

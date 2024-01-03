@@ -27,7 +27,7 @@ module RegisterFile #(parameter WORD_SIZE = 32,
                         parameter NUM_REGS = 32,
                         parameter INDEX_WIDTH = $clog2(NUM_REGS))(
                           input wire clk,
-                          input wire enable,
+                          input wire write_enable,
                           input wire reset,
                           input wire [INDEX_WIDTH-1:0] write_idx,
                           input wire [WORD_SIZE-1:0] write_data,
@@ -42,12 +42,12 @@ module RegisterFile #(parameter WORD_SIZE = 32,
   begin
     if(reset)
     begin
-      for(i = 0; i < NUM_REGS; i = i + 1)
+      for(integer i = 0; i < NUM_REGS; i = i + 1)
       begin
         r[i] = 0;
       end
     end
-    else if(enable)
+    else if(write_enable)
     begin
       r[write_idx] <= write_data;
     end
