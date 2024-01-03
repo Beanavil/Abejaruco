@@ -25,25 +25,53 @@
 
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
+`include "src/decode/register_file.v"
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
+module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
+                   parameter NUM_REGS = 32,
+                   parameter INDEX_WIDTH = $clog2(NUM_REGS))(
     input wire reset,
     input wire clk,
     output wire [31:0] dcache_data_out,
     output wire [1:0] cu_alu_op
   );
 
-  reg [31:0] x0 = 0; /*zero*/
-  reg [31:0] r [0:31];
-  reg [31:0] rm0 = 32'b1000;
-  reg [31:0] rm1;
-  reg [31:0] rm2;
+  // Special registers
+  reg [31:0] rm0 = 32'h1000; /*return PC on exception*/
+  reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
+  reg [31:0] rm2; /*exception type info*/
+  reg [31:0] x0 = 32'h0;/*zero*/
+  reg [31:0] x1; /*ra*/
+
+  // Register file wires
+  reg rf_enable;
+  reg rf_reset;
+  reg [INDEX_WIDTH-1:0] rf_write_idx;
+  reg [31:0] rf_write_data;
+  reg [INDEX_WIDTH-1:0] rf_read_idx_1;
+  reg [INDEX_WIDTH-1:0] rf_read_idx_2;
+  reg [31:0] rf_read_data_1;
+  reg [31:0] rf_read_data_2;
+
+  // Main memory wires
+  // -- In wires from dcache
+  wire dcache_mem_enable;
+  wire dcache_mem_op_init;
+  wire dcache_mem_op;
+  wire [31:0] dcache_mem_address;
+  wire [127:0] dcache_mem_data_in;
+  wire dcache_op_done;
+
+  // -- Out wires to dcache
+  wire dcache_mem_data_ready;
+  wire [127:0] dcache_mem_data_out;
+
 
   // Data cache wires
-  // -- In wires (from CPU)
+  // -- In wires from CPU
   reg dcache_access;               // Enable the cache, to it obey the inputs
   reg dcache_reset;
   reg [31:0] dcache_address;
@@ -51,21 +79,17 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   reg dcache_op;
   reg dcache_byte_op;
 
-  // -- In wires (from memory)
-  wire dcache_mem_data_ready;
-  wire [127:0] dcache_mem_data_out;
-
-  // -- Out wires (to CPU)
+  // -- Out wires to CPU
   wire dcache_data_ready;
   // wire [31:0] dcache_data_out;
 
-  // -- Out wires (to memory)
-  wire dcache_mem_enable;
-  wire dcache_mem_op_init;
-  wire dcache_mem_op;
-  wire [31:0] dcache_mem_address;
-  wire [127:0] dcache_mem_data_in;
-  wire dcache_op_done;
+  // -- Inital values
+  assign dcache_access = 1'b1;
+  assign dcache_reset = 0;
+  assign dcache_address = rm0;
+  assign dcache_data_in = dcache_mem_data_out;
+  assign dcache_op = 1'b1;
+  assign dcache_byte_op = 1'b0;
 
   // Fetch registers wires
   // -- Out wires
@@ -97,7 +121,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   //TODO cuando se implemente la memoria de instrucciones.
   // Common memory wires
   // -- In wires
-  wire mem_enable;
+  // wire mem_enable;
   // wire mem_op;
   // wire [31:0] mem_address;
   // wire [127:0] mem_data_in;
@@ -107,17 +131,20 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
   // wire mem_data_ready;
   wire memory_in_use;
 
-  // Inital values modules not active
-  assign dcache_reset = 0;
-  assign dcache_address = rm0;
-  assign dcache_op = 1'b1;
-  assign dcache_access = 1'b1;
-  assign dcache_data_in = dcache_mem_data_out;
-  assign dcache_byte_op = 1'b0;
-
   // Instantiations
+  RegisterFile register_file(
+                 .clk(clk),
+                 .enable(rf_enable),
+                 .reset(rf_reset),
+                 .write_idx(rf_write_idx),
+                 .write_data(rf_write_data),
+                 .read_idx_1(rf_read_idx_1),
+                 .read_idx_2(rf_read_idx_2),
+                 .read_data_1(rf_read_data_1),
+                 .read_data_2(rf_read_data_2));
+
   Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
-           //IN
+           // In
            .clk(clk),
            .enable(dcache_mem_enable),
            .op(dcache_mem_op),
@@ -126,14 +153,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
            .op_init(dcache_mem_op_init),
            .op_done(dcache_op_done),
 
-           //OUT
+           // Out
            .data_out(dcache_mem_data_out),
            .data_ready(dcache_mem_data_ready),
            .memory_in_use(memory_in_use)
          );
 
   Cache data_cache(
-          //IN (from CPU)
+          // In
+          // -- from CPU
           .clk(clk),
           .reset(dcache_reset),
           .access(dcache_access),
@@ -141,17 +169,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
           .data_in(dcache_data_in),
           .op(dcache_op),
           .byte_op(dcache_byte_op),
-
-          //IN (from memory)
+          // -- from main memory
           .mem_data_ready(dcache_mem_data_ready),
           .mem_data_out(dcache_mem_data_out),
           .memory_in_use(memory_in_use),
 
-          //OUT (to CPU)
+          // Out
+          // -- to CPU
           .data_out(dcache_data_out),
           .data_ready(dcache_data_ready),
-
-          //OUT (to memory)
+          // -- to main memory
           .mem_op_init(dcache_mem_op_init),
           .mem_enable(dcache_mem_enable),
           .mem_op(dcache_mem_op),
@@ -161,23 +188,23 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
         );
 
   FetchRegisters #(.WORD_SIZE(32)) fetch_registers(
-                   //IN
+                   // In
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(dcache_data_out),
                    .active(dcache_op_done),
 
-                   //OUT
+                   // Out
                    .rm0_out(fetch_rm0_out),
                    .instruction_out(fetch_instruction_out),
                    .active_out(fetch_active_out)
                  );
 
   ControlUnit control_unit(
-                //IN
+                // In
                 .opcode(fetch_instruction_out[6:0]),
 
-                //OUT
+                // Out
                 .reg_write(cu_reg_write),
                 .mem_read(cu_mem_read),
                 .mem_to_reg(cu_mem_to_reg),
@@ -187,12 +214,12 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o")(
               );
 
   DecodeRegisters decode_registers(
-                    //IN
+                    // In
                     .clk(clk),
                     .rm0_in(fetch_rm0_out),
                     .instruction_in(fetch_instruction_out),
 
-                    //OUT
+                    // Out
                     .rm0_out(decode_rm0_out),
                     .instruction_out(decode_instruction_out),
                     .cu_branch_out(decode_cu_branch_out),
