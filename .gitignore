@@ -5,3 +5,5 @@ build/*
 Makefile
 # CMake
 CMakeFiles/*
+# Executables
+*.vvp

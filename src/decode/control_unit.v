@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -22,17 +22,21 @@
 `default_nettype none
 
 module ControlUnit
-  (input [6:0] opcode,
+  (input wire clk,
+   input [6:0] opcode,
+   input [2:0] funct3,
    output reg branch,
    output reg reg_write,
    output reg mem_read,
    output reg mem_to_reg,
    output reg [1:0] alu_op,
    output reg mem_write,
-   output reg alu_src);
+   output reg alu_src,
+   output reg is_imm);
 
-  always @(*)
+  always @(clk)
   begin
+    $display("---------> Opcode: %b", opcode);
     case (opcode)
       7'b0110011: /*R-type*/
       begin
@@ -43,6 +47,7 @@ module ControlUnit
         alu_op = 2'b10;
         mem_write = 1'b0;
         alu_src = 1'b0;
+        is_imm = 1'b0;
       end
 
       7'b0000011: /*I-type*/
@@ -54,6 +59,12 @@ module ControlUnit
         alu_op = 2'b00;
         mem_write = 1'b0;
         alu_src = 1'b1;
+        case (funct3)
+          3'b001:
+            is_imm = 1'b1;
+          default:
+            is_imm = 1'b0;
+        endcase
       end
 
       7'b0100011: /*S-type*/
@@ -65,6 +76,12 @@ module ControlUnit
         alu_op = 2'b00;
         mem_write = 1'b1;
         alu_src = 1'b1;
+        case (funct3)
+          3'b001:
+            is_imm = 1'b1;
+          default:
+            is_imm = 1'b0;
+        endcase
       end
 
       7'b1100011: /*branch*/
@@ -76,6 +93,7 @@ module ControlUnit
         alu_op = 2'b01;
         mem_write = 1'b0;
         alu_src = 1'b0;
+        is_imm = 1'b0;
       end
 
       7'b1100111: /*jump*/
@@ -87,6 +105,7 @@ module ControlUnit
         alu_op = 2'b11;
         mem_write = 1'b0;
         alu_src = 1'b0;
+        is_imm = 1'b0;
       end
 
       default:

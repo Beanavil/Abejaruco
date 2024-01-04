@@ -19,25 +19,37 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32    // Default bit
-  )(
-    input sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
+`default_nettype none
+
+`timescale 1ns / 1ps
+
+module FetchRegisters #(parameter WORD_SIZE = 32)(
+    input wire clk,
+    input wire [WORD_SIZE-1:0] rm0_in,
+    output reg [WORD_SIZE-1:0] rm0_out,
+    input wire [WORD_SIZE-1:0] instruction_in,
+    output reg [WORD_SIZE-1:0] instruction_out,
+    input wire active,
+    output reg active_out
   );
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
+  initial
   begin
-    case(sel)
-      1'b0:
-        out = in0;        // Select input in0
-      1'b1:
-        out = in1;        // Select input in1
-      default:
-        out = {N{1'b0}};  // Default case (N-bit 0)
-    endcase
+    rm0_out = 0;
+    instruction_out = 0;
+  end
+
+  always @(negedge clk)
+  begin
+    if (active)
+    begin
+      $display("FetchRegisters: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
+      rm0_out = rm0_in;
+      instruction_out = instruction_in;
+      active_out = 1'b1;
+    end
+    else begin
+      active_out = 1'b0;
+    end
   end
 endmodule

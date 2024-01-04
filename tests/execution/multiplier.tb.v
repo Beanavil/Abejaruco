@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -23,158 +23,264 @@
 
 `timescale 1ns / 1ps
 
+`include "tests/utils/tb_utils.v"
+
 `include "src/execution/multiplier.v"
 
 module Multiplier_tb();
-  reg clock;
+  reg clk;
   reg [31:0] multiplicand, multiplier;
   wire [31:0] result;
   wire overflow;
   integer i;
 
+  parameter CLK_PERIOD = 1;
+
   Multiplier #(32) uut (
-               .clock(clock),
+               .clk(clk),
                .multiplicand(multiplicand),
                .multiplier(multiplier),
                .result(result),
                .overflow(overflow)
              );
 
-  initial
-  begin
-    $display("Testing multiple stage Multiplier");
-    $display("-------------------------------");
-    clock = 0;
+  task automatic reset_input;
+    begin
+      $display("*** Resetting input ***");
+      clk = 1'b0;
+      multiplicand = 32'd0;
+      multiplier = 32'd0;
+      #CLK_PERIOD;
+      $display("Done");
+    end
+  endtask
 
-    multiplicand = 0;
-    multiplier = 0;
+  task automatic run_tests;
+    begin
+      integer err;
+      $display("*** Run tests ***");
+      test_1(err);
+      check_err(err, "1");
 
-    #1;
-    clock = 1;
-    multiplicand = 32'h000000FF;
-    multiplier = 32'h00000083;
+      test_2(err);
+      check_err(err, "2");
 
-    #1;
-    clock = 0;
+      test_3(err);
+      check_err(err, "3");
 
-    for (i = 0; i < 4; i = i + 1)
-    begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
-    end
+      test_4(err);
+      check_err(err, "4");
 
-    $display("Test case 1: assert when multiplicand = 32'h000000FF, multiplier = 32'h00000083, result should be 32'h0000827D");
-    if (result !== 32'h0000827D)
-    begin
-      $display("Failed. Expected result: 32'h0000827D, Actual: %h", result);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 32'h0000827D, Actual: %h", result);
-    end
+      test_5(err);
+      check_err(err, "5");
 
-    clock = 1;
-    multiplicand = 32'h000000AA;
-    multiplier = 32'h000000BB;
-    #1;
-    clock = 0;
-    for (i = 0; i < 4; i = i + 1)
-    begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
-    end
-    $display("Test case 2: assert when multiplicand = 32'h000000AA, multiplier = 32'h000000BB, result should be 32'h00007c2e");
-    if (result !== 32'h00007c2e)
-    begin
-      $display("Failed. Expected result: 32'h00007c2e, Actual: %h", result);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 32'h00007c2e, Actual: %h", result);
-    end
+      test_6(err);
+      check_err(err, "6");
 
-    clock = 1;
-    multiplicand = 32'h00001FFF;
-    multiplier = 32'h00001FFF;
-    #1;
-    clock = 0;
-    for (i = 0; i < 4; i = i + 1)
-    begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
+      $display("Done");
     end
-    $display("Test case 3: assert when multiplicand = 32'h00001FFF, multiplier = 32'h00001FFF, result should be 32'h03ffc001");
-    if (result !== 32'h03ffc001)
-    begin
-      $display("Failed. Expected result: 32'h03ffc001, Actual: %h", result);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 32'h03ffc001, Actual: %h", result);
-    end
+  endtask
 
-    clock = 1;
-    multiplicand = 32'h00007FFF;
-    multiplier = 32'h00007FFF;
-    #1;
-    clock = 0;
+  task automatic print_tb_info;
+    input string test_name;
+    input [31:0] result_expected;
+    input overflow_expected;
+    begin
+      $display("Test case %s: assert when multiplicand = %h and multiplier = %h", test_name, multiplicand, multiplier);
+      $display("-- result should be %h, got %h", result_expected, result);
+      $display("-- overflow should be %h, got %h", overflow_expected, overflow);
+    end
+  endtask
 
-    for (i = 0; i < 4; i = i + 1)
-    begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
-    end
-    $display("Test case 4: assert when multiplicand = 32'h00007FFF, multiplier = 32'h00007FFF, result should be 32'h3FFF0001");
-    if (result !== 32'h3FFF0001)
-    begin
-      $display("Failed. Expected result: 32'3FFF0001, Actual: %h", result);
-    end
-    else
-    begin
-      $display("Passed. Expected result: 32'h3FFF0001, Actual: %h", result);
-    end
+  task automatic test_1;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
 
-    clock = 1;
-    multiplicand = 32'h0001FFFF;
-    multiplier = 32'h000FFFF;
-    #1;
-    clock = 0;
-    for (i = 0; i < 4; i = i + 1)
     begin
-      #1 clock = ~clock;
-      #1 clock = ~clock;
-    end
-    $display("Test case 5: assert when multiplicand = 32'h0001FFFF, multiplier = 32'h0000FFFF, overflow should be 1");
-    if (overflow !== 1)
-    begin
-      $display("Failed. Expected overflow 1, Actual: 0");
-    end
-    else
-    begin
-      $display("Passed. Overflow set to 1");
-    end
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h000000FF;
+      multiplier = 32'h00000083;
 
+      result_expected = 32'h0000827D;
+      overflow_expected = 1'b0;
 
-    $display("Test case 6: assert that the multiplication finishes after five clock cycles");
-    clock = 1;
-    multiplicand = 32'h0000000;
-    multiplier = 32'h000000;
-    #1;
-    clock = 0;
+      #CLK_PERIOD;
+      clk = 1'b0;
 
-    for (i = 0; i < 4; i = i + 1)
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        #CLK_PERIOD clk = ~clk;
+      end
+
+      print_tb_info("1", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  task automatic test_2;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
+
     begin
-      #1 clock = ~clock;
-        if (overflow === 0 && result === 32'h00000000)
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h000000AA;
+      multiplier = 32'h000000BB;
+
+      result_expected = 32'h00007C2E;
+      overflow_expected = 1'b0;
+
+      #CLK_PERIOD;
+      clk = 1'b0;
+
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        #CLK_PERIOD clk = ~clk;
+      end
+
+      print_tb_info("2", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  task automatic test_3;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
+
+    begin
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h00001FFF;
+      multiplier = 32'h00001FFF;
+
+      result_expected = 32'h03FFC001;
+      overflow_expected = 1'b0;
+
+      #CLK_PERIOD;
+      clk = 1'b0;
+
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        #CLK_PERIOD clk = ~clk;
+      end
+
+      print_tb_info("3", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  task automatic test_4;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
+
+    begin
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h00007FFF;
+      multiplier = 32'h00007FFF;
+
+      result_expected = 32'h3FFF0001;
+      overflow_expected = 1'b0;
+
+      #CLK_PERIOD;
+      clk = 1'b0;
+
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        #CLK_PERIOD clk = ~clk;
+      end
+
+      print_tb_info("4", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  task automatic test_5;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
+
+    begin
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h0001FFFF;
+      multiplier = 32'h000FFFF;
+
+      result_expected = 32'hFFFD0001;
+      overflow_expected = 1'b1;
+
+      #CLK_PERIOD;
+      clk = 1'b0;
+
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        #CLK_PERIOD clk = ~clk;
+      end
+
+      print_tb_info("5", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  task automatic test_6;
+    output integer err;
+    reg [31:0] result_expected;
+    reg overflow_expected;
+
+    begin
+      #CLK_PERIOD;
+      clk = 1'b1;
+      multiplicand = 32'h0000000;
+      multiplier = 32'h000000;
+
+      result_expected = 32'h00000000;
+      overflow_expected = 1'b0;
+
+      #CLK_PERIOD;
+      clk = 1'b0;
+
+      for (i = 0; i < 4; i = i + 1)
+      begin
+        #CLK_PERIOD clk = ~clk;
+        if ({overflow, result} === {1'b0, 32'h00000000})
         begin
+          begin_red_print();
           $display("Failed. Result available before five clock cycles");
+          end_color_print();
           $finish;
         end
-      #1 clock = ~clock;
-    end
+        #CLK_PERIOD clk = ~clk;
+      end
 
-    if (overflow === 0 && result === 32'h00000000)
-    $display("Passed. Result available at fifth clock cycle");
+      print_tb_info("6", result_expected, overflow_expected);
+
+      err = (result !== result_expected);
+    end
+  endtask
+
+  initial
+  begin
+    print_info("Testing multiple stage Multiplier");
+
+    reset_input();
+    run_tests();
+
+    print_info("Testing finised");
 
     $finish;
   end

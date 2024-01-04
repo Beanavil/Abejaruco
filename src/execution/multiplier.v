@@ -25,7 +25,7 @@
 
 module Multiplier #(parameter WIDTH = 32,
                       NIBBLE_WIDTH = 4)
-  (input wire clock,
+  (input wire clk,
    input wire [WIDTH-1:0] multiplicand,
    input wire [WIDTH-1:0] multiplier,
    output reg [WIDTH-1:0] result,
@@ -40,7 +40,7 @@ module Multiplier #(parameter WIDTH = 32,
   reg [WIDTH-1:0] multiplicandReg;
   integer i, j;
 
-  always @(posedge clock)
+  always @(posedge clk)
   begin
     multiplicandReg <= multiplicand;
     multiplierReg   <= multiplier;

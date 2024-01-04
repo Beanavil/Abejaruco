@@ -47,7 +47,7 @@ module ALU
         );
 
   Multiplier #(.WIDTH(32), .NIBBLE_WIDTH(4)) multiplier (
-               .clock(clk),
+               .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
                .result(tmp_mul_result)
@@ -55,6 +55,7 @@ module ALU
 
   always @(*)
   begin
+    $display("[ ALU ] - Value of first register: %d  Value of second register: %d Operation %d", input_first, input_second, alu_op);
     case (alu_op)
       2'b00: /*add*/
       begin

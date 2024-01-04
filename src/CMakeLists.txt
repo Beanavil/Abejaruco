@@ -26,5 +26,7 @@ list(APPEND MAIN_MODULE abejaruco)
 add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
 
 add_subdirectory(common)
+add_subdirectory(fetch)
 add_subdirectory(decode)
 add_subdirectory(execution)
+add_subdirectory(memory)

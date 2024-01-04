@@ -1,8 +1,8 @@
 # GNU General Public License
 #
-# Copyright : (c) 2023 Javier Beiro Piñón
-#           : (c) 2023 Beatriz Navidad Vilches
-#           : (c) 2023 Stefano Petrili
+# Copyright : (c) 2023-2024 Javier Beiro Piñón
+#           : (c) 2023-2024 Beatriz Navidad Vilches
+#           : (c) 2023-2024 Stefano Petrili
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #
@@ -34,10 +34,8 @@
 
 include(AddModule)
 
-list(APPEND MAIN_MODULE abejaruco)
-
-add_module(TARGET "${MAIN_MODULE}.tb" INCLUDES "${PROJECT_SOURCE_DIR}")
-
 add_subdirectory(common)
 add_subdirectory(decode)
 add_subdirectory(execution)
+add_subdirectory(memory)
+add_subdirectory(program_tests)

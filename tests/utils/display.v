@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -19,16 +19,14 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-module Display();
-  task end_color_print()
-    $write("%c[0m",27);
-  endtask
+task end_color_print;
+  $write("%c[0m", 27);
+endtask
 
-  task begin_green_print()
-    write("%c[1;32m",27);
-  endtask
+task begin_green_print;
+  $write("%c[1;32m", 27);
+endtask
 
-  task begin_red_print()
-    write("%c[1;31m",27);
-  endtask
-endmodule
+task begin_red_print;
+  $write("%c[1;31m", 27);
+endtask

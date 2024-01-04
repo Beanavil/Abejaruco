@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+// Copyright : (c) 2023 Javier Beiro Piñón
+// : (c) 2023 Beatriz Navidad Vilches
+// : (c) 2023 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,25 +19,12 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32    // Default bit
-  )(
-    input sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
-  );
-
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
-  begin
-    case(sel)
-      1'b0:
-        out = in0;        // Select input in0
-      1'b1:
-        out = in1;        // Select input in1
-      default:
-        out = {N{1'b0}};  // Default case (N-bit 0)
-    endcase
-  end
+module tag_comparator(
+    input wire [TAG_WIDTH-1:0] input_tag,
+    input wire [TAG_WIDTH-1:0] stored_tag,
+    input wire valid,
+    output wire hit
+);
+    parameter TAG_WIDTH = 32;
+    assign hit = valid ? (input_tag == stored_tag) : 1'b0;
 endmodule

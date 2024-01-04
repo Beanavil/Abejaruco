@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+// Copyright : (c) 2024 Javier Beiro Piñón
+//           : (c) 2024 Beatriz Navidad Vilches
+//           : (c) 2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,25 +19,16 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32    // Default bit
+`default_nettype none
+
+module SignExtend #(
+    parameter INPUT_SIZE = 12
   )(
-    input sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
+    input [INPUT_SIZE-1:0] in,
+    output [31:0] out
   );
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
-  begin
-    case(sel)
-      1'b0:
-        out = in0;        // Select input in0
-      1'b1:
-        out = in1;        // Select input in1
-      default:
-        out = {N{1'b0}};  // Default case (N-bit 0)
-    endcase
-  end
+  localparam EXTEND_SIZE = 32 - INPUT_SIZE;
+
+  assign out = {{EXTEND_SIZE{in[INPUT_SIZE-1]}}, in};
 endmodule
