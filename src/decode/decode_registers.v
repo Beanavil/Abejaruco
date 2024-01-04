@@ -91,6 +91,5 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5, OFFSET_SI
     dst_address_out = dst_address_in;
     offset_out = offset_in;
     destination_register_out = destination_register_in;
-    
   end
 endmodule

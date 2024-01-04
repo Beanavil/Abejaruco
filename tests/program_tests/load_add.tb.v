@@ -27,38 +27,33 @@
 
 `include "src/abejaruco.v"
 
-module Abejaruco_tb();
+module LoadAdd_tb();
   reg clk;
   reg reset;
-  wire [WORD_WIDTH-1:0] icache_data_out;
+  reg [WORD_WIDTH-1:0] rm0_initial [];
+  wire [WORD_WIDTH-1:0] alu_out_multiplexer;
   wire [1:0] cu_alu_op;
-  wire [WORD_WIDTH-1:0] alu_result;
-  wire cu_is_imm;
+  wire [WORD_WIDTH-1:0] icache_data_out;
 
-
-  reg signed [WORD_WIDTH-1:0] rf_write_data_test; //Signed inmediate
   reg [4:0] rf_write_idx_test;
   reg rf_write_enable_test;
-  reg mux2to1_sel_test;
-
 
   parameter CLK_PERIOD = 1;
   parameter RESET_PERIOD = 5;
   parameter CACHE_LINE_SIZE = 128;
   parameter WORD_WIDTH = 32;
+  parameter PROGRAM = "../../../programs/load_add.o";
 
-  Abejaruco uut(
+  Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
               .clk(clk),
-              .icache_data_out_test(icache_data_out),
+              .rm0_initial(32'b1000),
+              .alu_out_multiplexer_test(alu_out_multiplexer),
               .cu_alu_op_test(cu_alu_op),
-              .alu_result_test(alu_result),
+              .icache_data_out_test(icache_data_out),
 
-              .multiplexer_selector_test(mux2to1_sel_test),
-              .rf_write_data_test(rf_write_data_test),
               .rf_write_enable_test(rf_write_enable_test),
               .rf_write_idx_test(rf_write_idx_test)
-
             );
 
   task automatic reset_input;
@@ -76,11 +71,11 @@ module Abejaruco_tb();
     begin
       integer err;
       $display("*** Run tests ***");
-      // test_1(err);
-      // check_err(err, "1");
+      test_1(err);
+      check_err(err, "1");
 
-      // test_2(err);
-      // check_err(err, "2");
+      test_2(err);
+      check_err(err, "2");
 
       test_3(err);
       check_err(err, "3");
@@ -94,18 +89,21 @@ module Abejaruco_tb();
     input string test_description;
     input [WORD_WIDTH-1:0] icache_data_out_expected;
     input [1:0] cu_alu_op_expected;
+    input [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
     begin
       $display("Test case %s: %s", test_name, test_description);
       $display("-- icache_data_out should be %h, got %h", icache_data_out_expected, icache_data_out);
       $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, cu_alu_op);
+      $display("-- alu_out_multiplexer should be %h, got %h", alu_out_multiplexer_expected, alu_out_multiplexer);
     end
   endtask
 
-  // Test 1: Test that after 6 clock cycles we have the first instruction in icache_data_out
+  // Test 1: Fetch load immediate of 2 on register 1
   task automatic test_1;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
       clk = 1'b0;
@@ -125,90 +123,73 @@ module Abejaruco_tb();
       #CLK_PERIOD;
 
       icache_data_out_expected = 32'h00201083;
-
       cu_alu_op_expected = 2'b00;
+      alu_out_multiplexer_expected = 32'h0;
 
-      print_tb_info("1", "Load first instruction", icache_data_out_expected, cu_alu_op_expected);
+      print_tb_info("1", "Load first instruction", icache_data_out_expected,
+                                                   cu_alu_op_expected,
+                                                   alu_out_multiplexer_expected);
 
       err = (icache_data_out !== icache_data_out_expected);
     end
   endtask
 
-  // Test 2: Test that after 6 clock cycles we also have the second instruction and the control unit detects an add
+  // Test 2: Fetch an add and decode the previous li
   task automatic test_2;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
 
       #CLK_PERIOD;
-      #CLK_PERIOD;
-
 
       icache_data_out_expected = 32'h0000033;
       cu_alu_op_expected = 2'b00;
+      alu_out_multiplexer_expected = 32'h0;
 
-      print_tb_info("2", "Load second instruction", icache_data_out_expected, cu_alu_op_expected);
+      print_tb_info("2", "Load second instruction", icache_data_out_expected,
+                                                    cu_alu_op_expected,
+                                                    alu_out_multiplexer_expected);
 
       err = ({icache_data_out, cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
     end
   endtask
 
+  // Test 3:
+  // -- Fetch li of -4, decode add, execute li of 2.
+  // -- Check that the result of the execute stage is the value to be loaded in R1.
   task automatic test_3;
     output integer err;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
+
     begin
-      //Instruction -> ffc09103
-      // Load -4 to register 1
-
-      //Fetch
-      clk = 1'b0;
-      reset = 1'b1;
-
-      #2;
-      reset = 1'b0;
-
-      clk = 1'b1;
-
-      for (integer i = 0; i < 5; i = i + 1)
-      begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
-      end
-      #CLK_PERIOD;
-
-      //Decocde
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
-      #CLK_PERIOD;
+
       #CLK_PERIOD;
 
-      //Execute
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
-      #CLK_PERIOD;
-      #CLK_PERIOD;
+      icache_data_out_expected = 32'h0000033; /*icache miss, same as b4*/
+      cu_alu_op_expected = 2'b10;
+      alu_out_multiplexer_expected = 32'h00000002;
 
-      //Memory
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
-      #CLK_PERIOD;
-      #CLK_PERIOD;
+      print_tb_info("3", "Load third instruction", icache_data_out_expected,
+                                                   cu_alu_op_expected,
+                                                   alu_out_multiplexer_expected);
 
-      //Writeback
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
-      #CLK_PERIOD;
-      #CLK_PERIOD;
-      
+      err = ({icache_data_out, cu_alu_op, alu_out_multiplexer} !==
+              {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
 
-      //TODO check bonito
-      $display("mux2to1_sel_test: %b", mux2to1_sel_test);
-      $display("cu_reg_write_out: %b", rf_write_enable_test);
-      $display("destination_register_out: %b", rf_write_idx_test);
-      $display("extended_inmediate_out: %d", rf_write_data_test);
+      // //TODO check bonito
+      // $display("alu_out_multiplexer: %b", alu_out_multiplexer);
+      // $display("cu_reg_write_out: %b", rf_write_enable_test);
+      // $display("destination_register_out: %b", rf_write_idx_test);
+
 
     end
   endtask
@@ -220,12 +201,9 @@ module Abejaruco_tb();
     reset_input();
     run_tests();
 
-
-
     print_info("Testing finised");
 
     $finish;
   end
 
 endmodule
-

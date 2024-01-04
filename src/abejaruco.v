@@ -35,25 +35,24 @@
 `include "src/memory/memory_registers.v"
 `include "src/common/mux2to1.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
-                     parameter NUM_REGS = 32,
-                     parameter INDEX_WIDTH = $clog2(NUM_REGS))(
+module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
+                     NUM_REGS = 32,
+                     INDEX_WIDTH = $clog2(NUM_REGS))(
                        input wire clk,
                        input wire reset,
+                       input wire [31:0] rm0_initial,
                        output reg [31:0] icache_data_out_test,
                        output reg [1:0] cu_alu_op_test,
-                       output reg [31:0] alu_result_test,
-                       output reg [31:0] sign_extend_out_test,
 
-                      output reg multiplexer_selector_test,
-                      output reg [31:0] rf_write_data_test,
-                      output reg rf_write_enable_test,
-                      output reg [INDEX_WIDTH-1:0] rf_write_idx_test
+                       output reg [31:0] sign_extend_out_test,
+                       output reg [31:0] alu_out_multiplexer_test,
+                       output reg [31:0] rf_write_data_test,
+                       output reg rf_write_enable_test,
+                       output reg [INDEX_WIDTH-1:0] rf_write_idx_test
                      );
 
   // Special registers
-  // TODO change rm0 to 32'h1000, also in tests
-  reg [31:0] rm0 = 32'b0000; /*return PC on exception*/
+  reg [31:0] rm0; /*return PC on exception*/
   reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
   reg [31:0] rm2; /*exception type info*/
   reg [31:0] x0 = 32'h0; /*zero*/
@@ -67,7 +66,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   reg [INDEX_WIDTH-1:0] rf_read_idx_2;
   reg [31:0] rf_read_data_1;
   reg [31:0] rf_read_data_2;
-  
+
   // assign rf_write_enable = 1'b0;
 
   // Main memory wires
@@ -182,7 +181,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   //              Fetch stage               //
   //----------------------------------------//
 
-  Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128)) main_memory (
+  Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128), .PROGRAM(PROGRAM)) main_memory (
            // In
            .clk(clk),
            .enable(icache_mem_enable),
@@ -315,12 +314,12 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   //--------------------------------------------//
 
   SignExtend sign_extend(
-        // In (de offset is the same as the immediate)
-        .in(decode_offset_out),
+               // In (offset is the same as the immediate)
+               .in(decode_offset_out),
 
-        // Out
-        .out(sign_extend_out)
-      );
+               // Out
+               .out(sign_extend_out)
+             );
 
   // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
   assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
@@ -343,70 +342,73 @@ module Abejaruco #(parameter PROGRAM = "../../programs/random_binary.o",
   // assign res = (is_imm) ? offset : alu_result;
 
   ExecutionRegisters execution_registers(
-        // In
-        .clk(clk),
-        .extended_inmediate_in(sign_extend_out),
-        .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
-        .cu_reg_write_in(decode_cu_reg_write_out),
-        .destination_register_in(decode_dst_register_out),
+                       // In
+                       .clk(clk),
+                       .extended_inmediate_in(sign_extend_out),
+                       .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
+                       .cu_reg_write_in(decode_cu_reg_write_out),
+                       .destination_register_in(decode_dst_register_out),
 
-        // Out
-        .extended_inmediate_out(execution_sign_extend_out),
-        .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
-        .cu_reg_write_out(execution_cu_reg_write_out),
-        .destination_register_out(execution_dst_register_out)
-      );
+                       // Out
+                       .extended_inmediate_out(execution_sign_extend_out),
+                       .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
+                       .cu_reg_write_out(execution_cu_reg_write_out),
+                       .destination_register_out(execution_dst_register_out)
+                     );
 
   //--------------------------------------------//
   //               Memory stage                 //
   //--------------------------------------------//
 
+  // TODO: When adding ALU this will change to add the ALU result
+  Mux2to1 reg_write_mux(
+            // In
+            .sel(memory_cu_mem_to_reg_out),
+            .in0(alu_result),
+            .in1(memory_sign_extend_out),
+
+            // Out
+            .out(rf_write_data)
+          );
+
 
   MemoryRegisters memory_registers(
-        // In
-        .clk(clk),
-        .extended_inmediate_in(execution_sign_extend_out),
-        .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
-        .cu_reg_write_in(execution_cu_reg_write_out),
-        .destination_register_in(execution_dst_register_out),
+                    // In
+                    .clk(clk),
+                    .extended_inmediate_in(execution_sign_extend_out),
+                    .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
+                    .cu_reg_write_in(execution_cu_reg_write_out),
+                    .destination_register_in(execution_dst_register_out),
 
-        // Out
-        .extended_inmediate_out(memory_sign_extend_out),
-        .cu_mem_to_reg_out(memory_cu_mem_to_reg_out),
-        .cu_reg_write_out(rf_write_enable),
-        .destination_register_out(rf_write_idx)
-      );
+                    // Out
+                    .extended_inmediate_out(memory_sign_extend_out),
+                    .cu_mem_to_reg_out(memory_cu_mem_to_reg_out),
+                    .cu_reg_write_out(rf_write_enable),
+                    .destination_register_out(rf_write_idx)
+                  );
 
-  //TODO: When adding ALU this will change to add the ALU result
-   Mux2to1 reg_write_mux(
-        // In
-        .sel(memory_cu_mem_to_reg_out),
-        .in0(alu_result),
-        .in1(memory_sign_extend_out),
-
-        // Out
-        .out(rf_write_data)
-      );
-
-
-  //Auxiliar control outputs update
-  always @(posedge clk)
+  initial
   begin
-      icache_data_out_test = icache_data_out;
-      cu_alu_op_test = cu_alu_op;
-      alu_result_test = alu_result;
-
-      multiplexer_selector_test = memory_cu_mem_to_reg_out;
-      rf_write_data_test = memory_sign_extend_out; 
-      rf_write_enable_test = rf_write_enable;
-      rf_write_idx_test = rf_write_idx;
+    rm0 = rm0_initial;
   end
 
-  //Main pipeline execution
+  // Auxiliar control outputs update
+  always @(posedge clk)
+  begin
+    alu_out_multiplexer_test = rf_write_data;
+    cu_alu_op_test = cu_alu_op;
+    icache_data_out_test = icache_data_out;
+
+    rf_write_enable_test = rf_write_enable;
+    rf_write_idx_test = rf_write_idx;
+  end
+
+  // Main pipeline execution
   always @(posedge clk)
   begin
     if (icache_op_done)
     begin
+      $display("[ ABEJARUCO ] - Update rm0");
       rm0 = rm0 + 3'b100;
     end
 

@@ -27,7 +27,7 @@ module Memory #(parameter ADDRESS_SIZE = 12,
                   CACHE_LINE_SIZE = 128,
                   MEMORY_LOCATIONS = 4096,
                   OP_DELAY_CYCLES = 3,
-                  PROGRAM = "../../programs/inmediate.o")
+                  PROGRAM = "../../programs/random_binary.o")
   (input wire clk,
    input wire enable,
    input wire op,

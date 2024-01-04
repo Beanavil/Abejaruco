@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrili
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -23,7 +23,7 @@
 
 module ControlUnit
   (input wire clk,
-  input [6:0] opcode,
+   input [6:0] opcode,
    input [2:0] funct3,
    output reg branch,
    output reg reg_write,
@@ -36,7 +36,7 @@ module ControlUnit
 
   always @(clk)
   begin
-    $display("--------->Opcode: %b", opcode);
+    $display("---------> Opcode: %b", opcode);
     case (opcode)
       7'b0110011: /*R-type*/
       begin

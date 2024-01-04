@@ -29,7 +29,7 @@ module Mux2to1_tb;
 
   reg [N-1:0] in0;
   reg [N-1:0] in1;
-  reg [1:0] sel;
+  reg sel;
   wire [N-1:0] out;
 
   // Instantiate the multiplexer module (Unit Under Test (UUT))
