@@ -19,12 +19,8 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
-
+`include "src/parameters.v"
 `include "tests/utils/tb_utils.v"
-
 `include "src/abejaruco.v"
 
 module LoadAdd_tb();
@@ -40,7 +36,6 @@ module LoadAdd_tb();
 
   parameter CLK_PERIOD = 1;
   parameter RESET_PERIOD = 5;
-  parameter CACHE_LINE_SIZE = 128;
   parameter WORD_WIDTH = 32;
   parameter PROGRAM = "../../../programs/load_add.o";
 

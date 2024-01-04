@@ -19,19 +19,14 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
-`timescale 1ns / 1ps
+module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
-module Memory #(parameter ADDRESS_SIZE = 12,
-                  CACHE_LINE_SIZE = 128,
-                  MEMORY_LOCATIONS = 4096,
-                  OP_DELAY_CYCLES = 3,
-                  PROGRAM = "../../programs/random_binary.o")
   (input wire clk,
    input wire enable,
    input wire op,
-   input wire [ADDRESS_SIZE-1:0] address,
+   input wire [MEMORY_ADDRESS_SIZE-1:0] address,
    input wire [CACHE_LINE_SIZE-1:0] data_in,
    input wire op_init,
    input wire op_done,                        // The module finished reading the returned data
@@ -82,7 +77,7 @@ module Memory #(parameter ADDRESS_SIZE = 12,
         2'b01: /*WAIT*/
         begin
           $display("Entra en wait %d", counter);
-          if (counter < OP_DELAY_CYCLES-1)
+          if (counter < MEMORY_OP_DELAY_CYCLES-1)
           begin
             counter = counter + 1;
           end

@@ -19,9 +19,7 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
@@ -35,21 +33,19 @@
 `include "src/memory/memory_registers.v"
 `include "src/common/mux2to1.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
-                     NUM_REGS = 32,
-                     INDEX_WIDTH = $clog2(NUM_REGS))(
-                       input wire clk,
-                       input wire reset,
-                       input wire [31:0] rm0_initial,
-                       output reg [31:0] icache_data_out_test,
-                       output reg [1:0] cu_alu_op_test,
+module Abejaruco #(parameter PROGRAM = "../../programs/zero.o") (
+    input wire clk,
+    input wire reset,
+    input wire [31:0] rm0_initial,
+    output reg [31:0] icache_data_out_test,
+    output reg [1:0] cu_alu_op_test,
 
-                       output reg [31:0] sign_extend_out_test,
-                       output reg [31:0] alu_out_multiplexer_test,
-                       output reg [31:0] rf_write_data_test,
-                       output reg rf_write_enable_test,
-                       output reg [INDEX_WIDTH-1:0] rf_write_idx_test
-                     );
+    output reg [31:0] sign_extend_out_test,
+    output reg [31:0] alu_out_multiplexer_test,
+    output reg [31:0] rf_write_data_test,
+    output reg rf_write_enable_test,
+    output reg [REGISTER_INDEX_WIDTH-1:0] rf_write_idx_test
+  );
 
   // Special registers
   reg [31:0] rm0; /*return PC on exception*/
@@ -59,10 +55,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
 
   // Register file wires
   reg rf_write_enable; // TODO in WB stage
-  reg [INDEX_WIDTH-1:0] rf_write_idx; // TODO in WB stage
+  reg [REGISTER_INDEX_WIDTH-1:0] rf_write_idx; // TODO in WB stage
   reg [31:0] rf_write_data; // TODO in WB stage
-  reg [INDEX_WIDTH-1:0] rf_read_idx_1;
-  reg [INDEX_WIDTH-1:0] rf_read_idx_2;
+  reg [REGISTER_INDEX_WIDTH-1:0] rf_read_idx_1;
+  reg [REGISTER_INDEX_WIDTH-1:0] rf_read_idx_2;
   reg [31:0] rf_read_data_1;
   reg [31:0] rf_read_data_2;
 
@@ -73,7 +69,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire icache_mem_enable;
   wire icache_mem_op_init;
   wire icache_mem_op;
-  wire [31:0] icache_mem_address;
+  wire [11:0] icache_mem_address;
   wire [127:0] icache_mem_data_in;
   wire icache_op_done;
 
@@ -185,7 +181,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   //              Fetch stage               //
   //----------------------------------------//
 
-  Memory #(.MEMORY_LOCATIONS(4096), .ADDRESS_SIZE(32), .CACHE_LINE_SIZE(128), .PROGRAM(PROGRAM)) main_memory (
+  Memory #(.PROGRAM(PROGRAM)) main_memory (
            // In
            .clk(clk),
            .enable(icache_mem_enable),

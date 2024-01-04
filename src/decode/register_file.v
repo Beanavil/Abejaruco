@@ -19,20 +19,17 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 module RegisterFile #(parameter WORD_SIZE = 32,
-                        parameter NUM_REGS = 32,
-                        parameter INDEX_WIDTH = $clog2(NUM_REGS))(
+                        parameter NUM_REGS = 32)(
                           input wire clk,
                           input wire write_enable,
                           input wire reset,
-                          input wire [INDEX_WIDTH-1:0] write_idx,
+                          input wire [REGISTER_INDEX_WIDTH-1:0] write_idx,
                           input wire [WORD_SIZE-1:0] write_data,
-                          input wire [INDEX_WIDTH-1:0] read_idx_1,
-                          input wire [INDEX_WIDTH-1:0] read_idx_2,
+                          input wire [REGISTER_INDEX_WIDTH-1:0] read_idx_1,
+                          input wire [REGISTER_INDEX_WIDTH-1:0] read_idx_2,
                           output reg [WORD_SIZE-1:0] read_data_1,
                           output reg [WORD_SIZE-1:0] read_data_2
                         );

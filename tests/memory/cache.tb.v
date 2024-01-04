@@ -19,18 +19,16 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
 
-`timescale 1ns / 1ps
 
 `include "tests/utils/tb_utils.v"
 
 `include "src/memory/cache.v"
 
+`include "src/parameters.v"
+
 module Cache_tb;
 
-  parameter LINE_SIZE = 128;
-  parameter ADDRESS_WIDTH = 32;
   parameter WORD_WIDTH = 32;
   parameter WORDS_PER_LINE = 4;
 
@@ -44,7 +42,7 @@ module Cache_tb;
   reg byte_op;
   // In wires (from memory)
   reg mem_data_ready;
-  reg [LINE_SIZE-1:0] mem_data_out;
+  reg [CACHE_LINE_SIZE-1:0] mem_data_out;
   reg memory_in_use;
 
   // Out wires (to CPU)
@@ -56,8 +54,8 @@ module Cache_tb;
   wire mem_op;
   wire mem_op_init;
   wire mem_op_done;
-  wire [LINE_SIZE-1:0] mem_data_in;
-  wire [ADDRESS_WIDTH-1:0] mem_address;
+  wire [CACHE_LINE_SIZE-1:0] mem_data_in;
+  wire [MEMORY_ADDRESS_SIZE-1:0] mem_address;
 
 
   parameter CLK_PERIOD = 1;

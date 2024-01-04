@@ -19,10 +19,13 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
+`include "src/parameters.v"
+
 `include "src/common/tag_comparator.v"
 `include "src/common/priority_encoder.v"
 
 //TODO add half word operations
+
 module Cache (
     // In wires (from CPU)
     input wire clk,
@@ -35,7 +38,7 @@ module Cache (
 
     // In wires (from memory)
     input wire mem_data_ready,
-    input wire [LINE_SIZE-1:0] mem_data_out,
+    input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
     input wire memory_in_use,
 
     // Out wires (to CPU)
@@ -47,27 +50,9 @@ module Cache (
     output reg mem_op,                          // Select read/write operation
     output reg mem_op_init,                     // Tell memory that we are going to use it
     output reg mem_op_done,                     // The caché finished reading the returned data
-    output reg [LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
-    output reg [ADDRESS_WIDTH-1:0] mem_address  // Address to be read/written in memory
+    output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
+    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
   );
-
-  // Parameter definitions
-  parameter ADDRESS_WIDTH = 32;                                           // Memory address width
-  parameter WORD_WIDTH = 32;                                              // Size of words
-  parameter LINE_SIZE = 128;                                              // Size of each cache line in bytes
-  parameter NUM_LINES = 4;                                                // Number of lines in the cache
-
-  parameter WORDS_PER_LINE = LINE_SIZE / (WORD_WIDTH);                    // Number of words in each cache line
-  parameter FULL_OFFSET_WIDTH = $clog2(WORDS_PER_LINE) + $clog2(WORD_WIDTH/8);    // Calculate offset width
-  parameter TAG_WIDTH = ADDRESS_WIDTH - FULL_OFFSET_WIDTH;                // Calculate tag width
-
-  // Auxiliar constants for address decoding based on parameters
-  parameter INIT_TAG = ADDRESS_WIDTH - 1;
-  parameter END_TAG = ADDRESS_WIDTH - TAG_WIDTH; // TODO: FULL_OFFSET_WIDTH
-  parameter INIT_WORD_OFFSET = END_TAG - 1;
-  parameter END_WORD_OFFSET = INIT_WORD_OFFSET - ($clog2(WORDS_PER_LINE)-1);
-  parameter INIT_BYTE_OFFSET = END_WORD_OFFSET - 1;
-  parameter END_BYTE_OFFSET = 0;
 
   // Internal signals for tag comparators
   reg hit;
@@ -75,17 +60,17 @@ module Cache (
   wire hit0, hit1, hit2, hit3;
 
   // Memory arrays for tags, data, and LRU status
-  reg [TAG_WIDTH-1:0] tag_array[NUM_LINES-1:0];
-  reg [WORD_WIDTH-1:0] data_array[NUM_LINES-1:0][WORDS_PER_LINE-1:0];
-  reg [NUM_LINES-1:0] valid_array;
-  reg [NUM_LINES-1:0] dirty_array;
-  reg [1:0] lru_counters[NUM_LINES-1:0];
+  reg [TAG_WIDTH-1:0] tag_array[CACHE_NUM_LINES-1:0];
+  reg [WORD_WIDTH-1:0] data_array[CACHE_NUM_LINES-1:0][CACHE_WORDS_PER_LINE-1:0];
+  reg [CACHE_NUM_LINES-1:0] valid_array;
+  reg [CACHE_NUM_LINES-1:0] dirty_array;
+  reg [1:0] lru_counters[CACHE_NUM_LINES-1:0];
 
   // Instantiate tag comparators
-  tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp0 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[0]), .valid(valid_array[0]), .hit(hit0));
-  tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp1 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[1]), .valid(valid_array[1]), .hit(hit1));
-  tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp2 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[2]), .valid(valid_array[2]), .hit(hit2));
-  tag_comparator #(.TAG_WIDTH(TAG_WIDTH)) comp3 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[3]), .valid(valid_array[3]), .hit(hit3));
+  tag_comparator comp0 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[0]), .valid(valid_array[0]), .hit(hit0));
+  tag_comparator comp1 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[1]), .valid(valid_array[1]), .hit(hit1));
+  tag_comparator comp2 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[2]), .valid(valid_array[2]), .hit(hit2));
+  tag_comparator comp3 (.input_tag(address[INIT_TAG:END_TAG]), .stored_tag(tag_array[3]), .valid(valid_array[3]), .hit(hit3));
 
   // Combine hit signals
   assign hit_signals = {hit0, hit1, hit2, hit3};
@@ -100,14 +85,14 @@ module Cache (
     input [1:0] accessed_line; // Updated the size to match line_number
     integer i;
     begin
-      for (i = 0; i < NUM_LINES; i = i + 1)
+      for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
       begin
         if (lru_counters[i] >= lru_counters[accessed_line])
         begin
           lru_counters[i] = lru_counters[i] - 1;
         end
       end
-      lru_counters[accessed_line] = NUM_LINES - 1;  // Most recently used
+      lru_counters[accessed_line] = CACHE_NUM_LINES - 1;  // Most recently used
     end
   endtask
 
@@ -116,7 +101,7 @@ module Cache (
 
   initial
   begin
-    for (i = 0; i < NUM_LINES; i = i + 1)
+    for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
     begin
       valid_array[i] = 0;
       lru_counters[i] = i;
@@ -135,13 +120,14 @@ module Cache (
     $display("The access is: %b", access);
     if (access)
     begin
-      if (mem_op_done === 1'b1) begin
+      if (mem_op_done === 1'b1)
+      begin
         mem_op_done = 1'b0;
       end
 
       if (reset)
       begin
-        for (i = 0; i < NUM_LINES; i = i + 1)
+        for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
         begin
           valid_array[i] = 0;
           lru_counters[i] = i;
@@ -181,7 +167,7 @@ module Cache (
 
           // Find the line to replace based on LRU
           replace_index = 0;
-          for (j = 0; j < NUM_LINES; j = j + 1)
+          for (j = 0; j < CACHE_NUM_LINES; j = j + 1)
           begin
             if (lru_counters[j] < lru_counters[replace_index])
             begin
@@ -305,7 +291,7 @@ module Cache (
 
           // Find the line to replace based on LRU
           replace_index = 0;
-          for (j = 0; j < NUM_LINES; j = j + 1)
+          for (j = 0; j < CACHE_NUM_LINES; j = j + 1)
           begin
             if (lru_counters[j] < lru_counters[replace_index])
             begin
@@ -334,10 +320,10 @@ module Cache (
 
       // FOR TESTING --- Print cache contents
       $display("Printing Cache Contents at Time: %0d", $time);
-      for (i = 0; i < NUM_LINES; i = i + 1)
+      for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
       begin
         $display("Line %0d: Valid = %0b, Tag = %h, Data =", i, valid_array[i], tag_array[i]);
-        for (j = 0; j < WORDS_PER_LINE; j = j + 1)
+        for (j = 0; j < CACHE_WORDS_PER_LINE; j = j + 1)
         begin
           $write("%h ", data_array[i][j]);
         end
