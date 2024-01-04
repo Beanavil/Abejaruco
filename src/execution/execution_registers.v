@@ -30,12 +30,16 @@ module ExecutionRegisters #(parameter WORD_SIZE = 32, parameter REGISTER_INDEX =
     input wire cu_mem_to_reg_in,
     input wire cu_reg_write_in,
     input [REGISTER_INDEX-1:0] destination_register_in,
+    input [WORD_SIZE-1:0] alu_result_in,
+    input alu_zero_in,
 
     // Out
     output reg [WORD_SIZE-1:0] extended_inmediate_out,
     output reg cu_mem_to_reg_out,
     output reg cu_reg_write_out,
-    output reg [REGISTER_INDEX-1:0] destination_register_out
+    output reg [REGISTER_INDEX-1:0] destination_register_out,
+    output reg [WORD_SIZE-1:0] alu_result_out,
+    output reg alu_zero_out
   );
 
   initial
@@ -43,6 +47,8 @@ module ExecutionRegisters #(parameter WORD_SIZE = 32, parameter REGISTER_INDEX =
     extended_inmediate_out = 0;
     cu_mem_to_reg_out = 0;
     cu_reg_write_out = 0;
+    alu_result_out = 0;
+    alu_zero_out = 0;
   end
 
   always @(negedge clk)
@@ -51,5 +57,7 @@ module ExecutionRegisters #(parameter WORD_SIZE = 32, parameter REGISTER_INDEX =
     cu_mem_to_reg_out = cu_mem_to_reg_in;
     cu_reg_write_out = cu_reg_write_in;
     destination_register_out = destination_register_in;
+    alu_result_out = alu_result_in;
+    alu_zero_out = alu_zero_in;
   end
 endmodule

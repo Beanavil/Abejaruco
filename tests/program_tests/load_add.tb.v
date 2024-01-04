@@ -44,6 +44,9 @@ module LoadAdd_tb();
   parameter WORD_WIDTH = 32;
   parameter PROGRAM = "../../../programs/load_add.o";
 
+  // Print parameters
+  parameter ARRAY_LENGTH = 32;
+
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
               .clk(clk),
@@ -80,6 +83,9 @@ module LoadAdd_tb();
       test_3(err);
       check_err(err, "3");
 
+      test_4(err);
+      check_err(err, "4");
+
       $display("Done");
     end
   endtask
@@ -98,7 +104,7 @@ module LoadAdd_tb();
     end
   endtask
 
-  // Test 1: Fetch load immediate of 2 on register 1
+  // Test 1: Fetch immediate of 2 on register 1
   task automatic test_1;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
@@ -127,8 +133,8 @@ module LoadAdd_tb();
       alu_out_multiplexer_expected = 32'h0;
 
       print_tb_info("1", "Load first instruction", icache_data_out_expected,
-                                                   cu_alu_op_expected,
-                                                   alu_out_multiplexer_expected);
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
 
       err = (icache_data_out !== icache_data_out_expected);
     end
@@ -152,15 +158,15 @@ module LoadAdd_tb();
       alu_out_multiplexer_expected = 32'h0;
 
       print_tb_info("2", "Load second instruction", icache_data_out_expected,
-                                                    cu_alu_op_expected,
-                                                    alu_out_multiplexer_expected);
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
 
       err = ({icache_data_out, cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
     end
   endtask
 
   // Test 3:
-  // -- Fetch li of -4, decode add, execute li of 2.
+  // -- F li of -4 /*miss*/, ID add, EX li of 2 M -, WB -
   // -- Check that the result of the execute stage is the value to be loaded in R1.
   task automatic test_3;
     output integer err;
@@ -179,18 +185,47 @@ module LoadAdd_tb();
       alu_out_multiplexer_expected = 32'h00000002;
 
       print_tb_info("3", "Load third instruction", icache_data_out_expected,
-                                                   cu_alu_op_expected,
-                                                   alu_out_multiplexer_expected);
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
 
       err = ({icache_data_out, cu_alu_op, alu_out_multiplexer} !==
-              {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
+             {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
+    end
+  endtask
 
-      // //TODO check bonito
-      // $display("alu_out_multiplexer: %b", alu_out_multiplexer);
-      // $display("cu_reg_write_out: %b", rf_write_enable_test);
-      // $display("destination_register_out: %b", rf_write_idx_test);
+  // Test 4:
+  // -- F li of -4 /*miss*/, ID add, EX add, M li of 2 WB -.
+  // -- F li of -4 /*miss*/, ID add, EX add, M add,    WB li of 2.
+  // -- Check that registers update correctly after writeback.
+  task automatic test_4;
+    output integer err;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
+
+    begin
+      // Skip memory stage as we don't have anything in there yet
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+
+      #CLK_PERIOD;
+
+      icache_data_out_expected = 32'h0000033; /*icache miss, same as b4*/
+      cu_alu_op_expected = 2'b10;
+      alu_out_multiplexer_expected = 32'h0;
+
+      print_tb_info("5", "Load fourth&fifth instructions", icache_data_out_expected,
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
+      $display("-- register_file.r[1] should be %h, got %h", 32'h00000002, uut.register_file.r[1]);
 
 
+      err = ({icache_data_out, cu_alu_op, alu_out_multiplexer, uut.register_file.r[1'b1]} !==
+             {icache_data_out_expected, cu_alu_op_expected,
+              alu_out_multiplexer_expected, 32'h00000002 /*r1_expected*/});
     end
   endtask
 

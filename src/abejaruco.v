@@ -55,8 +55,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   reg [31:0] rm0; /*return PC on exception*/
   reg [31:0] rm1 = 32'h2000; /*@ for certain exceptions*/
   reg [31:0] rm2; /*exception type info*/
-  reg [31:0] x0 = 32'h0; /*zero*/
-  reg [31:0] x1; /*ra*/
+  // reg [31:0] x1; /*ra*/
 
   // Register file wires
   reg rf_write_enable; // TODO in WB stage
@@ -121,6 +120,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
 
   // Decode registers wires
   // -- Out wires
+  wire [31:0] decode_alu_result_out;
+  wire decode_alu_zero_out;
   wire [31:0] decode_rm0_out;
   wire [31:0] decode_instruction_out;
   wire [4:0] decode_dst_register_out;
@@ -146,12 +147,13 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire [31:0] alu_first_register;
   wire [31:0] alu_second_register;
   wire [31:0] alu_address;
-  wire [31:0] alu_result;
 
   // -- Out wires
   wire alu_zero;
 
   // Execution registers wires
+  wire [31:0] execution_alu_result_out;
+  wire execution_alu_zero_out;
   wire [31:0] execution_sign_extend_out;
   wire execution_cu_mem_to_reg_out;
   wire execution_cu_reg_write_out;
@@ -172,6 +174,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire memory_in_use;
 
   // Memory registers wires
+  wire [31:0] memory_alu_result_out;
+  wire memory_alu_zero_out;
   wire [31:0] memory_sign_extend_out;
   wire memory_cu_mem_to_reg_out;
 
@@ -335,7 +339,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
 
         //OUT
         .zero(alu_zero),
-        .result(alu_result)
+        .result(decode_alu_result_out)
       );
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
@@ -348,44 +352,53 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                        .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
                        .cu_reg_write_in(decode_cu_reg_write_out),
                        .destination_register_in(decode_dst_register_out),
+                       .alu_result_in(decode_alu_result_out),
+                       .alu_zero_in(decode_alu_zero_out),
 
                        // Out
                        .extended_inmediate_out(execution_sign_extend_out),
                        .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
                        .cu_reg_write_out(execution_cu_reg_write_out),
-                       .destination_register_out(execution_dst_register_out)
+                       .destination_register_out(execution_dst_register_out),
+                       .alu_result_out(execution_alu_result_out),
+                       .alu_zero_out(execution_alu_zero_out)
                      );
 
   //--------------------------------------------//
   //               Memory stage                 //
   //--------------------------------------------//
 
-  // TODO: When adding ALU this will change to add the ALU result
-  Mux2to1 reg_write_mux(
-            // In
-            .sel(memory_cu_mem_to_reg_out),
-            .in0(alu_result),
-            .in1(memory_sign_extend_out),
-
-            // Out
-            .out(rf_write_data)
-          );
-
-
   MemoryRegisters memory_registers(
                     // In
                     .clk(clk),
+                    .alu_result_in(execution_alu_result_out),
                     .extended_inmediate_in(execution_sign_extend_out),
                     .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
                     .cu_reg_write_in(execution_cu_reg_write_out),
                     .destination_register_in(execution_dst_register_out),
 
                     // Out
+                    .alu_result_out(memory_alu_result_out),
                     .extended_inmediate_out(memory_sign_extend_out),
                     .cu_mem_to_reg_out(memory_cu_mem_to_reg_out),
                     .cu_reg_write_out(rf_write_enable),
                     .destination_register_out(rf_write_idx)
                   );
+
+  //--------------------------------------------//
+  //              Write Back stage              //
+  //--------------------------------------------//
+
+  // TODO: When adding ALU this will change to add the ALU result
+  Mux2to1 reg_write_mux(
+            // In
+            .sel(memory_cu_mem_to_reg_out),
+            .in0(memory_alu_result_out),
+            .in1(memory_sign_extend_out),
+
+            // Out
+            .out(rf_write_data)
+          );
 
   initial
   begin

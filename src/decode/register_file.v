@@ -36,13 +36,18 @@ module RegisterFile #(parameter WORD_SIZE = 32,
                           output reg [WORD_SIZE-1:0] read_data_1,
                           output reg [WORD_SIZE-1:0] read_data_2
                         );
-  reg [WORD_SIZE-1:0] r[NUM_REGS]; /*registers*/
+  reg [WORD_SIZE-1:0] r[NUM_REGS]; /*registers + zero*/
+
+  initial
+  begin
+    r[0] = 0; /*zero constant register*/
+  end
 
   always @(posedge clk)
   begin
     if(reset)
     begin
-      for(integer i = 0; i < NUM_REGS; i = i + 1)
+      for(integer i = 1; i < NUM_REGS; i = i + 1)
       begin
         r[i] = 0;
       end
