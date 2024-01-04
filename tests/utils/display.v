@@ -23,6 +23,10 @@ task end_color_print;
   $write("%c[0m", 27);
 endtask
 
+task begin_blue_print;
+  $write("%c[1;34m", 27);
+endtask
+
 task begin_green_print;
   $write("%c[1;32m", 27);
 endtask

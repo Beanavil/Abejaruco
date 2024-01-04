@@ -22,10 +22,10 @@
 `include "tests/utils/display.v"
 
 task automatic check_err;
-  input integer err;
+  input err;
   input string test_name;
   begin
-    if (!err)
+    if (err === 1'b0)
     begin
       begin_green_print();
       $display("TEST %s PASSED.", test_name);
@@ -37,6 +37,34 @@ task automatic check_err;
       $display("TEST %s FAILED.", test_name);
       end_color_print();
     end
+  end
+endtask
+
+task automatic finish_test_run;
+  input integer err_count;
+  input integer num_tests;
+  begin
+    $display("");
+    if (err_count == 0)
+    begin
+      begin_green_print();
+      $display("%0d of %0d tests passed.", num_tests, num_tests);
+      end_color_print();
+      begin_blue_print();
+      $display("No tests failed.");
+      end_color_print();
+    end
+    else
+    begin
+      begin_blue_print();
+      $display("%0d of %0d tests passed.", num_tests - err_count, num_tests);
+      end_color_print();
+      begin_red_print();
+      $display("%0d of %0d tests failed.", err_count, num_tests);
+      end_color_print();
+    end
+    $display("");
+    $display("Done");
   end
 endtask
 
