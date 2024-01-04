@@ -135,7 +135,6 @@ module Cache (
     $display("The access is: %b", access);
     if (access)
     begin
-      
       if (mem_op_done === 1'b1) begin
         mem_op_done = 1'b0;
       end
@@ -171,6 +170,7 @@ module Cache (
           begin
             $display("Warning: byte_op is not 0 or 1");
           end
+          mem_op_done = 1;
           update_lru(line_number);
 
         end
@@ -289,6 +289,7 @@ module Cache (
             $display("Warning: byte_op is not 0 or 1");
           end
 
+          mem_op_done = 1;
           update_lru(line_number);
         end
         else /*miss*/
@@ -322,9 +323,9 @@ module Cache (
 
             // Update line control information
             tag_array[replace_index] = address[INIT_TAG:END_TAG];
+            mem_op_done = 1;
             valid_array[replace_index] = 1;
             update_lru(replace_index);
-            mem_op_done = 1;
 
             data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
           end
