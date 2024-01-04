@@ -25,7 +25,7 @@
 
 module FlipFlop_tb;
 
-  parameter N = 32; // Specify the bit width here. Change this to test different widths.
+  localparam N = 32; // Specify the bit width here. Change this to test different widths.
 
   reg clk;
   reg reset;

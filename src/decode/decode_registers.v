@@ -19,18 +19,16 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
-`timescale 1ns / 1ps
-
-module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5, OFFSET_SIZE = 12)(
+module DecodeRegisters(
     // In
     input wire clk,
-    input wire [WORD_SIZE-1:0] rm0_in,
-    input wire [WORD_SIZE-1:0] instruction_in,
-    input wire [REGISTER_INDEX-1:0] destination_register_in,
-    input wire [WORD_SIZE-1:0] first_register_in,
-    input wire [WORD_SIZE-1:0] second_register_in,
+    input wire [WORD_WIDTH-1:0] rm0_in,
+    input wire [WORD_WIDTH-1:0] instruction_in,
+    input wire [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
+    input wire [WORD_WIDTH-1:0] first_register_in,
+    input wire [WORD_WIDTH-1:0] second_register_in,
     input wire cu_branch_in,
     input wire cu_reg_write_in,
     input wire cu_mem_read_in,
@@ -39,16 +37,16 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5, OFFSET_SI
     input wire cu_mem_write_in,
     input wire cu_alu_src_in,
     input wire cu_is_imm_in,
-    input wire [REGISTER_INDEX-1:0] src_address_in,
-    input wire [REGISTER_INDEX-1:0] dst_address_in,
+    input wire [REGISTER_INDEX_WIDTH-1:0] src_address_in,
+    input wire [REGISTER_INDEX_WIDTH-1:0] dst_address_in,
     input wire [OFFSET_SIZE-1:0] offset_in,
 
     // Out
-    output reg [WORD_SIZE-1:0] rm0_out,
-    output reg [WORD_SIZE-1:0] instruction_out,
-    output reg [REGISTER_INDEX-1:0] destination_register_out,
-    output reg [WORD_SIZE-1:0] first_register_out,
-    output reg [WORD_SIZE-1:0] second_register_out,
+    output reg [WORD_WIDTH-1:0] rm0_out,
+    output reg [WORD_WIDTH-1:0] instruction_out,
+    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
+    output reg [WORD_WIDTH-1:0] first_register_out,
+    output reg [WORD_WIDTH-1:0] second_register_out,
     output reg cu_branch_out,
     output reg cu_reg_write_out,
     output reg cu_mem_read_out,
@@ -57,8 +55,8 @@ module DecodeRegisters #(parameter WORD_SIZE = 32, REGISTER_INDEX = 5, OFFSET_SI
     output reg cu_mem_write_out,
     output reg cu_alu_src_out,
     output reg cu_is_imm_out,
-    output reg [REGISTER_INDEX-1:0] src_address_out,
-    output reg [REGISTER_INDEX-1:0] dst_address_out,
+    output reg [REGISTER_INDEX_WIDTH-1:0] src_address_out,
+    output reg [REGISTER_INDEX_WIDTH-1:0] dst_address_out,
     output reg [OFFSET_SIZE-1:0] offset_out
   );
 

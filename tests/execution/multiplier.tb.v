@@ -19,9 +19,7 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "tests/utils/tb_utils.v"
 
@@ -34,9 +32,7 @@ module Multiplier_tb();
   wire overflow;
   integer i;
 
-  parameter CLK_PERIOD = 1;
-
-  Multiplier #(32) uut (
+  Multiplier #(WORD_WIDTH) uut (
                .clk(clk),
                .multiplicand(multiplicand),
                .multiplier(multiplier),

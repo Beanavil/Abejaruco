@@ -225,7 +225,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o") (
           .mem_data_in(icache_mem_data_in)
         );
 
-  FetchRegisters #(.WORD_SIZE(32)) fetch_registers(
+  FetchRegisters fetch_registers(
                    // In
                    .clk(clk),
                    .rm0_in(rm0),

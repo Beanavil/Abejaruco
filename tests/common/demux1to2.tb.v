@@ -25,7 +25,7 @@
 
 module Demux1to2_tb;
 
-  parameter N = 32;  // Specify the bit width
+  localparam N = 32;  // Specify the bit width
 
   reg [N-1:0] in;
   reg sel;

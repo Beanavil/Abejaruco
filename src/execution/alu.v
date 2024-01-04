@@ -19,7 +19,7 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
 `include "src/common/adder.v"
 `include "src/execution/multiplier.v"
@@ -46,7 +46,7 @@ module ALU
           .carry_out(tmp_sum_zero)
         );
 
-  Multiplier #(.WIDTH(32), .NIBBLE_WIDTH(4)) multiplier (
+  Multiplier multiplier (
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),

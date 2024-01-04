@@ -13,7 +13,6 @@ parameter REGISTER_INDEX_WIDTH = $clog2(NUM_REGS);
 parameter ADDRESS_WIDTH = 32;
 parameter WORD_WIDTH = 32;
 
-
 parameter MEMORY_ADDRESS_SIZE = 12;
 parameter MEMORY_LOCATIONS = 4096;
 parameter MEMORY_OP_DELAY_CYCLES = 3;
@@ -29,6 +28,11 @@ parameter END_WORD_OFFSET = INIT_WORD_OFFSET - ($clog2(CACHE_WORDS_PER_LINE)-1);
 parameter INIT_BYTE_OFFSET = END_WORD_OFFSET - 1;
 parameter END_BYTE_OFFSET = 0;
 parameter TAG_WIDTH = ADDRESS_WIDTH - FULL_OFFSET_WIDTH;
-  parameter FULL_OFFSET_WIDTH = $clog2(CACHE_WORDS_PER_LINE) + $clog2(WORD_WIDTH/8);    // Calculate offset width
+parameter FULL_OFFSET_WIDTH = $clog2(CACHE_WORDS_PER_LINE) + $clog2(WORD_WIDTH/8);
 
+parameter SIGN_EXTENDER_INPUT_SIZE = 12;
+
+parameter OFFSET_SIZE = 12;
+
+parameter NIBBLE_WIDTH = 4;
 `endif

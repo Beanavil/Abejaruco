@@ -19,9 +19,7 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "tests/utils/tb_utils.v"
 `include "src/execution/alu_control.v"
@@ -31,8 +29,6 @@ module ALUControl_tb();
   reg [6:0] inst;
   reg [1:0] ctrl_alu_op;
   wire [1:0] alu_op;
-
-  parameter CLK_PERIOD = 1;
 
   ALUControl alu_control
              (.inst(inst),

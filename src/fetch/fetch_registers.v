@@ -19,16 +19,14 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
-`timescale 1ns / 1ps
-
-module FetchRegisters #(parameter WORD_SIZE = 32)(
+module FetchRegisters (
     input wire clk,
-    input wire [WORD_SIZE-1:0] rm0_in,
-    output reg [WORD_SIZE-1:0] rm0_out,
-    input wire [WORD_SIZE-1:0] instruction_in,
-    output reg [WORD_SIZE-1:0] instruction_out,
+    input wire [WORD_WIDTH-1:0] rm0_in,
+    output reg [WORD_WIDTH-1:0] rm0_out,
+    input wire [WORD_WIDTH-1:0] instruction_in,
+    output reg [WORD_WIDTH-1:0] instruction_out,
     input wire active,
     output reg active_out
   );
@@ -48,7 +46,8 @@ module FetchRegisters #(parameter WORD_SIZE = 32)(
       instruction_out = instruction_in;
       active_out = 1'b1;
     end
-    else begin
+    else
+    begin
       active_out = 1'b0;
     end
   end

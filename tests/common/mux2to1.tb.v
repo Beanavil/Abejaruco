@@ -25,7 +25,7 @@
 
 module Mux2to1_tb;
 
-  parameter N = 32;
+  localparam N = 32;
 
   reg [N-1:0] in0;
   reg [N-1:0] in1;
