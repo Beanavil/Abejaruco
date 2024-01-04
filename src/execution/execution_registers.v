@@ -19,26 +19,24 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
-`timescale 1ns / 1ps
-
-module ExecutionRegisters #(parameter WORD_SIZE = 32, parameter REGISTER_INDEX = 5)(
+module ExecutionRegisters (
     // In
     input wire clk,
-    input wire [WORD_SIZE-1:0] extended_inmediate_in,
+    input wire [WORD_WIDTH-1:0] extended_inmediate_in,
     input wire cu_mem_to_reg_in,
     input wire cu_reg_write_in,
-    input [REGISTER_INDEX-1:0] destination_register_in,
-    input [WORD_SIZE-1:0] alu_result_in,
+    input [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
+    input [WORD_WIDTH-1:0] alu_result_in,
     input alu_zero_in,
 
     // Out
-    output reg [WORD_SIZE-1:0] extended_inmediate_out,
+    output reg [WORD_WIDTH-1:0] extended_inmediate_out,
     output reg cu_mem_to_reg_out,
     output reg cu_reg_write_out,
-    output reg [REGISTER_INDEX-1:0] destination_register_out,
-    output reg [WORD_SIZE-1:0] alu_result_out,
+    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
+    output reg [WORD_WIDTH-1:0] alu_result_out,
     output reg alu_zero_out
   );
 
@@ -60,4 +58,5 @@ module ExecutionRegisters #(parameter WORD_SIZE = 32, parameter REGISTER_INDEX =
     alu_result_out = alu_result_in;
     alu_zero_out = alu_zero_in;
   end
+
 endmodule

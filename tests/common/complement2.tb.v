@@ -19,18 +19,15 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "src/common/complement2.v"
 
 module Complement2_tb;
+  reg [WORD_WIDTH-1:0] in;
+  wire [WORD_WIDTH-1:0] out;
 
-  parameter N = 32; // Define the bit width for the test
-  reg [N-1:0] in;
-  wire [N-1:0] out;
-
-  // Instantiate the Two's Complement module (Unit Under Test (UUT))
-  Complement2 #(.N(N)) uut (
+  Complement2 #(.N(WORD_WIDTH)) uut (
                 .in(in),
                 .out(out)
               );
@@ -53,9 +50,9 @@ module Complement2_tb;
     // Test Case 2: Positive number
     #10;
     $display("Test Case 2: Positive number");
-    in = 1; // Smallest positive number in N bits
+    in = 1; // Smallest positive number in WORD_WIDTH bits
     #10;
-    if (out !== {N{1'b1}})
+    if (out !== {WORD_WIDTH{1'b1}})
     begin
       $display("Error in Test Case 2 at time %0d", $time);
     end
@@ -63,7 +60,7 @@ module Complement2_tb;
     // Test Case 3: Negative number
     #10;
     $display("Test Case 3: Negative number");
-    in = ~0; // Largest negative number in N bits (all 1's)
+    in = ~0; // Largest negative number in WORD_WIDTH bits (all 1's)
     #10;
     if (out !== 1)
     begin
@@ -77,4 +74,3 @@ module Complement2_tb;
   end
 
 endmodule
-

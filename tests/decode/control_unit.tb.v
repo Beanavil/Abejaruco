@@ -19,9 +19,7 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "tests/utils/tb_utils.v"
 
@@ -39,8 +37,6 @@ module ControlUnit_tb();
   wire mem_write;
   wire alu_src;
   wire is_imm;
-
-  parameter CLK_PERIOD = 1;
 
   ControlUnit control_unit
               (.opcode(opcode),

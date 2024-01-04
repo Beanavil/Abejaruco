@@ -19,36 +19,33 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
+`include "src/parameters.v"
 
-`timescale 1ns / 1ps
-
-module Multiplier #(parameter WIDTH = 32,
-                      NIBBLE_WIDTH = 4)
+module Multiplier
   (input wire clk,
-   input wire [WIDTH-1:0] multiplicand,
-   input wire [WIDTH-1:0] multiplier,
-   output reg [WIDTH-1:0] result,
+   input wire [WORD_WIDTH-1:0] multiplicand,
+   input wire [WORD_WIDTH-1:0] multiplier,
+   output reg [WORD_WIDTH-1:0] result,
    output reg overflow);
 
-  reg [WIDTH*2-1:0] internalResult;
-  reg [WIDTH-1:0] partialProduct1 [0:64-1];
-  reg [WIDTH-1:0] partialProduct2 [0:32-1];
-  reg [WIDTH-1:0] partialProduct3 [0:16-1];
-  reg [WIDTH-1:0] partialProduct4 [0:8-1];
-  reg [WIDTH-1:0] multiplierReg;
-  reg [WIDTH-1:0] multiplicandReg;
+  reg [WORD_WIDTH*2-1:0] internalResult;
+  reg [WORD_WIDTH-1:0] partialProduct1 [0:64-1];
+  reg [WORD_WIDTH-1:0] partialProduct2 [0:32-1];
+  reg [WORD_WIDTH-1:0] partialProduct3 [0:16-1];
+  reg [WORD_WIDTH-1:0] partialProduct4 [0:8-1];
+  reg [WORD_WIDTH-1:0] multiplierReg;
+  reg [WORD_WIDTH-1:0] multiplicandReg;
   integer i, j;
 
   always @(posedge clk)
   begin
     multiplicandReg <= multiplicand;
     multiplierReg   <= multiplier;
-    for (i = 0; i < WIDTH/NIBBLE_WIDTH; i = i + 1)
+    for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin
-      for (j = 0; j < WIDTH/NIBBLE_WIDTH; j = j + 1)
+      for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
       begin
-        partialProduct1[i*WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
+        partialProduct1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
       end
     end
 

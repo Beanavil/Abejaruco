@@ -19,21 +19,15 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
 
-`timescale 1ns / 1ps
 
 `include "tests/utils/tb_utils.v"
 
 `include "src/memory/cache.v"
 
+`include "src/parameters.v"
+
 module Cache_tb;
-
-  parameter LINE_SIZE = 128;
-  parameter ADDRESS_WIDTH = 32;
-  parameter WORD_WIDTH = 32;
-  parameter WORDS_PER_LINE = 4;
-
   // In wires (from CPU)
   reg clk;
   reg access;
@@ -44,7 +38,7 @@ module Cache_tb;
   reg byte_op;
   // In wires (from memory)
   reg mem_data_ready;
-  reg [LINE_SIZE-1:0] mem_data_out;
+  reg [CACHE_LINE_SIZE-1:0] mem_data_out;
   reg memory_in_use;
 
   // Out wires (to CPU)
@@ -56,12 +50,8 @@ module Cache_tb;
   wire mem_op;
   wire mem_op_init;
   wire mem_op_done;
-  wire [LINE_SIZE-1:0] mem_data_in;
-  wire [ADDRESS_WIDTH-1:0] mem_address;
-
-
-  parameter CLK_PERIOD = 1;
-  parameter D_CLK_PERIOD = 2;
+  wire [CACHE_LINE_SIZE-1:0] mem_data_in;
+  wire [MEMORY_ADDRESS_SIZE-1:0] mem_address;
 
   Cache uut (
           .clk(clk),
@@ -85,11 +75,6 @@ module Cache_tb;
         );
 
   // Clock generation
-  // TODO: I think that in the tests it would be better to control the clock manually
-  //       by setting it to 0 and 1 instead of using a clock generator.
-  //       This way we can control that the modules actually take the number
-  //       of cycles that we expect them to take. If we use a clock generator
-  //       it's harder to know at any given point what the state of the system is.
   always #CLK_PERIOD clk = ~clk;
 
   task automatic reset_input;
@@ -154,12 +139,12 @@ module Cache_tb;
       reset = 0;
       byte_op = 0;
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       op = 1'b1; /*read*/
       byte_op = 1;
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
       #10
 
        data_out_expected = 32'h00000011;
@@ -167,7 +152,7 @@ module Cache_tb;
 
       err = (data_out !== data_out_expected);
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
       access = 0;
     end
   endtask
@@ -186,18 +171,18 @@ module Cache_tb;
       reset = 0;
       byte_op = 0;
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       op = 1'b1; /*read*/
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       data_out_expected = 32'h11111111;
       print_tb_info("2", "Write to the same memory address", data_out_expected);
 
       err = (data_out !== data_out_expected);
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
       access = 0;
     end
   endtask
@@ -216,18 +201,18 @@ module Cache_tb;
       reset = 0;
       byte_op = 0;
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       op = 1'b1; /*read*/
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       data_out_expected = 32'h11111111;
       print_tb_info("3", "Write to another word in the same address", data_out_expected);
 
       err = (data_out !== data_out_expected);
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
       access = 0;
     end
   endtask
@@ -246,18 +231,18 @@ module Cache_tb;
       reset = 0;
       byte_op = 1;
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       op = 1'b1; /*read*/
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
 
       data_out_expected = 32'h00000033;
       print_tb_info("4", "Write and read byte", data_out_expected);
 
       err = (data_out !== data_out_expected);
 
-      #D_CLK_PERIOD;
+      #CLK_PERIOD;
       access = 0;
     end
   endtask

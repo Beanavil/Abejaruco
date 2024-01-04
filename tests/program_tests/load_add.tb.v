@@ -19,12 +19,9 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "tests/utils/tb_utils.v"
-
 `include "src/abejaruco.v"
 
 module LoadAdd_tb();
@@ -38,14 +35,7 @@ module LoadAdd_tb();
   reg [4:0] rf_write_idx_test;
   reg rf_write_enable_test;
 
-  parameter CLK_PERIOD = 1;
-  parameter RESET_PERIOD = 5;
-  parameter CACHE_LINE_SIZE = 128;
-  parameter WORD_WIDTH = 32;
   parameter PROGRAM = "../../../programs/load_add.o";
-
-  // Print parameters
-  parameter ARRAY_LENGTH = 32;
 
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
@@ -64,7 +54,7 @@ module LoadAdd_tb();
       $display("*** Resetting input ***");
       clk = 0;
       reset = 1;
-      #RESET_PERIOD reset = 0;
+      #CLK_PERIOD reset = 0;
       #CLK_PERIOD;
       $display("Done");
     end

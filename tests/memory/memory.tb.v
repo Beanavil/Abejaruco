@@ -19,30 +19,22 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`default_nettype none
-
-`timescale 1ns / 1ps
+`include "src/parameters.v"
 
 `include "tests/utils/tb_utils.v"
-
 `include "src/memory/memory.v"
 
-module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
-                    ADDRESS_SIZE = 12,
-                    CACHE_LINE_SIZE = 128) ();
+module Memory_tb();
   reg clk;
   reg enable;
   reg op;
-  reg [ADDRESS_SIZE-1:0] address;
+  reg [MEMORY_ADDRESS_SIZE-1:0] address;
   reg [CACHE_LINE_SIZE-1:0] data_in;
   reg memory_in_use;
   wire [CACHE_LINE_SIZE-1:0] data_out;
   wire data_ready;
 
-  parameter CLK_PERIOD = 2;
-  parameter DELAY_PERIOD = 6;
-
-  Memory #(.MEMORY_LOCATIONS(MEMORY_LOCATIONS), .ADDRESS_SIZE(ADDRESS_SIZE), .CACHE_LINE_SIZE(CACHE_LINE_SIZE)) uut (
+  Memory uut (
            .clk(clk),
            .enable(enable),
            .op(op),
@@ -54,11 +46,6 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
          );
 
   // Clock generation
-  // TODO: I think that in the tests it would be better to control the clock manually
-  //       by setting it to 0 and 1 instead of using a clock generator.
-  //       This way we can control that the modules actually take the number
-  //       of cycles that we expect them to take. If we use a clock generator
-  //       it's harder to know at any given point what the state of the system is.
   always #1 clk = ~clk;
 
   task automatic reset_input;
@@ -106,7 +93,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
       enable = 1;
 
       #CLK_PERIOD;
-      #DELAY_PERIOD;
+      #MEMORY_TB_DELAY_PERIOD;
       #CLK_PERIOD;
 
       enable = 0;
@@ -117,7 +104,7 @@ module Memory_tb#(parameter MEMORY_LOCATIONS = 4096,
       enable = 1;
 
       #CLK_PERIOD;
-      #DELAY_PERIOD;
+      #MEMORY_TB_DELAY_PERIOD;
       #CLK_PERIOD;
 
       data_out_expected = 128'h00FF00FF00FF00FF00FF00FF00FF00FF;
