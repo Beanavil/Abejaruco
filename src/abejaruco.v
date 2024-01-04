@@ -33,19 +33,13 @@
 `include "src/memory/memory_registers.v"
 `include "src/common/mux2to1.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/zero.o") (
-    input wire clk,
-    input wire reset,
-    input wire [31:0] rm0_initial,
-    output reg [31:0] icache_data_out_test,
-    output reg [1:0] cu_alu_op_test,
-
-    output reg [31:0] sign_extend_out_test,
-    output reg [31:0] alu_out_multiplexer_test,
-    output reg [31:0] rf_write_data_test,
-    output reg rf_write_enable_test,
-    output reg [REGISTER_INDEX_WIDTH-1:0] rf_write_idx_test
-  );
+module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
+                     NUM_REGS = 32,
+                     INDEX_WIDTH = $clog2(NUM_REGS))(
+                       input wire clk,
+                       input wire reset,
+                       input wire [31:0] rm0_initial
+                     );
 
   // Special registers
   reg [31:0] rm0; /*return PC on exception*/
@@ -399,17 +393,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o") (
   initial
   begin
     rm0 = rm0_initial;
-  end
-
-  // Auxiliar control outputs update
-  always @(posedge clk)
-  begin
-    alu_out_multiplexer_test = rf_write_data;
-    cu_alu_op_test = cu_alu_op;
-    icache_data_out_test = icache_data_out;
-
-    rf_write_enable_test = rf_write_enable;
-    rf_write_idx_test = rf_write_idx;
   end
 
   // Main pipeline execution
