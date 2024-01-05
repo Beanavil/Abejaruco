@@ -2,7 +2,7 @@
 #
 # Copyright : (c) 2023-2024 Javier Beiro Piñón
 #           : (c) 2023-2024 Beatriz Navidad Vilches
-#           : (c) 2023-2024 Stefano Petrili
+#           : (c) 2023-2024 Stefano Petrilli
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #

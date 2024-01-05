@@ -2,7 +2,7 @@
 
 `timescale 1ns / 1ps
 
-`ifndef PARAMETERS_V
+`ifndef PARAMETERS_VPetrilli
 `define PARAMETERS_V
 
 parameter CLK_PERIOD = 1;
