@@ -32,7 +32,7 @@ module Multiplier_tb();
   wire overflow;
   integer i;
 
-  Multiplier #(WORD_WIDTH) uut (
+  Multiplier uut (
                .clk(clk),
                .multiplicand(multiplicand),
                .multiplier(multiplier),

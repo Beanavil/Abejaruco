@@ -28,9 +28,6 @@ module LoadAdd_tb();
   reg clk;
   reg reset;
   reg [WORD_WIDTH-1:0] rm0_initial [];
-  wire [WORD_WIDTH-1:0] alu_out_multiplexer;
-  wire [1:0] cu_alu_op;
-  wire [WORD_WIDTH-1:0] icache_data_out;
 
   reg [4:0] rf_write_idx_test;
   reg rf_write_enable_test;
@@ -40,13 +37,7 @@ module LoadAdd_tb();
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
               .clk(clk),
-              .rm0_initial(32'b1000),
-              .alu_out_multiplexer_test(alu_out_multiplexer),
-              .cu_alu_op_test(cu_alu_op),
-              .icache_data_out_test(icache_data_out),
-
-              .rf_write_enable_test(rf_write_enable_test),
-              .rf_write_idx_test(rf_write_idx_test)
+              .rm0_initial(32'b1000)
             );
 
   task automatic reset_input;
@@ -88,9 +79,9 @@ module LoadAdd_tb();
     input [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
     begin
       $display("Test case %s: %s", test_name, test_description);
-      $display("-- icache_data_out should be %h, got %h", icache_data_out_expected, icache_data_out);
-      $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, cu_alu_op);
-      $display("-- alu_out_multiplexer should be %h, got %h", alu_out_multiplexer_expected, alu_out_multiplexer);
+      $display("-- icache_data_out should be %h, got %h", icache_data_out_expected, uut.icache_data_out);
+      $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, uut.cu_alu_op);
+      $display("-- alu_out_multiplexer should be %h, got %h", alu_out_multiplexer_expected, uut.rf_write_data);
     end
   endtask
 
@@ -126,7 +117,7 @@ module LoadAdd_tb();
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      err = (icache_data_out !== icache_data_out_expected);
+      err = (uut.icache_data_out !== icache_data_out_expected);
     end
   endtask
 
@@ -151,7 +142,7 @@ module LoadAdd_tb();
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      err = ({icache_data_out, cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
+      err = ({uut.icache_data_out, uut.cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
     end
   endtask
 
@@ -178,7 +169,7 @@ module LoadAdd_tb();
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      err = ({icache_data_out, cu_alu_op, alu_out_multiplexer} !==
+      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
              {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
     end
   endtask
@@ -213,7 +204,7 @@ module LoadAdd_tb();
       $display("-- register_file.r[1] should be %h, got %h", 32'h00000002, uut.register_file.r[1]);
 
 
-      err = ({icache_data_out, cu_alu_op, alu_out_multiplexer, uut.register_file.r[1'b1]} !==
+      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data, uut.register_file.r[1'b1]} !==
              {icache_data_out_expected, cu_alu_op_expected,
               alu_out_multiplexer_expected, 32'h00000002 /*r1_expected*/});
     end
