@@ -28,6 +28,7 @@ module ExecutionRegisters (
     input [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
     input [WORD_WIDTH-1:0] alu_result_in,
     input alu_zero_in,
+    input wire active,
 
     // Out
     output reg [WORD_WIDTH-1:0] extended_inmediate_out,
@@ -35,7 +36,8 @@ module ExecutionRegisters (
     output reg cu_reg_write_out,
     output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
     output reg [WORD_WIDTH-1:0] alu_result_out,
-    output reg alu_zero_out
+    output reg alu_zero_out,
+    output reg active_out
   );
 `include "src/parameters.v"
 
@@ -50,12 +52,20 @@ module ExecutionRegisters (
 
   always @(negedge clk)
   begin
-    extended_inmediate_out = extended_inmediate_in;
-    cu_mem_to_reg_out = cu_mem_to_reg_in;
-    cu_reg_write_out = cu_reg_write_in;
-    destination_register_out = destination_register_in;
-    alu_result_out = alu_result_in;
-    alu_zero_out = alu_zero_in;
+    if (active)
+    begin
+      extended_inmediate_out = extended_inmediate_in;
+      cu_mem_to_reg_out = cu_mem_to_reg_in;
+      cu_reg_write_out = cu_reg_write_in;
+      destination_register_out = destination_register_in;
+      alu_result_out = alu_result_in;
+      alu_zero_out = alu_zero_in;
+      active_out = 1'b1;
+    end
+    else
+    begin
+      active_out = 1'b0;
+    end
   end
 
 endmodule

@@ -25,6 +25,7 @@
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
 `include "src/execution/alu.v"
+`include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
@@ -105,6 +106,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire cu_is_imm;
   wire [1:0] cu_alu_op;
 
+  // ALU control unit wires
+  // -- Out wires
+   wire [1:0] alu_ctrl_alu_op;
+   wire alu_op_done;
+
   // Decode registers wires
   // -- Out wires
   wire [31:0] decode_alu_result_out;
@@ -131,8 +137,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   // ALU wires
   // -- In wires
-  wire [31:0] alu_first_register;
-  wire [31:0] alu_second_register;
+  wire [31:0] alu_first_input;
+  wire [31:0] alu_second_input;
   wire [31:0] alu_address;
 
   // -- Out wires
@@ -145,6 +151,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire execution_cu_mem_to_reg_out;
   wire execution_cu_reg_write_out;
   wire [4:0] execution_dst_register_out;
+  wire execution_active_out;
 
 
   //TODO cuando se implemente la memoria de datos.
@@ -312,21 +319,28 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                .out(sign_extend_out)
              );
 
+  ALUControl alu_control
+  (.clk(clk),
+   .inst(decode_offset_out[11:5]),
+   .cu_alu_op(decode_cu_alu_op_out),
+   .alu_op(alu_ctrl_alu_op));
+
   // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
   assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
-  assign alu_first_register = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
-  assign alu_second_register = (decode_cu_alu_src_out) ? decode_offset_out : decode_second_register_out;
+  assign alu_first_input = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
+  assign alu_second_input = (decode_cu_alu_src_out) ? {20'b0, decode_offset_out} : decode_second_register_out;
 
   ALU alu(
         //IN
         .clk(clk),
-        .input_first(alu_first_register),
-        .input_second(alu_second_register),
-        .alu_op(decode_cu_alu_op_out),
+        .input_first(alu_first_input),
+        .input_second(alu_second_input),
+        .alu_op(alu_ctrl_alu_op),
 
         //OUT
         .zero(alu_zero),
-        .result(decode_alu_result_out)
+        .result(decode_alu_result_out),
+        .op_done(alu_op_done)
       );
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
@@ -341,6 +355,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .destination_register_in(decode_dst_register_out),
                        .alu_result_in(decode_alu_result_out),
                        .alu_zero_in(decode_alu_zero_out),
+                       .active(alu_op_done),
 
                        // Out
                        .extended_inmediate_out(execution_sign_extend_out),
@@ -348,7 +363,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .cu_reg_write_out(execution_cu_reg_write_out),
                        .destination_register_out(execution_dst_register_out),
                        .alu_result_out(execution_alu_result_out),
-                       .alu_zero_out(execution_alu_zero_out)
+                       .alu_zero_out(execution_alu_zero_out),
+                       .active_out(execution_active_out)
                      );
 
   //--------------------------------------------//
