@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
   (input wire clk,
@@ -34,6 +32,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
    output reg data_ready,
    output reg memory_in_use                   // Memory is use by another module
   );
+`include "src/parameters.v"
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 

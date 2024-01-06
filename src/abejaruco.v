@@ -19,27 +19,24 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
+`include "src/common/mux2to1.v"
+`include "src/common/sign_extend.v"
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
+`include "src/execution/alu.v"
+`include "src/execution/execution_registers.v"
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
-`include "src/execution/alu.v"
-`include "src/common/sign_extend.v"
-`include "src/execution/execution_registers.v"
 `include "src/memory/memory_registers.v"
-`include "src/common/mux2to1.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
-                     NUM_REGS = 32,
-                     INDEX_WIDTH = $clog2(NUM_REGS))(
-                       input wire clk,
-                       input wire reset,
-                       input wire [31:0] rm0_initial
-                     );
+module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
+    input wire clk,
+    input wire reset,
+    input wire [31:0] rm0_initial
+  );
+`include "src/parameters.v"
 
   // Special registers
   reg [31:0] rm0; /*return PC on exception*/

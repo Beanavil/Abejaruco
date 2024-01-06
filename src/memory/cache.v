@@ -18,11 +18,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
-
-`include "src/parameters.v"
-
-`include "src/common/tag_comparator.v"
 `include "src/common/priority_encoder.v"
+`include "src/common/tag_comparator.v"
 
 //TODO add half word operations
 
@@ -53,6 +50,7 @@ module Cache (
     output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
     output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
   );
+`include "src/parameters.v"
 
   // Internal signals for tag comparators
   reg hit;

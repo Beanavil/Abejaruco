@@ -19,13 +19,12 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
+`include "src/decode/control_unit.v"
 `include "tests/utils/tb_utils.v"
 
-`include "src/decode/control_unit.v"
-
 module ControlUnit_tb();
+`include "src/parameters.v"
+
   reg clk;
   reg [6:0] opcode;
   reg [2:0] funct3;

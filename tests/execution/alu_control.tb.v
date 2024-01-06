@@ -19,12 +19,12 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
-`include "tests/utils/tb_utils.v"
 `include "src/execution/alu_control.v"
+`include "tests/utils/tb_utils.v"
 
 module ALUControl_tb();
+`include "src/parameters.v"
+
   reg clk;
   reg [6:0] inst;
   reg [1:0] ctrl_alu_op;

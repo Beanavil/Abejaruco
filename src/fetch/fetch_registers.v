@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module FetchRegisters (
     input wire clk,
     input wire [WORD_WIDTH-1:0] rm0_in,
@@ -30,6 +28,7 @@ module FetchRegisters (
     input wire active,
     output reg active_out
   );
+`include "src/parameters.v"
 
   initial
   begin

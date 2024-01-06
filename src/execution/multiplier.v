@@ -19,14 +19,13 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module Multiplier
   (input wire clk,
    input wire [WORD_WIDTH-1:0] multiplicand,
    input wire [WORD_WIDTH-1:0] multiplier,
    output reg [WORD_WIDTH-1:0] result,
    output reg overflow);
+`include "src/parameters.v"
 
   reg [WORD_WIDTH*2-1:0] internalResult;
   reg [WORD_WIDTH-1:0] partialProduct1 [0:64-1];

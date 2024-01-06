@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module DecodeRegisters(
     // In
     input wire clk,
@@ -59,6 +57,7 @@ module DecodeRegisters(
     output reg [REGISTER_INDEX_WIDTH-1:0] dst_address_out,
     output reg [OFFSET_SIZE-1:0] offset_out
   );
+`include "src/parameters.v"
 
   initial
   begin

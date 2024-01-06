@@ -19,12 +19,11 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module SignExtend(
     input [SIGN_EXTENDER_INPUT_SIZE-1:0] in,
     output [WORD_WIDTH-1:0] out
   );
+`include "src/parameters.v"
 
   localparam EXTEND_SIZE = WORD_WIDTH - SIGN_EXTENDER_INPUT_SIZE;
 

@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 `include "src/common/adder.v"
 `include "src/execution/multiplier.v"
 
@@ -31,6 +29,7 @@ module ALU
    input [1:0] alu_op,
    output zero,
    output [31:0] result);
+`include "src/parameters.v"
 
   wire [31:0] tmp_sum_result, tmp_mul_result;
   wire tmp_sum_zero;

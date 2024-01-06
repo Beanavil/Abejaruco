@@ -19,7 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
 
 module flipFlop (
     input clk,
@@ -27,6 +26,8 @@ module flipFlop (
     input [WORD_SIZE-1:0] d,
     output reg [WORD_SIZE-1:0] q
   );
+`include "src/parameters.v"
+
   always @(posedge clk or posedge reset)
   begin
     if (reset)

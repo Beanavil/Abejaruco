@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module RegisterFile (
     input wire clk,
     input wire write_enable,
@@ -32,6 +30,8 @@ module RegisterFile (
     output reg [WORD_WIDTH-1:0] read_data_1,
     output reg [WORD_WIDTH-1:0] read_data_2
   );
+`include "src/parameters.v"
+
   reg [WORD_WIDTH-1:0] r[NUM_REGS]; /*registers + zero*/
 
   initial

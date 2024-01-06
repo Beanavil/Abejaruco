@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module MemoryRegisters (
     // In
     input wire clk,
@@ -37,6 +35,7 @@ module MemoryRegisters (
     output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
     output reg [WORD_WIDTH-1:0] alu_result_out
   );
+`include "src/parameters.v"
 
   initial
   begin

@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module ExecutionRegisters (
     // In
     input wire clk,
@@ -39,6 +37,7 @@ module ExecutionRegisters (
     output reg [WORD_WIDTH-1:0] alu_result_out,
     output reg alu_zero_out
   );
+`include "src/parameters.v"
 
   initial
   begin

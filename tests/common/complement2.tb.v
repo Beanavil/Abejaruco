@@ -19,11 +19,11 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 `include "src/common/complement2.v"
 
 module Complement2_tb;
+`include "src/parameters.v"
+
   reg [WORD_WIDTH-1:0] in;
   wire [WORD_WIDTH-1:0] out;
 
