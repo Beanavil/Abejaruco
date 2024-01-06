@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrilli
+// Copyright : (c) 2024 Javier Beiro Piñón
+//           : (c) 2024 Beatriz Navidad Vilches
+//           : (c) 2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -24,12 +24,12 @@
 `include "tests/utils/tb_utils.v"
 `include "src/abejaruco.v"
 
-module LoadAdd_tb();
+module ALUOps_tb();
   reg clk;
   reg reset;
   reg [WORD_WIDTH-1:0] rm0_initial [];
 
-  parameter PROGRAM = "../../../programs/load_add.o";
+  parameter PROGRAM = "../../../programs/alu_ops.o";
 
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
@@ -52,17 +52,17 @@ module LoadAdd_tb();
     begin
       integer err;
       $display("*** Run tests ***");
-      test_1(err);
-      check_err(err, "1");
+      test_mul(err);
+      check_err(err, "mul");
 
-      test_2(err);
-      check_err(err, "2");
+      test_add(err);
+      check_err(err, "add");
 
-      test_3(err);
-      check_err(err, "3");
+      test_sub(err);
+      check_err(err, "sub");
 
-      test_4(err);
-      check_err(err, "4");
+      test_wb(err);
+      check_err(err, "wb");
 
       $display("Done");
     end
@@ -75,15 +75,15 @@ module LoadAdd_tb();
     input [1:0] cu_alu_op_expected;
     input [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
     begin
-      $display("Test case %s: %s", test_name, test_description);
+      $display("Test %s: %s", test_name, test_description);
       $display("-- icache_data_out should be %h, got %h", icache_data_out_expected, uut.icache_data_out);
       $display("-- cu_alu_op should be %h, got %h", cu_alu_op_expected, uut.cu_alu_op);
       $display("-- alu_out_multiplexer should be %h, got %h", alu_out_multiplexer_expected, uut.rf_write_data);
     end
   endtask
 
-  // Test 1: Fetch immediate of 2 on register 1
-  task automatic test_1;
+  // Test mul: load two immediates and multiply them
+  task automatic test_mul;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
@@ -106,63 +106,46 @@ module LoadAdd_tb();
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00201083;
+      icache_data_out_expected = 32'h00208013;
       cu_alu_op_expected = 2'b00;
       alu_out_multiplexer_expected = 32'h0;
 
-      print_tb_info("1", "Load first instruction", icache_data_out_expected,
+      print_tb_info("MUL", "Load first immediate",
+                    icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      err = (uut.icache_data_out !== icache_data_out_expected);
-    end
-  endtask
-
-  // Test 2: Fetch an add and decode the previous li
-  task automatic test_2;
-    output integer err;
-    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
-    reg [1:0] cu_alu_op_expected;
-    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
-
-    begin
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h0000033;
+      icache_data_out_expected = 32'h00110013;
       cu_alu_op_expected = 2'b00;
-      alu_out_multiplexer_expected = 32'h0;
+      alu_out_multiplexer_expected = 32'h0; // TODO
 
-      print_tb_info("2", "Load second instruction", icache_data_out_expected,
+      print_tb_info("MUL", "Load second immediate",
+                    icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      err = ({uut.icache_data_out, uut.cu_alu_op} !== {icache_data_out_expected, cu_alu_op_expected});
-    end
-  endtask
-
-  // Test 3:
-  // -- F li of -4 /*miss*/, ID add, EX li of 2 M -, WB -
-  // -- Check that the result of the execute stage is the value to be loaded in R1.
-  task automatic test_3;
-    output integer err;
-    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
-    reg [1:0] cu_alu_op_expected;
-    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
-
-    begin
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h0000033; /*icache miss, same as b4*/
+      icache_data_out_expected = 32'h022081B3;
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h00000002;
+      alu_out_multiplexer_expected = 32'h0; // TODO
 
-      print_tb_info("3", "Load third instruction", icache_data_out_expected,
+      print_tb_info("MUL", "Load mul",
+                    icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
@@ -171,45 +154,103 @@ module LoadAdd_tb();
     end
   endtask
 
-  // Test 4:
-  // -- F li of -4 /*miss*/, ID add, EX add, M li of 2 WB -.
-  // -- F li of -4 /*miss*/, ID add, EX add, M add,    WB li of 2.
-  // -- Check that registers update correctly after writeback.
-  task automatic test_4;
+  // Test add: add the previously loaded immediates
+  task automatic test_add;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
-      // Skip memory stage as we don't have anything in there yet
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
-
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h0000033; /*icache miss, same as b4*/
+      icache_data_out_expected = 32'h00110233;
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h0;
+      alu_out_multiplexer_expected = 32'h0; // TODO
 
-      print_tb_info("5", "Load fourth&fifth instructions", icache_data_out_expected,
+      print_tb_info("ADD", "Add the previously loaded immediates",
+                    icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
-      $display("-- register_file.r[1] should be %h, got %h", 32'h00000002, uut.register_file.r[1]);
 
+      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
+             {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
+    end
+  endtask
 
-      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data, uut.register_file.r[1'b1]} !==
-             {icache_data_out_expected, cu_alu_op_expected,
-              alu_out_multiplexer_expected, 32'h00000002 /*r1_expected*/});
+  // Test sub: substact the previously loaded immediates
+  task automatic test_sub;
+    output integer err;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
+
+    begin
+      for (integer i = 0; i < 5; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
+
+      #CLK_PERIOD;
+
+      icache_data_out_expected = 32'h402082B3;
+      cu_alu_op_expected = 2'b10;
+      alu_out_multiplexer_expected = 32'h00000002; // TODO
+
+      print_tb_info("SUB", "Substact the previously loaded immediates",
+                    icache_data_out_expected,
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
+
+      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
+             {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
+    end
+  endtask
+
+  // Test wb: check that registers update correctly after writeback
+  task automatic test_wb;
+    output integer err;
+    reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
+    reg [1:0] cu_alu_op_expected;
+    reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
+
+    begin
+      // Wait until sub instruction finishes
+     for (integer i = 0; i < 4; i = i + 1) // TODO: 3 cycles or 4?
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+      end
+
+      #CLK_PERIOD;
+
+      icache_data_out_expected = 32'h00000000; /*icache miss, same as b4*/
+      cu_alu_op_expected = 2'b00;
+      alu_out_multiplexer_expected = 32'h0;
+
+      print_tb_info("WB", "Check writeback of registers",
+                    icache_data_out_expected,
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
+      $display("-- register_file.r[3] should be %h, got %h", 32'h00000002, uut.register_file.r[3]);
+      $display("-- register_file.r[4] should be %h, got %h", 32'h00000003, uut.register_file.r[4]);
+      $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
+
+      err = ({uut.register_file.r[3], uut.register_file.r[4], uut.register_file.r[5]} !==
+             {32'h00000002, 32'h00000003, 32'h00000001});
     end
   endtask
 
   initial
   begin
-    print_info("Testing load immediate followed by add");
+    print_info("Testing ALU instructions (mul, add, sub)");
 
     reset_input();
     run_tests();
