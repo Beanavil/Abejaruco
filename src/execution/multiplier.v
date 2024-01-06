@@ -24,51 +24,54 @@ module Multiplier
    input wire [WORD_WIDTH-1:0] multiplicand,
    input wire [WORD_WIDTH-1:0] multiplier,
    output reg [WORD_WIDTH-1:0] result,
+   output reg op_done,
    output reg overflow);
 `include "src/parameters.v"
 
   reg [WORD_WIDTH*2-1:0] internalResult;
-  reg [WORD_WIDTH-1:0] partialProduct1 [0:64-1];
-  reg [WORD_WIDTH-1:0] partialProduct2 [0:32-1];
-  reg [WORD_WIDTH-1:0] partialProduct3 [0:16-1];
-  reg [WORD_WIDTH-1:0] partialProduct4 [0:8-1];
-  reg [WORD_WIDTH-1:0] multiplierReg;
-  reg [WORD_WIDTH-1:0] multiplicandReg;
+  reg [WORD_WIDTH-1:0] partial_product_1 [0:64-1];
+  reg [WORD_WIDTH-1:0] partial_product_2 [0:32-1];
+  reg [WORD_WIDTH-1:0] partial_product_3 [0:16-1];
+  reg [WORD_WIDTH-1:0] partial_product_4 [0:8-1];
+  reg [WORD_WIDTH-1:0] multiplier_reg;
+  reg [WORD_WIDTH-1:0] multiplicand_reg;
   integer i, j;
 
   always @(posedge clk)
   begin
-    multiplicandReg <= multiplicand;
-    multiplierReg   <= multiplier;
+    multiplicand_reg <= multiplicand;
+    multiplier_reg   <= multiplier;
+    op_done <= 0;
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin
       for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
       begin
-        partialProduct1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicandReg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplierReg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
+        partial_product_1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicand_reg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplier_reg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
       end
     end
 
     for (i = 0; i < 32; i = i + 1)
     begin
-      partialProduct2[i] <= partialProduct1[i * 2] + partialProduct1[(i * 2) + 1];
+      partial_product_2[i] <= partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
     end
 
     for (i = 0; i < 16; i = i + 1)
     begin
-      partialProduct3[i] <= partialProduct2[i * 2] + partialProduct2[(i * 2) + 1];
+      partial_product_3[i] <= partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
     end
 
     for (i = 0; i < 8; i = i + 1)
     begin
-      partialProduct4[i] <= partialProduct3[i * 2] + partialProduct3[(i * 2) + 1];
+      partial_product_4[i] <= partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
     end
 
     internalResult = 32'b0;
     for (i = 0; i < 8; i = i + 1)
     begin
-      internalResult = internalResult + partialProduct4[i];
+      internalResult = internalResult + partial_product_4[i];
     end
 
+    op_done <= 0;
     overflow <= |internalResult[63:32];
     result <= internalResult[31:0];
   end

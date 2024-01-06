@@ -200,7 +200,7 @@ module Cache (
               // Finish the write operation
               mem_op_done = 1;
               valid_array[replace_index] = 0;
-              mem_enable = 1'b0;
+              mem_enable = 0;
             end
           end
           else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
@@ -247,6 +247,8 @@ module Cache (
             valid_array[replace_index] = 1;
             dirty_array[replace_index] = 1;
             update_lru(replace_index);
+            mem_op_done = 1;
+            mem_enable = 0;
           end
         end
       end
@@ -280,6 +282,7 @@ module Cache (
         begin
           mem_address = {address[31:4], 4'b0000};
           mem_enable = 1;
+          mem_op_done = 0;
           mem_op = 0;
           $display("The cache address is: %b", address);
           $display("The cache address value is: %h", data_out);

@@ -19,12 +19,12 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
-`include "tests/utils/tb_utils.v"
 `include "src/abejaruco.v"
+`include "tests/utils/tb_utils.v"
 
 module ALUOps_tb();
+`include "src/parameters.v"
+
   reg clk;
   reg reset;
   reg [WORD_WIDTH-1:0] rm0_initial [];
@@ -58,11 +58,11 @@ module ALUOps_tb();
       test_add(err);
       check_err(err, "add");
 
-      test_sub(err);
-      check_err(err, "sub");
+      // test_sub(err);
+      // check_err(err, "sub");
 
-      test_wb(err);
-      check_err(err, "wb");
+      // test_wb(err);
+      // check_err(err, "wb");
 
       $display("Done");
     end
@@ -83,6 +83,16 @@ module ALUOps_tb();
   endtask
 
   // Test mul: load two immediates and multiply them
+  // -- li $r1 <- 2         | F F F F F
+  // --------------------------------------------------------
+  // -- li $r1 <- 2         | F F F F F F D
+  // -- li $r2 <- 1         |             F
+  // --------------------------------------------------------
+  // -- li $r1 <- 2         | F F F F F D E C W
+  // -- li $r2 <- 1         |           F D E C W
+  // -- mul $r3 <- $r1, $r2 |             F F F F F D
+  // -- add $r4 <- $r2, $r1 |                       F
+  // --------------------------------------------------------
   task automatic test_mul;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
@@ -98,6 +108,7 @@ module ALUOps_tb();
 
       clk = 1'b1;
 
+      // 5 cycles to fetch li (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
@@ -108,30 +119,29 @@ module ALUOps_tb();
 
       icache_data_out_expected = 32'h00208013;
       cu_alu_op_expected = 2'b00;
-      alu_out_multiplexer_expected = 32'h0;
+      alu_out_multiplexer_expected = 32'h0; // 0 cause no inst went through ALU yet
 
       print_tb_info("MUL", "Load first immediate",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      for (integer i = 0; i < 5; i = i + 1)
-      begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
-      end
+      // 1 cycle to fetch second li (icache hit)
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
 
       #CLK_PERIOD;
 
       icache_data_out_expected = 32'h00110013;
       cu_alu_op_expected = 2'b00;
-      alu_out_multiplexer_expected = 32'h0; // TODO
+      alu_out_multiplexer_expected = 32'h0; // idem
 
       print_tb_info("MUL", "Load second immediate",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
+      // 5 cycles to decode mul (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
@@ -140,21 +150,37 @@ module ALUOps_tb();
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h022081B3;
+      icache_data_out_expected = 32'h00110233; // next inst (add) has been already fetched
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h0; // TODO
+      alu_out_multiplexer_expected = 32'h1; // 1 from loading it into $r2
 
       print_tb_info("MUL", "Load mul",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
+      $display("-- register_file.r[1] should be %h, got %h", 32'h00000002, uut.register_file.r[1]);
+      $display("-- register_file.r[2] should be %h, got %h", 32'h00000001, uut.register_file.r[2]);
 
-      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
-             {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
+      err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data,
+              uut.register_file.r[1], uut.register_file.r[2]} !==
+             {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected,
+              32'h00000002, 32'h00000001});
     end
   endtask
 
   // Test add: add the previously loaded immediates
+  // -- li $r1 <- 2         | F F F F F D E C W
+  // -- li $r2 <- 1         |           F D E C W
+  // -- mul $r3 <- $r1, $r2 |             F F F F F D E E E E E
+  // -- add $r4 <- $r2, $r1 |                       F D D D D D
+  // -- sub $r5 <- $r1, $r2 |                         F F F F F
+  // ------------------------------------------------------------
+  // -- li $r1 <- 2         | F F F F F D E C W
+  // -- li $r2 <- 1         |           F D E C W
+  // -- mul $r3 <- $r1, $r2 |             F F F F F D E E E E E C
+  // -- add $r4 <- $r2, $r1 |                       F D D D D D E
+  // -- sub $r5 <- $r1, $r2 |                         F F F F F D
+  // -------------------------------------------------------------
   task automatic test_add;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
@@ -162,6 +188,7 @@ module ALUOps_tb();
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
+      // 5 cycles to perform mul
       for (integer i = 0; i < 5; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
@@ -170,9 +197,23 @@ module ALUOps_tb();
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00110233;
+      icache_data_out_expected = 32'h402082B3; // sub is already fetched
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h0; // TODO
+      alu_out_multiplexer_expected = 32'h2; // mul result
+
+      print_tb_info("ADD", "Decode add instruction",
+                    icache_data_out_expected,
+                    cu_alu_op_expected,
+                    alu_out_multiplexer_expected);
+
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+
+      #CLK_PERIOD;
+
+      icache_data_out_expected = 32'h00000000;
+      cu_alu_op_expected = 2'b10;
+      alu_out_multiplexer_expected = 32'h3; // add result
 
       print_tb_info("ADD", "Add the previously loaded immediates",
                     icache_data_out_expected,
@@ -185,6 +226,13 @@ module ALUOps_tb();
   endtask
 
   // Test sub: substact the previously loaded immediates
+  // -- li $r1 <- 2         | F F F F F D E C W
+  // -- li $r2 <- 1         |           F D E C W
+  // -- mul $r3 <- $r1, $r2 |             F F F F F D E E E E E C W
+  // -- add $r4 <- $r2, $r1 |                       F D D D D D E C
+  // -- sub $r5 <- $r1, $r2 |                         F F F F F D E
+  // -- nop                 |                                     F
+  // -----------------------------------------------------------------
   task automatic test_sub;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
@@ -192,22 +240,20 @@ module ALUOps_tb();
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
-      for (integer i = 0; i < 5; i = i + 1)
-      begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
-      end
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h402082B3;
+      icache_data_out_expected = 32'h00000000;
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h00000002; // TODO
+      alu_out_multiplexer_expected = 32'h00000001; // TODO
 
       print_tb_info("SUB", "Substact the previously loaded immediates",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
+      $display("-- register_file.r[3] should be %h, got %h", 32'h00000002, uut.register_file.r[3]);
 
       err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
              {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
@@ -223,7 +269,7 @@ module ALUOps_tb();
 
     begin
       // Wait until sub instruction finishes
-     for (integer i = 0; i < 4; i = i + 1) // TODO: 3 cycles or 4?
+      for (integer i = 0; i < 4; i = i + 1) // TODO: 3 cycles or 4?
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;

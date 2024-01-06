@@ -22,13 +22,14 @@
 `default_nettype none
 
 module ALUControl
-  (input [6:0] inst /*bytes [31,25]*/,
-   input [1:0] ctrl_alu_op,
+  (input wire clk,
+   input [6:0] inst /*bytes [31,25]*/,
+   input [1:0] cu_alu_op,
    output reg [1:0] alu_op);
 
-  always @(*)
+  always @(clk)
   begin
-    case (ctrl_alu_op)
+    case (cu_alu_op)
       2'b10: /*R-type*/
       begin
         case (inst)

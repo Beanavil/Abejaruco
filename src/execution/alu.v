@@ -28,11 +28,13 @@ module ALU
    input [31:0] input_second,
    input [1:0] alu_op,
    output zero,
-   output [31:0] result);
+   output [31:0] result,
+   output reg op_done);
 `include "src/parameters.v"
 
   wire [31:0] tmp_sum_result, tmp_mul_result;
   wire tmp_sum_zero;
+  wire mul_done;
 
   reg [31:0] reg_result;
   reg reg_zero;
@@ -49,26 +51,36 @@ module ALU
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
-               .result(tmp_mul_result)
+               .result(tmp_mul_result),
+               .op_done(mul_done)
              );
 
-  always @(*)
+  always @(posedge clk)
   begin
-    $display("[ ALU ] - Value of first register: %d  Value of second register: %d Operation %d", input_first, input_second, alu_op);
+    op_done = 0;
     case (alu_op)
       2'b00: /*add*/
       begin
-        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
+        $display("[ ALU ] -  Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result);
+        {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
+        op_done = 1;
       end
 
       2'b01: /*sub*/
       begin
-        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
+        $display("[ ALU ] -  Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result);
+        {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
+        op_done = 1;
       end
 
       2'b10: /*mul*/
       begin
-        {reg_result, reg_zero} <= {tmp_mul_result, (tmp_mul_result == 0)};
+        if(mul_done)
+        begin
+          $display("[ ALU ] -  Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result);
+          {reg_result, reg_zero} = {tmp_mul_result, (tmp_mul_result == 0)};
+          op_done = 1;
+        end
       end
 
       default:
