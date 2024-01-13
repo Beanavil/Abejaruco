@@ -24,6 +24,7 @@
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
+`include "src/decode/hazzard_dect_unit.v"
 `include "src/execution/alu.v"
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
@@ -31,6 +32,7 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
+
 
 module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
     input wire clk,
@@ -129,7 +131,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire [4:0] decode_src_address_out;
   wire [4:0] decode_dst_address_out;
   wire [11:0] decode_offset_out;
-
+  wire stall;
   // Sign extend wires
   wire [31:0] sign_extend_out;
 
@@ -248,6 +250,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                  .read_data_1(rf_read_data_1),
                  .read_data_2(rf_read_data_2));
 
+  
   ControlUnit control_unit(
                 // In
                 .clk(clk),
@@ -264,6 +267,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                 .alu_src(cu_alu_src),
                 .is_imm(cu_is_imm)
               );
+
+  HazzardDectUnit hazzard_dect_unit(.clk(clk),
+                                    .id_reg_rt_1(fetch_instruction_out[19:15]), 
+                                    .id_reg_rt_2(fetch_instruction_out[24:20]), 
+                                    .ex_reg_rs(decode_dst_address_out), 
+                                    .alu_op_done(alu_op_done), 
+                                    
+                                    .mem_reg_rt(execution_dst_register_out),
+                                    .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
+                                    .stall(stall));
 
   DecodeRegisters decode_registers(
                     // In
