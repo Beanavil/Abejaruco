@@ -42,7 +42,7 @@ module ALUOps_tb();
       clk = 0;
       reset = 1;
       #CLK_PERIOD reset = 0;
-      #CLK_PERIOD;
+      clk = 1;
       $display("Done");
     end
   endtask
@@ -99,13 +99,6 @@ module ALUOps_tb();
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
-      clk = 1'b0;
-      reset = 1'b1;
-
-      #CLK_PERIOD;
-      reset = 1'b0;
-      clk = 1'b1;
-
       // 5 cycles to fetch li (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
@@ -114,8 +107,9 @@ module ALUOps_tb();
       end
 
       #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
 
-      icache_data_out_expected = 32'h00208013;
+      icache_data_out_expected = 32'h00201083;
       cu_alu_op_expected = 2'b00;
       alu_out_multiplexer_expected = 32'h0; // 0 cause no inst went through ALU yet
 
@@ -125,8 +119,8 @@ module ALUOps_tb();
                     alu_out_multiplexer_expected);
 
       // 1 cycle to fetch second li (icache hit)
-      #CLK_PERIOD clk = 1'b1;
       #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
 
       #CLK_PERIOD;
 
@@ -142,13 +136,13 @@ module ALUOps_tb();
       // 5 cycles to decode mul (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b1;
         #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
       end
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00110233; // next inst (add) has been already fetched
+      icache_data_out_expected = 32'h402082B3; // next inst (add) has been already fetched, but we check register in next cycle (so sub has been fetched)
       cu_alu_op_expected = 2'b10;
       alu_out_multiplexer_expected = 32'h1; // 1 from loading it into $r2
 

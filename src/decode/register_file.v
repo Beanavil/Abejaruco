@@ -50,8 +50,8 @@ module RegisterFile (
     end
     else if(write_enable)
     begin
-      r[write_idx] <= write_data;
-      $display("---->Register %d has been written with %b", write_idx, write_data);
+      r[write_idx] = write_data;
+      `REGISTER_FILE_DISPLAY($sformatf("---->Register %d has been written with %b", write_idx, write_data));
     end
   end
 

@@ -48,6 +48,7 @@ module MemoryRegisters (
 
   always @(negedge clk)
   begin
+    `MEM_REGISTER_DISPLAY($sformatf("alu_result_in %h", alu_result_in));
     extended_inmediate_out = extended_inmediate_in;
     cu_mem_to_reg_out = cu_mem_to_reg_in;
     cu_reg_write_out = cu_reg_write_in;

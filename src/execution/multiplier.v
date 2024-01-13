@@ -44,7 +44,8 @@ module Multiplier
   reg [WORD_WIDTH-1:0] multiplicand_reg;
   integer i, j;
 
-  initial begin
+  initial
+  begin
     stages_finished = 5'b0;
   end
 
@@ -59,7 +60,7 @@ module Multiplier
       stages_finished[i] = stages_finished[i - 1];
     end
     op_done = stages_finished[3];
-    $display("[ MULTIPLIER ] - stages_finished[4]: %d", stages_finished[4]);
+    `MULTIPLIER_DISPLAY($sformatf("stages_finished[4]: %d", stages_finished[4]));
 
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin

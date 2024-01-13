@@ -21,7 +21,7 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES alu_ops load_add)
+list(APPEND VERILOG_MODULES alu_ops hazards load_add)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET "${MODULE}.tb" INCLUDES "${PROJECT_SOURCE_DIR}")

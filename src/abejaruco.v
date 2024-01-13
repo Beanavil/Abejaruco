@@ -24,6 +24,7 @@
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
+`include "src/decode/hazard_detection_unit.v"
 `include "src/execution/alu.v"
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
@@ -31,6 +32,7 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
+
 
 module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
     input wire clk,
@@ -106,8 +108,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   // ALU control unit wires
   // -- Out wires
-   wire [1:0] alu_ctrl_alu_op;
-   wire alu_op_done;
+  wire [1:0] alu_ctrl_alu_op;
+  wire alu_op_done;
 
   // Decode registers wires
   // -- Out wires
@@ -129,7 +131,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire [4:0] decode_src_address_out;
   wire [4:0] decode_dst_address_out;
   wire [11:0] decode_offset_out;
-
+  wire stall;
   // Sign extend wires
   wire [31:0] sign_extend_out;
 
@@ -226,7 +228,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .cache_op_done_in(icache_op_done),
+                   .cache_op_done_in(icache_op_done), //TODO think this about this
+                   .stall_in(stall),
 
                    // Out
                    .rm0_out(fetch_rm0_out),
@@ -265,6 +268,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                 .is_imm(cu_is_imm)
               );
 
+  HazardDetectionUnit hazard_detection_unit(.clk(clk),
+                                    .decode_idx_src_1(fetch_instruction_out[19:15]),
+                                    .decode_idx_src_2(fetch_instruction_out[24:20]),
+                                    .execution_idx_dst(decode_dst_address_out),
+                                    .alu_op_done(alu_op_done),
+
+                                    .memory_idx_src_dst(execution_dst_register_out),
+                                    .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
+                                    .stall(stall));
+
   DecodeRegisters decode_registers(
                     // In
                     .clk(clk),
@@ -284,6 +297,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .src_address_in(fetch_instruction_out[19:15]),
                     .dst_address_in(fetch_instruction_out[11:7]),
                     .offset_in(fetch_instruction_out[31:20]),
+                    .stall_in(stall),
 
                     // Out
                     .rm0_out(decode_rm0_out),
@@ -317,10 +331,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
              );
 
   ALUControl alu_control
-  (.clk(clk),
-   .inst(decode_offset_out[11:5]),
-   .cu_alu_op(decode_cu_alu_op_out),
-   .alu_op(alu_ctrl_alu_op));
+             (.clk(clk),
+              .inst(decode_offset_out[11:5]),
+              .cu_alu_op(decode_cu_alu_op_out),
+              .alu_op(alu_ctrl_alu_op));
 
   // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
   assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
@@ -403,7 +417,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   initial
   begin
     rm0 = rm0_initial;
-    $display("[ ABEJARUCO ] - Initial rm0 = %h", rm0);
+    `ABEJARUCO_DISPLAY($sformatf("[ ABEJARUCO ] - Initial rm0 = %h", rm0));
   end
 
   // Main pipeline execution
@@ -416,6 +430,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
       rm0 = rm0 + 3'b100;
     end
 
-   `ABEJARUCO_DISPLAY($sformatf("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out));
+    `ABEJARUCO_DISPLAY($sformatf("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out));
   end
 endmodule

@@ -54,13 +54,38 @@ parameter OFFSET_SIZE = 12;
 parameter NIBBLE_WIDTH = 4;
 
 `define ABEJARUCO_VERBOSE
-`define ALU_VERBOSE
+// `define ALU_VERBOSE
 `define MEMORY_VERBOSE
-// `define CACHE_VERBOSE
+`define CACHE_VERBOSE
+// `define F_REGS_VERBOSE
+// `define D_REGS_VERBOSE
+// `define EX_REGS_VERBOSE
+// `define HAZARD_DETECTION_UNIT_VERBOSE
+// `define MULTIPLIER_VERBOSE
 
-`define F_REGS_VERBOSE
-`define D_REGS_VERBOSE
-`define EX_REGS_VERBOSE
+`ifdef EX_REGISTER_VERBOSE
+`define EX_REGISTER_DISPLAY(str) $display("[ EX_REGISTER ] %s", str)
+`else
+`define EX_REGISTER_DISPLAY(str)
+`endif
+
+`ifdef MEM_REGISTER_VERBOSE
+`define MEM_REGISTER_DISPLAY(str) $display("[ MEM_REGISTER ] %s", str)
+`else
+`define MEM_REGISTER_DISPLAY(str)
+`endif
+
+`ifdef CONTROL_UNIT_VERBOSE
+`define CONTROL_UNIT_DISPLAY(str) $display("[ CONTROL_UNIT ] %s", str)
+`else
+`define CONTROL_UNIT_DISPLAY(str)
+`endif
+
+`ifdef REGISTER_FILE_VERBOSE
+`define REGISTER_FILE_DISPLAY(str) $display("[ REGISTER_FILE ] %s", str)
+`else
+`define REGISTER_FILE_DISPLAY(str)
+`endif
 
 `ifdef CACHE_VERBOSE
 `define CACHE_DISPLAY(str) $display("[ CACHE ] %s", str)
@@ -70,11 +95,23 @@ parameter NIBBLE_WIDTH = 4;
 `define CACHE_WRITE(str)
 `endif
 
+`ifdef MEMORY_VERBOSE
+`define MEMORY_DISPLAY(str) $display("[ MEMORY ] %s", str)
+`else
+`define MEMORY_DISPLAY(str)
+`endif
+
+`ifdef MULTIPLIER_VERBOSE
+`define MULTIPLIER_DISPLAY(str) $display("[ MULTIPLIER ] %s", str)
+`else
+`define MULTIPLIER_DISPLAY(str)
+`endif
+
 `ifdef ABEJARUCO_VERBOSE
 `define ABEJARUCO_DISPLAY(str) $display("[ ABEJARUCO ] %s", str)
 `define ABEJARUCO_WRITE(str) $write("%s", str)
 `else
-`define ABEJARUCO_VERBOSE(str)
+`define ABEJARUCO_DISPLAY(str)
 `define ABEJARUCO_WRITE(str)
 `endif
 
@@ -82,8 +119,14 @@ parameter NIBBLE_WIDTH = 4;
 `define ALU_DISPLAY(str) $display("[ ALU ] %s", str)
 `define ALU_WRITE(str) $write("%s", str)
 `else
-`define ALU_VERBOSE(str)
+`define ALU_DISPLAY(str)
 `define ALU_WRITE(str)
+`endif
+
+`ifdef HAZARD_DETECTION_UNIT_VERBOSE
+`define HAZARD_DETECTION_UNIT_DISPLAY(str) $display("[ HAZARD DETECTION UNIT ] %s", str)
+`else
+`define HAZARD_DETECTION_UNIT_DISPLAY(str)
 `endif
 
 `endif

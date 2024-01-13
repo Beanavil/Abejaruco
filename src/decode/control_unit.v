@@ -23,24 +23,25 @@
 
 module ControlUnit
   (
-   // In
-   input wire clk,
-   input [6:0] opcode,
-   input [2:0] funct3,
+    // In
+    input wire clk,
+    input [6:0] opcode,
+    input [2:0] funct3,
 
-   // Out
-   output reg branch,
-   output reg reg_write,
-   output reg mem_read,
-   output reg mem_to_reg,
-   output reg [1:0] alu_op,
-   output reg mem_write,
-   output reg alu_src,
-   output reg is_imm);
+    // Out
+    output reg branch,
+    output reg reg_write,
+    output reg mem_read,
+    output reg mem_to_reg,
+    output reg [1:0] alu_op,
+    output reg mem_write,
+    output reg alu_src,
+    output reg is_imm);
+`include "src/parameters.v"
 
   always @(clk)
   begin
-    $display("---------> Opcode: %b", opcode);
+    `CONTROL_UNIT_DISPLAY($sformatf("---------> Opcode: %b", opcode));
     case (opcode)
       7'b0110011: /*R-type*/
       begin
