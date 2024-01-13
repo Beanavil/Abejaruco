@@ -25,7 +25,7 @@ module FetchRegisters (
     output reg [WORD_WIDTH-1:0] rm0_out,
     input wire [WORD_WIDTH-1:0] instruction_in,
     output reg [WORD_WIDTH-1:0] instruction_out,
-    input wire active,
+    input wire cache_op_done_in,
     output reg active_out
   );
 `include "src/parameters.v"
@@ -38,8 +38,13 @@ module FetchRegisters (
 
   always @(negedge clk)
   begin
-    if (active)
+
+    // Reason to stall the fetch stage
+    // - Cache has not finished
+
+    if (cache_op_done_in)
     begin
+      // $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
       $display("FetchRegisters: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
       rm0_out = rm0_in;
       instruction_out = instruction_in;

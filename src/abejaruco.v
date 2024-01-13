@@ -69,7 +69,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire icache_mem_data_ready;
   wire [127:0] icache_mem_data_out;
 
-
   // Data cache wires
   // -- In wires from CPU
   reg icache_access;               // Enable the cache, to it obey the inputs
@@ -93,7 +92,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // -- Out wires
   wire [31:0] fetch_rm0_out;
   wire [31:0] fetch_instruction_out;
-  wire fetch_active_out;
 
   // Control unit wires
   // -- Out wires
@@ -228,12 +226,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .active(icache_op_done),
+                   .cache_op_done_in(icache_op_done),
 
                    // Out
                    .rm0_out(fetch_rm0_out),
-                   .instruction_out(fetch_instruction_out),
-                   .active_out(fetch_active_out)
+                   .instruction_out(fetch_instruction_out)
                  );
 
   //----------------------------------------//
@@ -418,9 +415,5 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
     end
 
     $display("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out);
-    if (fetch_active_out)
-    begin
-      $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
-    end
   end
 endmodule

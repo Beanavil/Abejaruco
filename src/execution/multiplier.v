@@ -19,6 +19,8 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
+`include "src/parameters.v"
+
 module Multiplier
   (input wire clk,
    input wire [WORD_WIDTH-1:0] multiplicand,
@@ -26,7 +28,6 @@ module Multiplier
    output reg [WORD_WIDTH-1:0] result,
    output reg op_done,
    output reg overflow);
-`include "src/parameters.v"
 
   reg [WORD_WIDTH*2-1:0] internalResult;
   reg [WORD_WIDTH-1:0] partial_product_1 [0:64-1];
@@ -37,11 +38,17 @@ module Multiplier
   reg [WORD_WIDTH-1:0] multiplicand_reg;
   integer i, j;
 
+  initial
+  begin
+    op_done = 0;
+    overflow = 0;
+  end
+
   always @(posedge clk)
   begin
-    multiplicand_reg <= multiplicand;
-    multiplier_reg   <= multiplier;
-    op_done <= 0;
+    multiplicand_reg = multiplicand;
+    multiplier_reg = multiplier;
+    op_done = 0;
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin
       for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
@@ -52,17 +59,17 @@ module Multiplier
 
     for (i = 0; i < 32; i = i + 1)
     begin
-      partial_product_2[i] <= partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
+      partial_product_2[i] = partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
     end
 
     for (i = 0; i < 16; i = i + 1)
     begin
-      partial_product_3[i] <= partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
+      partial_product_3[i] = partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
     end
 
     for (i = 0; i < 8; i = i + 1)
     begin
-      partial_product_4[i] <= partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
+      partial_product_4[i] = partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
     end
 
     internalResult = 32'b0;
@@ -71,9 +78,9 @@ module Multiplier
       internalResult = internalResult + partial_product_4[i];
     end
 
-    op_done <= 0;
-    overflow <= |internalResult[63:32];
-    result <= internalResult[31:0];
+    op_done = 1;
+    overflow = |internalResult[63:32];
+    result = internalResult[31:0];
   end
 
 endmodule

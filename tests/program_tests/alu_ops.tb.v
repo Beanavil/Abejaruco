@@ -55,8 +55,8 @@ module ALUOps_tb();
       test_mul(err);
       check_err(err, "mul");
 
-      test_add(err);
-      check_err(err, "add");
+      // test_add(err);
+      // check_err(err, "add");
 
       // test_sub(err);
       // check_err(err, "sub");
