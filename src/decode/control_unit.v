@@ -22,9 +22,13 @@
 `default_nettype none
 
 module ControlUnit
-  (input wire clk,
+  (
+   // In
+   input wire clk,
    input [6:0] opcode,
    input [2:0] funct3,
+
+   // Out
    output reg branch,
    output reg reg_write,
    output reg mem_read,

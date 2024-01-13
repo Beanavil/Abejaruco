@@ -27,7 +27,6 @@ module ALUOps_tb();
 
   reg clk;
   reg reset;
-  reg [WORD_WIDTH-1:0] rm0_initial [];
 
   parameter PROGRAM = "../../../programs/alu_ops.o";
 
@@ -103,9 +102,8 @@ module ALUOps_tb();
       clk = 1'b0;
       reset = 1'b1;
 
-      #2;
+      #CLK_PERIOD;
       reset = 1'b0;
-
       clk = 1'b1;
 
       // 5 cycles to fetch li (icache miss)
@@ -115,7 +113,7 @@ module ALUOps_tb();
         #CLK_PERIOD clk = 1'b1;
       end
 
-      #CLK_PERIOD;
+      #CLK_PERIOD clk = 1'b0;
 
       icache_data_out_expected = 32'h00208013;
       cu_alu_op_expected = 2'b00;
@@ -127,8 +125,8 @@ module ALUOps_tb();
                     alu_out_multiplexer_expected);
 
       // 1 cycle to fetch second li (icache hit)
-      #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD clk = 1'b0;
 
       #CLK_PERIOD;
 
@@ -144,8 +142,8 @@ module ALUOps_tb();
       // 5 cycles to decode mul (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD clk = 1'b0;
       end
 
       #CLK_PERIOD;
@@ -191,8 +189,8 @@ module ALUOps_tb();
       // 5 cycles to perform mul
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD clk = 1'b0;
       end
 
       #CLK_PERIOD;
@@ -206,8 +204,8 @@ module ALUOps_tb();
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD clk = 1'b0;
 
       #CLK_PERIOD;
 

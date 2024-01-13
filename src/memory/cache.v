@@ -115,7 +115,7 @@ module Cache (
 
   always @(posedge clk or posedge reset)
   begin
-    $display("The access is: %b", access);
+    `CACHE_DISPLAY($sformatf("The access is: %b", access));
     if (access)
     begin
       if (mem_op_done === 1'b1)
@@ -152,7 +152,7 @@ module Cache (
           end
           else
           begin
-            $display("Warning: byte_op is not 0 or 1");
+            `CACHE_DISPLAY($sformatf("Warning: byte_op is not 0 or 1"));
           end
           mem_op_done = 1;
           update_lru(line_number);
@@ -160,8 +160,8 @@ module Cache (
         end
         else /*miss*/
         begin
-          $display("----> Miss");
-          $display("Miss values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready);
+          `CACHE_DISPLAY("----> Miss");
+          `CACHE_DISPLAY($sformatf("Miss values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready));
 
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -173,12 +173,13 @@ module Cache (
             end
           end
 
-          $display("----> Valid: %b", valid_array[replace_index]);
-          $display("----> Dirty: %b", dirty_array[replace_index]);
+          `CACHE_DISPLAY($sformatf("----> Valid: %b", valid_array[replace_index]));
+          `CACHE_DISPLAY($sformatf("----> Dirty: %b", dirty_array[replace_index]));
 
           if (valid_array[replace_index] && dirty_array[replace_index])
           begin
-            $display("----> Memory access to write");
+            `CACHE_DISPLAY("----> Memory access to write");
+
             // Tell memory to write the line
             if(memory_in_use == 0) // Wait until memory is available
             begin
@@ -205,8 +206,7 @@ module Cache (
           end
           else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
           begin
-            $display("----> Memory access to read");
-            // Init the read operation
+            `CACHE_DISPLAY("----> Memory access to read");
             mem_op_done = 0;
             mem_address = address;
             mem_op = 1'b0;
@@ -228,7 +228,7 @@ module Cache (
           end
           else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0)
           begin
-            $display("----> Write");
+            `CACHE_DISPLAY("----> Write");
             if (byte_op)
             begin
               data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
@@ -239,7 +239,7 @@ module Cache (
             end
             else
             begin
-              $display("Warning: byte_op is not 0 or 1");
+              `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
             end
 
             // Update line control information
@@ -258,8 +258,8 @@ module Cache (
 
         if (hit)
         begin
-          $display("----> Hit");
-          $display("Hit values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready);
+          `CACHE_DISPLAY("----> Hit");
+          `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready));
 
           if (byte_op)
           begin
@@ -272,7 +272,7 @@ module Cache (
           end
           else
           begin
-            $display("Warning: byte_op is not 0 or 1");
+            `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
           end
 
           mem_op_done = 1;
@@ -284,11 +284,10 @@ module Cache (
           mem_enable = 1;
           mem_op_done = 0;
           mem_op = 0;
-          $display("The cache address is: %b", address);
-          $display("The cache address value is: %h", data_out);
-
-          $display("The memory address is: %b", mem_address);
-          $display("The memory address value is: %h", mem_data_out);
+          `CACHE_DISPLAY($sformatf("The cache address is: %b", address));
+          `CACHE_DISPLAY($sformatf("The cache address value is: %h", data_out));
+          `CACHE_DISPLAY($sformatf("The memory address is: %b", mem_address));
+          `CACHE_DISPLAY($sformatf("The memory address value is: %h", mem_data_out));
 
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -320,17 +319,19 @@ module Cache (
       end
 
       // FOR TESTING --- Print cache contents
-      $display("Printing Cache Contents at Time: %0d", $time);
+      `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
+
       for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
       begin
-        $display("Line %0d: Valid = %0b, Tag = %h, Data =", i, valid_array[i], tag_array[i]);
+        `CACHE_DISPLAY($sformatf("Line %0d: Valid = %0b, Tag = %h, Data =", i, valid_array[i], tag_array[i]));
+        `CACHE_WRITE($sformatf("\t"));
         for (j = 0; j < CACHE_WORDS_PER_LINE; j = j + 1)
         begin
-          $write("%h ", data_array[i][j]);
+          `CACHE_WRITE($sformatf("%h ", data_array[i][j]));
         end
-        $display(" ");
+        `CACHE_WRITE("\n");
       end
-      $display("\n");
+      // `CACHE_DISPLAY("\n");
     end
   end
 endmodule

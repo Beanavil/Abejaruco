@@ -23,14 +23,19 @@
 `include "src/execution/multiplier.v"
 
 module ALU
-  (input wire clk,
-   input [31:0] input_first,
-   input [31:0] input_second,
-   input [1:0] alu_op,
-   output zero,
-   output [31:0] result,
-   output reg op_done);
-`include "src/parameters.v"
+  (
+    // In
+    input wire clk,
+    input [31:0] input_first,
+    input [31:0] input_second,
+    input [1:0] alu_op,
+
+    // Out
+    output zero,
+    output [31:0] result,
+    output reg op_done);
+  
+  `include "src/parameters.v"
 
   wire [31:0] tmp_sum_result, tmp_mul_result;
   wire tmp_sum_zero;
@@ -51,6 +56,7 @@ module ALU
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
+               .start_mul(alu_op === 2'b10),
                .result(tmp_mul_result),
                .op_done(mul_done)
              );
@@ -61,23 +67,25 @@ module ALU
     case (alu_op)
       2'b00: /*add*/
       begin
-        $display("[ ALU ] -  Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result);
+        $display("[ ALU ] -  Performing add of %0d plus %0d with result %0d", input_first, input_second, tmp_sum_result);
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
 
       2'b01: /*sub*/
       begin
-        $display("[ ALU ] -  Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result);
+        $display("[ ALU ] -  Performing sub of %0d minus %0d with result %0d", input_first, input_second, tmp_sum_result);
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
 
       2'b10: /*mul*/
       begin
+        op_done = 0;
+        $display("[ ALU ] -  op_done %d before checking mul_done %d", op_done, mul_done);
         if(mul_done)
         begin
-          $display("[ ALU ] -  Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result);
+          $display("[ ALU ] -  Performing mul of %0d times %0d with result %0d", input_first, input_second, tmp_mul_result);
           {reg_result, reg_zero} = {tmp_mul_result, (tmp_mul_result == 0)};
           op_done = 1;
         end
@@ -85,7 +93,7 @@ module ALU
 
       default:
       begin
-        // TODO: que hacer aqui
+        op_done = 0;
       end
     endcase
   end

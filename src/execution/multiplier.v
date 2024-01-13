@@ -20,15 +20,22 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 module Multiplier
-  (input wire clk,
-   input wire [WORD_WIDTH-1:0] multiplicand,
-   input wire [WORD_WIDTH-1:0] multiplier,
-   output reg [WORD_WIDTH-1:0] result,
-   output reg op_done,
-   output reg overflow);
+  (
+    // In
+    input wire clk,
+    input wire [WORD_WIDTH-1:0] multiplicand,
+    input wire [WORD_WIDTH-1:0] multiplier,
+    input wire start_mul,
+
+    // Out
+    output reg [WORD_WIDTH-1:0] result,
+    output reg op_done,
+    output reg overflow);
+
 `include "src/parameters.v"
 
-  reg [WORD_WIDTH*2-1:0] internalResult;
+  reg [WORD_WIDTH*2-1:0] internal_result;
+  reg [4:0] stages_finished;
   reg [WORD_WIDTH-1:0] partial_product_1 [0:64-1];
   reg [WORD_WIDTH-1:0] partial_product_2 [0:32-1];
   reg [WORD_WIDTH-1:0] partial_product_3 [0:16-1];
@@ -37,11 +44,23 @@ module Multiplier
   reg [WORD_WIDTH-1:0] multiplicand_reg;
   integer i, j;
 
+  initial begin
+    stages_finished = 5'b0;
+  end
+
   always @(posedge clk)
   begin
-    multiplicand_reg <= multiplicand;
-    multiplier_reg   <= multiplier;
-    op_done <= 0;
+    multiplicand_reg = multiplicand;
+    multiplier_reg = multiplier;
+
+    stages_finished[0] = start_mul;
+    for (integer i = 1; i < 5; i = i + 1)
+    begin
+      stages_finished[i] = stages_finished[i - 1];
+    end
+    op_done = stages_finished[3];
+    $display("[ MULTIPLIER ] - stages_finished[4]: %d", stages_finished[4]);
+
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin
       for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
@@ -52,28 +71,28 @@ module Multiplier
 
     for (i = 0; i < 32; i = i + 1)
     begin
-      partial_product_2[i] <= partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
+      partial_product_2[i] = partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
     end
 
     for (i = 0; i < 16; i = i + 1)
     begin
-      partial_product_3[i] <= partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
+      partial_product_3[i] = partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
     end
 
     for (i = 0; i < 8; i = i + 1)
     begin
-      partial_product_4[i] <= partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
+      partial_product_4[i] = partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
     end
 
-    internalResult = 32'b0;
+    internal_result = 32'b0;
     for (i = 0; i < 8; i = i + 1)
     begin
-      internalResult = internalResult + partial_product_4[i];
+      internal_result = internal_result + partial_product_4[i];
     end
 
-    op_done <= 0;
-    overflow <= |internalResult[63:32];
-    result <= internalResult[31:0];
+    // op_done = &stages_finished[4:0];
+    overflow = |internal_result[63:32];
+    result = internal_result[31:0];
   end
 
 endmodule

@@ -52,4 +52,38 @@ parameter SIGN_EXTENDER_INPUT_SIZE = 12;
 parameter OFFSET_SIZE = 12;
 
 parameter NIBBLE_WIDTH = 4;
+
+`define ABEJARUCO_VERBOSE
+`define ALU_VERBOSE
+`define MEMORY_VERBOSE
+// `define CACHE_VERBOSE
+
+`define F_REGS_VERBOSE
+`define D_REGS_VERBOSE
+`define EX_REGS_VERBOSE
+
+`ifdef CACHE_VERBOSE
+`define CACHE_DISPLAY(str) $display("[ CACHE ] %s", str)
+`define CACHE_WRITE(str) $write("%s", str)
+`else
+`define CACHE_DISPLAY(str)
+`define CACHE_WRITE(str)
+`endif
+
+`ifdef ABEJARUCO_VERBOSE
+`define ABEJARUCO_DISPLAY(str) $display("[ ABEJARUCO ] %s", str)
+`define ABEJARUCO_WRITE(str) $write("%s", str)
+`else
+`define ABEJARUCO_VERBOSE(str)
+`define ABEJARUCO_WRITE(str)
+`endif
+
+`ifdef ALU_VERBOSE
+`define ALU_DISPLAY(str) $display("[ ALU ] %s", str)
+`define ALU_WRITE(str) $write("%s", str)
+`else
+`define ALU_VERBOSE(str)
+`define ALU_WRITE(str)
+`endif
+
 `endif
