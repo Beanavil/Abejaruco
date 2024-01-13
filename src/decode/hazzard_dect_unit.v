@@ -21,24 +21,27 @@
 
 `default_nettype none
 
-module HazzardDectUnit
+//Condiciones: 
+//1. Si el registro salida de ext es igual al registro entrada de id (y ex no ha terminado)
 
-(input wire clk,
-   input [6:0] ,
-   input [2:0] funct3,
-   output reg branch,
-   output reg reg_write,
-   output reg mem_read,
-   output reg mem_to_reg,
-   output reg [1:0] alu_op,
-   output reg mem_write,
-   output reg alu_src,
-   output reg is_imm);
+module HazzardDectUnit 
+  (input wire clk,
+   input reg [REGISTER_INDEX_WIDTH-1:0] id_reg_rt,
+   input reg [REGISTER_INDEX_WIDTH-1:0] ex_reg_rs,
+   input reg alu_op_done
+
+   input reg [REGISTER_INDEX_WIDTH-1:0] men_reg_rt,
+   input reg mem_op_done 
+);
+`include "src/parameters.v"
 
   always @(clk)
   begin
-  
-  
+    if (id_reg_rt == ex_reg_rs && alu_op_done == 0)
+      $display("Hazzard ALU - ALU");
+    else if (id_reg_rt == mem_reg_re && mem_op_done == 0)
+      $display("Hazzard ALU - MEM");
   end 
 
 endmodule
+
