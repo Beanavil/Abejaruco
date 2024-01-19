@@ -346,6 +346,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   assign alu_second_input = (decode_cu_alu_src_out) ?
          {20'b0, decode_offset_out} : decode_second_register_out;
 
+StallUnit stall_unit(.clk(clk),
+                       .alu_op_done(alu_op_done),
+                       .icache_op_done(icache_op_done));
+
+
   ALU alu(
         //IN
         .clk(clk),
@@ -358,6 +363,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
         .result(decode_alu_result_out),
         .op_done(alu_op_done)
       );
+
+  
+  
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
   // assign res = (is_imm) ? offset : alu_result;
@@ -419,10 +427,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
             .out(rf_write_data)
           );
 
-  // Don't move this from here
-  StallUnit stall_unit(.clk(clk),
-                       .alu_op_done(alu_op_done),
-                       .icache_op_done(icache_op_done));
+  
 
   initial
   begin
@@ -433,11 +438,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(posedge clk)
   begin
+    $display("                                        clk %d", clk);
+    $display("-----Value 0 ---_>stall_unit.increase_pc %d", stall_unit.increase_pc);
     if (stall_unit.increase_pc)
     begin
       `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
       rm0 = rm0 + 3'b100;
     end
     `ABEJARUCO_DISPLAY($sformatf("icache_op_done %b and alu_op_done %b", icache_op_done, alu_op_done));
+
+  $display("--Value 1 -----_>stall_unit.increase_pc %d", stall_unit.increase_pc);
   end
 endmodule

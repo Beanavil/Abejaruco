@@ -187,8 +187,8 @@ module ALUOps_tb();
       // 5 cycles to perform mul
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b1;
         #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
         $display("c---------------------------");
       end
 
@@ -205,9 +205,10 @@ module ALUOps_tb();
                     alu_out_multiplexer_expected);
       $display("-- register_file.r[4] should be %h, got %h", 32'h00000010, uut.register_file.r[4]);
 
-      #CLK_PERIOD clk = 1'b1;
       #CLK_PERIOD clk = 1'b0;
-      $display("c---------------------------");
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      $display("c--------------------------2");
 
       #CLK_PERIOD;
 
@@ -249,9 +250,11 @@ module ALUOps_tb();
       // end
       $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
 
+
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
-      $display("c---------------------------");
+      #CLK_PERIOD;
+      $display("c---------------------------+");
 
       #CLK_PERIOD;
 
@@ -283,7 +286,7 @@ module ALUOps_tb();
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
-        $display("c---------------------------");
+        $display("c--------------------------");
       end
 
       #CLK_PERIOD;
