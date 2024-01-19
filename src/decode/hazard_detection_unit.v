@@ -66,7 +66,7 @@ module HazardDetectionUnit
     begin
       stall = 0;
     end
-    `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("[ HAZARD DETECT UNIT ] - decode_idx_src_1: %h, decode_idx_src_2 %h, execution_idx_dst %h, memory_idx_src_dst %h, alu_op_done %h, mem_op_done %h => stall %h",
+    `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %h, decode_idx_src_2 %h, execution_idx_dst %h, memory_idx_src_dst %h, alu_op_done %h, mem_op_done %h => stall %h",
                                    decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
                                    memory_idx_src_dst, alu_op_done, mem_op_done, stall));
 

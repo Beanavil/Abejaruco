@@ -34,7 +34,7 @@ module Hazards_tb();
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
               .clk(clk),
-              .rm0_initial(32'b0100)
+              .rm0_initial(32'b0000)
             );
 
   task automatic reset_input;
@@ -85,6 +85,8 @@ module Hazards_tb();
   // Test that in case of nops the stall is not set to 1
   // -- add $r0 <- $r0, $r0 F F F F F D E M W
   // -- add $r0 <- $r0, $r0           F D E M
+  // -- nop                             F D E
+  // -- nop                               F D
   task automatic test_nop;
     output integer err;
     reg stall_expected;
@@ -100,7 +102,7 @@ module Hazards_tb();
       end
 
       // 4 cycles to execute the instructions
-      for (integer i = 0; i < 4; i = i + 1)
+      for (integer i = 0; i < 3; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
@@ -134,7 +136,7 @@ module Hazards_tb();
       stall_expected = 0;
 
       // 2 cycles to fetch the line
-      for (integer i = 0; i < 2; i = i + 1)
+      for (integer i = 0; i < 5; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
@@ -142,7 +144,7 @@ module Hazards_tb();
       end
 
       // 2 cycles without stall
-      for (integer i = 0; i < 2; i = i + 1)
+      for (integer i = 0; i < 3; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;

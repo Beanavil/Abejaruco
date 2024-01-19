@@ -260,7 +260,7 @@ module Cache (
         begin
           `CACHE_DISPLAY("----> Hit");
           `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready));
-
+          mem_enable = 0;
           if (byte_op)
           begin
             data_out[WORD_WIDTH:8] = 0;
@@ -280,6 +280,7 @@ module Cache (
         end
         else /*miss*/
         begin
+          `CACHE_DISPLAY("----> Miss");
           mem_address = {address[31:4], 4'b0000};
           mem_enable = 1;
           mem_op_done = 0;
@@ -302,6 +303,7 @@ module Cache (
           // When memory returns data, store it in the cache
           if(mem_data_ready)
           begin
+            `CACHE_DISPLAY("----> Load");
             data_array[replace_index][0] = mem_data_out[31:0];
             data_array[replace_index][1] = mem_data_out[63:32];
             data_array[replace_index][2] = mem_data_out[95:64];

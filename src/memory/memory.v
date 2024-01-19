@@ -63,8 +63,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
   always @(posedge clk)
   begin
-    `MEMORY_DISPLAY($sformatf("The address is %h", address));
-    `MEMORY_DISPLAY($sformatf("Counter %h", counter));
+    `MEMORY_DISPLAY($sformatf("The address is %h, the state is %h", address, enable));
 
     if (enable)
     begin
@@ -77,7 +76,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
         2'b01: /*WAIT*/
         begin
-          `MEMORY_DISPLAY($sformatf("Entra en wait %d", counter));
+          `MEMORY_DISPLAY($sformatf("Enter in wait %d", counter));
           if (counter < MEMORY_OP_DELAY_CYCLES-1)
           begin
             counter = counter + 1;
@@ -93,7 +92,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
           `MEMORY_DISPLAY($sformatf("op = %b", op));
           if (op) /*write*/
           begin
-            `MEMORY_DISPLAY("Entra en write");
+            `MEMORY_DISPLAY("Enter in write");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
               memory[address + i] = data_in[i*8 +: 8];
@@ -101,14 +100,13 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
           end
           else /*read*/
           begin
-            `MEMORY_DISPLAY("Entra en read");
+            `MEMORY_DISPLAY("Enter in read");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
               data_out[i*8 +: 8] = memory[address + i];
             end
           end
           data_ready = 1'b1;
-          counter = 0;
           state = 2'b00;
         end
       endcase
