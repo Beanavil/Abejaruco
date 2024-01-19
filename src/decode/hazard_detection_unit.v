@@ -42,23 +42,26 @@ module HazardDetectionUnit
 
   always @(posedge clk)
   begin
-    // If execution result or memory load writes in register 0 don't stall cause it's a nop.
-    if (~execution_idx_dst || ~memory_idx_src_dst)
+    // If execution result or memory load writes in register 0 don't stall
+    // cause it's a nop.
+    if (execution_idx_dst == 0 || memory_idx_src_dst == 0)
     begin
       stall = 0;
     end
     // Data hazard
-    else if ((decode_idx_src_1 == execution_idx_dst || decode_idx_src_2 == execution_idx_dst) && alu_op_done == 0)
+    else if ((decode_idx_src_1 == execution_idx_dst ||
+              decode_idx_src_2 == execution_idx_dst) /* && alu_op_done == 0 */)
     begin
       stall = 1;
     end
     // Load-use hazard
-    else if ((decode_idx_src_1 == memory_idx_src_dst || decode_idx_src_2 == memory_idx_src_dst) && mem_op_done == 0)
+    else if ((decode_idx_src_1 == memory_idx_src_dst ||
+              decode_idx_src_2 == memory_idx_src_dst) /* && mem_op_done == 0 */ )
     begin
       stall = 1;
     end
     // Store-use hazard
-    else if ((decode_idx_src_1 == execution_idx_dst) && alu_op_done == 0)
+    else if ((decode_idx_src_1 == execution_idx_dst) /* && alu_op_done == 0 */ )
     begin
       stall = 1;
     end

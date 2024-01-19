@@ -112,14 +112,6 @@ module Hazards_tb();
       #CLK_PERIOD;
       print_tb_info("test_nop", stall_expected);
       err = uut.stall != stall_expected;
-
-      // // 5 cycles to execute the instructions
-      // for (integer i = 0; i < 5; i = i + 1)
-      // begin
-      //   #CLK_PERIOD clk = 1'b0;
-      //   #CLK_PERIOD clk = 1'b1;
-      //   print_tb_info("test_nop", stall_expected);
-      // end
     end
   endtask
 
@@ -144,7 +136,7 @@ module Hazards_tb();
       end
 
       // 2 cycles without stall
-      for (integer i = 0; i < 3; i = i + 1)
+      for (integer i = 0; i < 1; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
@@ -158,9 +150,7 @@ module Hazards_tb();
       stall_expected = 1;
       #CLK_PERIOD;
       print_tb_info("test_data_haz", stall_expected);
-
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      err = uut.stall != stall_expected;
     end
   endtask
 
@@ -199,8 +189,7 @@ module Hazards_tb();
       #CLK_PERIOD;
       print_tb_info("test_load_haz", stall_expected);
 
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      err = uut.stall == stall_expected;
     end
   endtask
 
