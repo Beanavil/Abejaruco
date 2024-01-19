@@ -65,8 +65,8 @@ module Hazards_tb();
       test_store_haz(err);
       check_err(err, "test_store_haz");
 
-      // test_no_haz(err);
-      // check_err(err, "test_no_haz");
+      test_no_haz(err);
+      check_err(err, "test_no_haz");
 
       $display("Done");
     end
@@ -230,6 +230,29 @@ module Hazards_tb();
       stall_expected = 1;
       #CLK_PERIOD;
       print_tb_info("test_store_haz", stall_expected);
+
+      err = uut.stall != stall_expected;
+    end
+  endtask
+
+  // Test that there are no hazards
+  // -- add $r4 <- $r1, $r1   F F F F F F D E M W
+  // -- add $r5 <- $r3, $r3               F D E M
+  // -- add $r0 <- $r0, $r0                 F D E
+  task automatic test_no_haz;
+    output integer err;
+    reg stall_expected;
+
+    begin
+      stall_expected = 0;
+
+      // 5 cycles to fetch the line
+      for (integer i = 0; i < 8; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+        print_tb_info("test_no_haz: fetch", stall_expected);
+      end
 
       err = uut.stall != stall_expected;
     end
