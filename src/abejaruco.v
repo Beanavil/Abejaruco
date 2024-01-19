@@ -269,14 +269,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
               );
 
   HazardDetectionUnit hazard_detection_unit(.clk(clk),
-                                    .decode_idx_src_1(fetch_instruction_out[19:15]),
-                                    .decode_idx_src_2(fetch_instruction_out[24:20]),
-                                    .execution_idx_dst(decode_dst_address_out),
-                                    .alu_op_done(alu_op_done),
+                      .decode_idx_src_1(fetch_instruction_out[19:15]),
+                      .decode_idx_src_2(fetch_instruction_out[24:20]),
+                      .execution_idx_dst(decode_dst_address_out),
+                      .alu_op_done(alu_op_done),
 
-                                    .memory_idx_src_dst(execution_dst_register_out),
-                                    .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
-                                    .stall(stall));
+                      .memory_idx_src_dst(execution_dst_register_out),
+                      .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
+                      .stall(stall));
 
   DecodeRegisters decode_registers(
                     // In
@@ -336,10 +336,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
               .cu_alu_op(decode_cu_alu_op_out),
               .alu_op(alu_ctrl_alu_op));
 
-  // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
-  assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
-  assign alu_first_input = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
-  assign alu_second_input = (decode_cu_alu_src_out) ? {20'b0, decode_offset_out} : decode_second_register_out;
+  // If alu_op is store/load, use destination/source and offset as arguments
+  // of the operation. Else, use registers' contents.
+  assign alu_address = (1/*ld*/) ?
+         decode_src_address_out : decode_dst_address_out;
+  assign alu_first_input = (decode_cu_alu_src_out) ?
+         alu_address : decode_first_register_out;
+  assign alu_second_input = (decode_cu_alu_src_out) ?
+         {20'b0, decode_offset_out} : decode_second_register_out;
 
   ALU alu(
         //IN
@@ -429,7 +433,5 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
       `ABEJARUCO_DISPLAY("Update rm0");
       rm0 = rm0 + 3'b100;
     end
-
-    `ABEJARUCO_DISPLAY($sformatf("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out));
   end
 endmodule

@@ -62,8 +62,8 @@ module Hazards_tb();
       test_load_haz(err);
       check_err(err, "test_load_haz");
 
-      // test_store_haz(err);
-      // check_err(err, "test_store_haz");
+      test_store_haz(err);
+      check_err(err, "test_store_haz");
 
       // test_no_haz(err);
       // check_err(err, "test_no_haz");
@@ -189,6 +189,47 @@ module Hazards_tb();
       stall_expected = 1;
       #CLK_PERIOD;
       print_tb_info("test_load_haz", stall_expected);
+
+      err = uut.stall != stall_expected;
+    end
+  endtask
+
+
+  // Test hazard detection store uses add result
+  // -- add $r2 <- $r1, $r1   F F F F F F D E M W
+  // -- stw 0($r2) <- $r3                 F D D E
+  // -- add $r0 <- $r0, $r0                 F F D
+  // -- add $r0 <- $r0, $r0                     F
+  task automatic test_store_haz;
+    output integer err;
+    reg stall_expected;
+
+    begin
+      stall_expected = 0;
+
+      // 5 cycles to fetch the line
+      for (integer i = 0; i < 6; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+        print_tb_info("test_store_haz: fetch", stall_expected);
+      end
+
+      // 2 cycles without stall
+      for (integer i = 0; i < 1; i = i + 1)
+      begin
+        #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
+        print_tb_info("test_store_haz", stall_expected);
+      end
+
+      // 1 cycle where it stalls
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;
+      stall_expected = 1;
+      #CLK_PERIOD;
+      print_tb_info("test_store_haz", stall_expected);
 
       err = uut.stall != stall_expected;
     end
