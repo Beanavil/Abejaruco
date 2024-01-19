@@ -49,8 +49,7 @@ module FetchRegisters (
 
     if (cache_op_done_in && ~stall_in)
     begin
-      // $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
-      $display("[ FETCH REGISTERS ]: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
+      `F_REGISTER_DISPLAY("Is not stalled");
       rm0_out = rm0_in;
       instruction_out = instruction_in;
       active_out = 1'b1;
@@ -59,5 +58,9 @@ module FetchRegisters (
     begin
       active_out = 1'b0;
     end
+
+    `F_REGISTER_DISPLAY($sformatf("rm0_in = %h, instruction_in = %h",
+                                  rm0_in, instruction_in));
+
   end
 endmodule

@@ -70,7 +70,6 @@ module DecodeRegisters(
 
   always @(negedge clk)
   begin
-
     rm0_out = rm0_in;
     instruction_out = instruction_in;
     first_register_out = first_register_in;
@@ -89,6 +88,12 @@ module DecodeRegisters(
     dst_address_out = dst_address_in;
     offset_out = offset_in;
     destination_register_out = destination_register_in;
-    $display("DecodeRegisters: rm0_in = %h, instruction_in = %h, src1 = %h, src2 = %h, dst = %h", rm0_in, instruction_in, first_register_out, second_register_out, destination_register_out);
+
+    `D_REGISTER_DISPLAY($sformatf({"DecodeRegisters: rm0_in = %h,",
+                                  "instruction_in = %h, src1 = %h,",
+                                  "src2 = %h, dst = %h"},
+                                  rm0_in, instruction_in, first_register_out,
+                                  second_register_out,
+                                  destination_register_out));
   end
 endmodule

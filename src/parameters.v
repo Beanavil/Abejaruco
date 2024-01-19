@@ -60,8 +60,21 @@ parameter NIBBLE_WIDTH = 4;
 // `define F_REGS_VERBOSE
 // `define D_REGS_VERBOSE
 // `define EX_REGS_VERBOSE
+// `define MEM_REGS_VERBOSE
 `define HAZARD_DETECTION_UNIT_VERBOSE
 // `define MULTIPLIER_VERBOSE
+
+`ifdef F_REGISTER_VERBOSE
+`define F_REGISTER_DISPLAY(str) $display("[ F_REGISTER ] %s", str)
+`else
+`define F_REGISTER_DISPLAY(str)
+`endif
+
+`ifdef D_REGISTER_VERBOSE
+`define D_REGISTER_DISPLAY(str) $display("[ D_REGISTER ] %s", str)
+`else
+`define D_REGISTER_DISPLAY(str)
+`endif
 
 `ifdef EX_REGISTER_VERBOSE
 `define EX_REGISTER_DISPLAY(str) $display("[ EX_REGISTER ] %s", str)
