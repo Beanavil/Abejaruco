@@ -47,6 +47,7 @@ module Multiplier
   initial
   begin
     stages_finished = 5'b0;
+    op_done = 0;
   end
 
   always @(posedge clk)
@@ -54,13 +55,14 @@ module Multiplier
     multiplicand_reg = multiplicand;
     multiplier_reg = multiplier;
 
-    stages_finished[0] = start_mul;
-    for (integer i = 1; i < 5; i = i + 1)
-    begin
-      stages_finished[i] = stages_finished[i - 1];
-    end
-    op_done = stages_finished[3];
-    `MULTIPLIER_DISPLAY($sformatf("stages_finished[4]: %d", stages_finished[4]));
+    $display("Start mul value : %d", start_mul);
+
+    stages_finished[4] = start_mul;
+    `MULTIPLIER_DISPLAY($sformatf("stages_finished before: %b", stages_finished));
+    stages_finished = stages_finished >> 1;
+    `MULTIPLIER_DISPLAY($sformatf("stages_finished after: %b", stages_finished));
+    
+    op_done = stages_finished[0];
 
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
     begin

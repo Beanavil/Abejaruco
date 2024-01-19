@@ -32,6 +32,7 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
+`include "src/stall_unit.v"
 
 
 module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
@@ -418,6 +419,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
             .out(rf_write_data)
           );
 
+  // Don't move this from here
+  StallUnit stall_unit(.clk(clk),
+                       .alu_op_done(alu_op_done),
+                       .icache_op_done(icache_op_done));
+
   initial
   begin
     rm0 = rm0_initial;
@@ -427,11 +433,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(posedge clk)
   begin
-    if (icache_op_done & alu_op_done)
+    if (stall_unit.increase_pc)
     begin
-      `ABEJARUCO_DISPLAY($sformatf("alu_op_done %b", alu_op_done));
-      `ABEJARUCO_DISPLAY("Update rm0");
+      `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
       rm0 = rm0 + 3'b100;
     end
+    `ABEJARUCO_DISPLAY($sformatf("icache_op_done %b and alu_op_done %b", icache_op_done, alu_op_done));
   end
 endmodule

@@ -26,13 +26,13 @@ module ALU
   (
     // In
     input wire clk,
-    input [31:0] input_first,
-    input [31:0] input_second,
-    input [1:0] alu_op,
+    input wire [31:0] input_first,
+    input wire [31:0] input_second,
+    input wire [1:0] alu_op,
 
     // Out
-    output zero,
-    output [31:0] result,
+    output reg zero,
+    output reg [31:0] result,
     output reg op_done);
 
 `include "src/parameters.v"
@@ -61,20 +61,24 @@ module ALU
                .op_done(mul_done)
              );
 
+  initial begin
+    op_done = 1;
+  end
+
   always @(posedge clk)
   begin
     op_done = 0;
     case (alu_op)
       2'b00: /*add*/
       begin
-        `ALU_DISPLAY($sformatf("Performing add of %0d plus %0d with result %0d", input_first, input_second, tmp_sum_result));
+        `ALU_DISPLAY($sformatf("Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result));
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
 
       2'b01: /*sub*/
       begin
-        `ALU_DISPLAY($sformatf("Performing sub of %0d minus %0d with result %0d", input_first, input_second, tmp_sum_result));
+        `ALU_DISPLAY($sformatf("Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result));
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
@@ -85,7 +89,7 @@ module ALU
         `ALU_DISPLAY($sformatf("op_done %d before checking mul_done %d", op_done, mul_done));
         if(mul_done)
         begin
-          `ALU_DISPLAY($sformatf("Performing mul of %0d times %0d with result %0d", input_first, input_second, tmp_mul_result));
+          `ALU_DISPLAY($sformatf("Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result));
           {reg_result, reg_zero} = {tmp_mul_result, (tmp_mul_result == 0)};
           op_done = 1;
         end

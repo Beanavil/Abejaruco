@@ -27,7 +27,7 @@ module ALUControl
    input [1:0] cu_alu_op,
    output reg [1:0] alu_op);
 
-  always @(clk)
+  always @(posedge clk)
   begin
     case (cu_alu_op)
       2'b10: /*R-type*/

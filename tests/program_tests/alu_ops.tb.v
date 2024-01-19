@@ -57,8 +57,8 @@ module ALUOps_tb();
       test_add(err);
       check_err(err, "add");
 
-      // test_sub(err);
-      // check_err(err, "sub");
+      test_sub(err);
+      check_err(err, "sub");
 
       // test_wb(err);
       // check_err(err, "wb");
@@ -104,10 +104,12 @@ module ALUOps_tb();
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
+        $display("c---------------------------");
       end
 
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      $display("c---------------------------");
 
       icache_data_out_expected = 32'h00201083;
       cu_alu_op_expected = 2'b00;
@@ -121,6 +123,7 @@ module ALUOps_tb();
       // 1 cycle to fetch second li (icache hit)
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      $display("c---------------------------");
 
       #CLK_PERIOD;
 
@@ -133,16 +136,17 @@ module ALUOps_tb();
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      // 5 cycles to decode mul (icache miss)
+      // 5 cycles to fetch mul (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
+        $display("c---------------------------");
       end
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h402082B3; // next inst (add) has been already fetched, but we check register in next cycle (so sub has been fetched)
+      icache_data_out_expected = 32'h00110233; // next inst (add) has been already fetched, but we check register in next cycle (so sub has been fetched)
       cu_alu_op_expected = 2'b10;
       alu_out_multiplexer_expected = 32'h1; // 1 from loading it into $r2
 
@@ -185,7 +189,9 @@ module ALUOps_tb();
       begin
         #CLK_PERIOD clk = 1'b1;
         #CLK_PERIOD clk = 1'b0;
+        $display("c---------------------------");
       end
+
 
       #CLK_PERIOD;
 
@@ -197,9 +203,11 @@ module ALUOps_tb();
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
+      $display("-- register_file.r[4] should be %h, got %h", 32'h00000010, uut.register_file.r[4]);
 
       #CLK_PERIOD clk = 1'b1;
       #CLK_PERIOD clk = 1'b0;
+      $display("c---------------------------");
 
       #CLK_PERIOD;
 
@@ -232,12 +240,22 @@ module ALUOps_tb();
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
+
+      // 5 cycles to fetch the line
+      // for (integer i = 0; i < 6; i = i + 1)
+      // begin
+      //   #CLK_PERIOD clk = 1'b1;
+      //   #CLK_PERIOD clk = 1'b0;
+      // end
+      $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
+
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      $display("c---------------------------");
 
       #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00000000;
+      icache_data_out_expected = 32'h00000001;
       cu_alu_op_expected = 2'b10;
       alu_out_multiplexer_expected = 32'h00000001; // TODO
 
@@ -245,7 +263,7 @@ module ALUOps_tb();
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
-      $display("-- register_file.r[3] should be %h, got %h", 32'h00000002, uut.register_file.r[3]);
+      $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
 
       err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
              {icache_data_out_expected, cu_alu_op_expected, alu_out_multiplexer_expected});
@@ -265,6 +283,7 @@ module ALUOps_tb();
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
+        $display("c---------------------------");
       end
 
       #CLK_PERIOD;
