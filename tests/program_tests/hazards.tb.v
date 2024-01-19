@@ -59,8 +59,8 @@ module Hazards_tb();
       test_data_haz(err);
       check_err(err, "test_data_haz");
 
-      // test_load_haz(err);
-      // check_err(err, "test_load_haz");
+      test_load_haz(err);
+      check_err(err, "test_load_haz");
 
       // test_store_haz(err);
       // check_err(err, "test_store_haz");
@@ -164,6 +164,8 @@ module Hazards_tb();
     reg stall_expected;
 
     begin
+      stall_expected = 0;
+
       // 5 cycles to fetch the line
       for (integer i = 0; i < 5; i = i + 1)
       begin
@@ -173,7 +175,6 @@ module Hazards_tb();
       end
 
       // 2 cycles without stall
-      stall_expected = 0;
       for (integer i = 0; i < 2; i = i + 1)
       begin
         #CLK_PERIOD clk = 1'b0;
@@ -189,7 +190,7 @@ module Hazards_tb();
       #CLK_PERIOD;
       print_tb_info("test_load_haz", stall_expected);
 
-      err = uut.stall == stall_expected;
+      err = uut.stall != stall_expected;
     end
   endtask
 
