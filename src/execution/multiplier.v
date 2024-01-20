@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-//           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrilli
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -55,47 +55,60 @@ module Multiplier
     multiplicand_reg = multiplicand;
     multiplier_reg = multiplier;
 
-    $display("Start mul value : %d", start_mul);
-
-    stages_finished[4] = start_mul;
-    `MULTIPLIER_DISPLAY($sformatf("stages_finished before: %b", stages_finished));
-    stages_finished = stages_finished >> 1;
-    `MULTIPLIER_DISPLAY($sformatf("stages_finished after: %b", stages_finished));
-    
-    op_done = stages_finished[0];
-
-    for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
+    if(start_mul)
     begin
-      for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
+      for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
       begin
-        partial_product_1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicand_reg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplier_reg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
+        for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
+        begin
+          partial_product_1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicand_reg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplier_reg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
+        end
       end
+      stages_finished = {start_mul, 4'b0};
     end
 
-    for (i = 0; i < 32; i = i + 1)
+    if (stages_finished[4])
     begin
-      partial_product_2[i] = partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
+      for (i = 0; i < 32; i = i + 1)
+      begin
+        partial_product_2[i] = partial_product_1[i * 2] + partial_product_1[(i * 2) + 1];
+      end
+      stages_finished <= stages_finished >> 1;
     end
 
-    for (i = 0; i < 16; i = i + 1)
+    if (stages_finished[3])
     begin
-      partial_product_3[i] = partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
+      for (i = 0; i < 16; i = i + 1)
+      begin
+        partial_product_3[i] = partial_product_2[i * 2] + partial_product_2[(i * 2) + 1];
+      end
+      stages_finished <= stages_finished >> 1;
     end
 
-    for (i = 0; i < 8; i = i + 1)
+    if (stages_finished[2])
     begin
-      partial_product_4[i] = partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
+      for (i = 0; i < 8; i = i + 1)
+      begin
+        partial_product_4[i] = partial_product_3[i * 2] + partial_product_3[(i * 2) + 1];
+      end
+      stages_finished <= stages_finished >> 1;
     end
 
-    internal_result = 32'b0;
-    for (i = 0; i < 8; i = i + 1)
+    if (stages_finished[1])
     begin
-      internal_result = internal_result + partial_product_4[i];
+      internal_result = 32'b0;
+      for (i = 0; i < 8; i = i + 1)
+      begin
+        internal_result = internal_result + partial_product_4[i];
+      end
+      stages_finished <= stages_finished >> 1;
     end
 
-    // op_done = &stages_finished[4:0];
-    overflow = |internal_result[63:32];
-    result = internal_result[31:0];
+    op_done <= stages_finished[0];
+    overflow <= |internal_result[63:32];
+    result <= internal_result[31:0];
+
+    $display("op_done %b, result %d", op_done, result);
   end
 
 endmodule

@@ -25,8 +25,8 @@
 module ALUOps_tb();
 `include "src/parameters.v"
 
-  reg clk;
-  reg reset;
+  reg clk = 0;
+  reg reset = 0;
 
   parameter PROGRAM = "../../../programs/alu_ops.o";
 
@@ -39,11 +39,13 @@ module ALUOps_tb();
   task automatic reset_input;
     begin
       $display("*** Resetting input ***");
-      clk = 0;
+      #CLK_PERIOD; //clk = 1;
       reset = 1;
-      #CLK_PERIOD reset = 0;
-      clk = 1;
-      $display("Done");
+      #CLK_PERIOD; //clk = 0
+      reset = 0;
+      #CLK_PERIOD; //clk = 1;
+      #CLK_PERIOD; //clk = 0
+      $display("Done"); 
     end
   endtask
 
@@ -54,11 +56,11 @@ module ALUOps_tb();
       test_mul(err);
       check_err(err, "mul");
 
-      test_add(err);
-      check_err(err, "add");
+      // test_add(err);
+      // check_err(err, "add");
 
-      test_sub(err);
-      check_err(err, "sub");
+      // test_sub(err);
+      // check_err(err, "sub");
 
       // test_wb(err);
       // check_err(err, "wb");
@@ -84,8 +86,8 @@ module ALUOps_tb();
   // Test mul: load two immediates and multiply them
   // -- li $r1 <- 2         | F F F F F
   // --------------------------------------------------------
-  // -- li $r1 <- 2         | F F F F F F D
-  // -- li $r2 <- 1         |             F
+  // -- li $r1 <- 2         | F F F F F D
+  // -- li $r2 <- 1         |           F
   // --------------------------------------------------------
   // -- li $r1 <- 2         | F F F F F D E C W
   // -- li $r2 <- 1         |           F D E C W
@@ -102,36 +104,38 @@ module ALUOps_tb();
       // 5 cycles to fetch li (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b0;
         $display("c---------------------------");
       end
 
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      // 1 cycle to decode li
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
       $display("c---------------------------");
 
-      icache_data_out_expected = 32'h00201083;
+      icache_data_out_expected = 32'h00101103;
       cu_alu_op_expected = 2'b00;
-      alu_out_multiplexer_expected = 32'h0; // 0 cause no inst went through ALU yet
+      alu_out_multiplexer_expected = 32'h0;
 
-      print_tb_info("MUL", "Load first immediate",
+      print_tb_info("MUL", "Decode first immediate",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
 
-      // 1 cycle to fetch second li (icache hit)
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      // 1 cycle to decode second li (icache hit)
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
+      #CLK_PERIOD;// clk = 1'b1;
+
       $display("c---------------------------");
 
-      #CLK_PERIOD;
 
-      icache_data_out_expected = 32'h00110013;
+      icache_data_out_expected = 32'h00101103; // mul has icache miss
       cu_alu_op_expected = 2'b00;
-      alu_out_multiplexer_expected = 32'h0; // idem
+      alu_out_multiplexer_expected = 32'h0;
 
-      print_tb_info("MUL", "Load second immediate",
+      print_tb_info("MUL", "Decode second immediate",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
@@ -139,18 +143,21 @@ module ALUOps_tb();
       // 5 cycles to fetch mul (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b0;
+        $display("Fetching mul, rf_write_data = %d", uut.rf_write_data);
         $display("c---------------------------");
       end
 
-      #CLK_PERIOD;
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
+      $display("c---------------------------");
 
-      icache_data_out_expected = 32'h00110233; // next inst (add) has been already fetched, but we check register in next cycle (so sub has been fetched)
+      icache_data_out_expected = 32'h00110233; // next inst (add) has been already fetched
       cu_alu_op_expected = 2'b10;
       alu_out_multiplexer_expected = 32'h1; // 1 from loading it into $r2
 
-      print_tb_info("MUL", "Load mul",
+      print_tb_info("MUL", "Decode mul",
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
@@ -187,13 +194,13 @@ module ALUOps_tb();
       // 5 cycles to perform mul
       for (integer i = 0; i < 5; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b0;
         $display("c---------------------------");
       end
 
-
-      #CLK_PERIOD;
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
 
       icache_data_out_expected = 32'h402082B3; // sub is already fetched
       cu_alu_op_expected = 2'b10;
@@ -205,12 +212,9 @@ module ALUOps_tb();
                     alu_out_multiplexer_expected);
       $display("-- register_file.r[4] should be %h, got %h", 32'h00000010, uut.register_file.r[4]);
 
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
-      #CLK_PERIOD;
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
       $display("c--------------------------2");
-
-      #CLK_PERIOD;
 
       icache_data_out_expected = 32'h00000000;
       cu_alu_op_expected = 2'b10;
@@ -245,18 +249,16 @@ module ALUOps_tb();
       // 5 cycles to fetch the line
       // for (integer i = 0; i < 6; i = i + 1)
       // begin
-      //   #CLK_PERIOD clk = 1'b1;
-      //   #CLK_PERIOD clk = 1'b0;
+      //   #CLK_PERIOD;// clk = 1'b1;
+      //   #CLK_PERIOD;// clk = 1'b0;
       // end
       $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
 
 
-      #CLK_PERIOD clk = 1'b0;
-      #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b1;
+      #CLK_PERIOD;// clk = 1'b0;
       #CLK_PERIOD;
       $display("c---------------------------+");
-
-      #CLK_PERIOD;
 
       icache_data_out_expected = 32'h00000001;
       cu_alu_op_expected = 2'b10;
@@ -284,8 +286,8 @@ module ALUOps_tb();
       // Wait until sub instruction finishes
       for (integer i = 0; i < 4; i = i + 1) // TODO: 3 cycles or 4?
       begin
-        #CLK_PERIOD clk = 1'b0;
-        #CLK_PERIOD clk = 1'b1;
+        #CLK_PERIOD;// clk = 1'b0;
+        #CLK_PERIOD;// clk = 1'b1;
         $display("c--------------------------");
       end
 
@@ -312,12 +314,26 @@ module ALUOps_tb();
   begin
     print_info("Testing ALU instructions (mul, add, sub)");
 
+    $dumpfile("alu_ops.vcd");
+    $dumpvars(0, uut);
+
+    #CLK_PERIOD clk = 0;
+
     reset_input();
+
     run_tests();
+
+    #100;
 
     print_info("Testing finised");
 
+
     $finish;
+  end
+
+  always
+  begin
+    #CLK_PERIOD clk = ~clk;
   end
 
 endmodule

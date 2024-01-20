@@ -32,7 +32,7 @@ module BaseMultiplier #(parameter WIDTH = 4)
   begin
     if (WIDTH > 4)
     begin
-      $display("\033[31mMultiplier instantiated with WIDTH > 4. WIDTH = %0d\033[0m", WIDTH);
+      // $display("\033[31mMultiplier instantiated with WIDTH > 4. WIDTH = %0d\033[0m", WIDTH);
     end
   end
 

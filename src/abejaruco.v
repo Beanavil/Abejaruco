@@ -25,6 +25,7 @@
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
 `include "src/decode/hazard_detection_unit.v"
+`include "src/decode/stall_unit.v"
 `include "src/execution/alu.v"
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
@@ -32,8 +33,6 @@
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
-`include "src/stall_unit.v"
-
 
 module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
     input wire clk,
@@ -279,6 +278,12 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                       .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
                       .stall(stall));
 
+
+  StallUnit stall_unit(.clk(clk),
+                       .alu_op_done(alu_op_done),
+                       .icache_op_done(icache_op_done),
+                       .reg_write(cu_reg_write));
+
   DecodeRegisters decode_registers(
                     // In
                     .clk(clk),
@@ -346,11 +351,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   assign alu_second_input = (decode_cu_alu_src_out) ?
          {20'b0, decode_offset_out} : decode_second_register_out;
 
-StallUnit stall_unit(.clk(clk),
-                       .alu_op_done(alu_op_done),
-                       .icache_op_done(icache_op_done));
-
-
   ALU alu(
         //IN
         .clk(clk),
@@ -363,9 +363,6 @@ StallUnit stall_unit(.clk(clk),
         .result(decode_alu_result_out),
         .op_done(alu_op_done)
       );
-
-  
-  
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
   // assign res = (is_imm) ? offset : alu_result;
@@ -427,26 +424,29 @@ StallUnit stall_unit(.clk(clk),
             .out(rf_write_data)
           );
 
-  
-
   initial
   begin
     rm0 = rm0_initial;
-    `ABEJARUCO_DISPLAY($sformatf("[ ABEJARUCO ] - Initial rm0 = %h", rm0));
+    `ABEJARUCO_DISPLAY($sformatf("[ ABEJARUCO ] - Initial rm0 = %h, clk = %b", rm0, clk));
   end
 
   // Main pipeline execution
   always @(posedge clk)
   begin
-    $display("                                        clk %d", clk);
-    $display("-----Value 0 ---_>stall_unit.increase_pc %d", stall_unit.increase_pc);
-    if (stall_unit.increase_pc)
+    $display("/////////// clk %d", clk);
+    if (stall_unit.increase_pc === 1)
     begin
       `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
       rm0 = rm0 + 3'b100;
     end
-    `ABEJARUCO_DISPLAY($sformatf("icache_op_done %b and alu_op_done %b", icache_op_done, alu_op_done));
+    if((icache_op_done & alu_op_done) !== stall_unit.increase_pc)
+    begin
+      $display("icache_op_done (%d) & alu_op_done (%d) !== stall_unit.increase_pc (%d)", icache_op_done, alu_op_done, stall_unit.increase_pc);
+    end
+  end
 
-  $display("--Value 1 -----_>stall_unit.increase_pc %d", stall_unit.increase_pc);
+  always @(negedge clk)
+  begin
+    $display("                     clk %d ///////////", clk);
   end
 endmodule

@@ -1,8 +1,8 @@
 # GNU General Public License
 #
-# Copyright : (c) 2023 Javier Beiro Piñón
-#           : (c) 2023 Beatriz Navidad Vilches
-#           : (c) 2023 Stefano Petrilli
+# Copyright : (c) 2023-2024 Javier Beiro Piñón
+#           : (c) 2023-2024 Beatriz Navidad Vilches
+#           : (c) 2023-2024 Stefano Petrilli
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #
@@ -21,7 +21,14 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES control_unit decode_registers register_file hazard_detection_unit)
+list(
+  APPEND
+  VERILOG_MODULES
+  control_unit
+  decode_registers
+  register_file
+  hazard_detection_unit
+  stall_unit)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")

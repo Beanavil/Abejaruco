@@ -71,25 +71,24 @@ module ALU
     case (alu_op)
       2'b00: /*add*/
       begin
-        `ALU_DISPLAY($sformatf("Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result));
+        $display("Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result);
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
 
       2'b01: /*sub*/
       begin
-        `ALU_DISPLAY($sformatf("Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result));
+        $display("Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result);
         {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
         op_done = 1;
       end
 
       2'b10: /*mul*/
       begin
-        op_done = 0;
-        `ALU_DISPLAY($sformatf("op_done %d before checking mul_done %d", op_done, mul_done));
+        $display("op_done %d before checking mul_done %d", op_done, mul_done);
         if(mul_done)
         begin
-          `ALU_DISPLAY($sformatf("Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result));
+          $display("Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result);
           {reg_result, reg_zero} = {tmp_mul_result, (tmp_mul_result == 0)};
           op_done = 1;
         end
