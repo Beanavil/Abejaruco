@@ -18,7 +18,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
-`include "src/common/priority_encoder.v"
+
+
+`include "src/common/priority_encoder.v" 
 `include "src/common/tag_comparator.v"
 
 //TODO add half word operations

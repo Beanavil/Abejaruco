@@ -29,6 +29,10 @@
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
 `include "src/fetch/fetch_registers.v"
+
+`include "src/common/priority_encoder.v" 
+`include "src/common/tag_comparator.v"
+`include "src/memory/d_cache.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
@@ -399,6 +403,63 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   //--------------------------------------------//
   //               Memory stage                 //
   //--------------------------------------------//
+
+  // DCache data_cache(// In
+  //         // -- from CPU
+  //         .clk(clk),
+  //         .reset(reset),
+  //         .access(icache_access),
+  //         .address(icache_address),
+  //         .data_in(icache_data_in),
+  //         .op(icache_op),
+  //         .byte_op(icache_byte_op),
+  //         // -- from main memory
+  //         .mem_data_ready(icache_mem_data_ready),
+  //         .mem_data_out(icache_mem_data_out),
+  //         .memory_in_use(memory_in_use),
+
+  //         // Out
+  //         // -- to CPU
+  //         .data_out(icache_data_out),
+  //         .data_ready(icache_data_ready),
+  //         // -- to main memory
+  //         .mem_op_init(icache_mem_op_init),
+  //         .mem_enable(icache_mem_enable),
+  //         .mem_op(icache_mem_op),
+  //         .mem_op_done(icache_op_done),
+  //         .mem_address(icache_mem_address),
+  //         .mem_data_in(icache_mem_data_in)
+  //       );
+
+  //   module DCache (
+  //   // In wires (from CPU)
+  //   input wire clk,
+  //   input wire access,
+  //   input wire reset,
+  //   input wire [ADDRESS_WIDTH-1:0] address,
+  //   input wire [WORD_WIDTH-1:0] data_in,        // Data to be written in the cache
+  //   input wire op,
+  //   input wire byte_op,
+
+  //   // In wires (from memory)
+  //   input wire mem_data_ready,
+  //   input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
+  //   input wire memory_in_use,
+
+  //   // Out wires (to CPU)
+  //   output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
+  //   output wire data_ready,                     // Data in the output is valid or write operation finished
+
+  //   // Out wires (to memory)
+  //   output reg mem_enable,                      // Enable the memory module to read/write
+  //   output reg mem_op,                          // Select read/write operation
+  //   output reg mem_op_init,                     // Tell memory that we are going to use it
+  //   output reg mem_op_done,                     // The caché finished reading the returned data
+  //   output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
+  //   output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
+  // );
+
+
 
   MemoryRegisters memory_registers(
                     // In
