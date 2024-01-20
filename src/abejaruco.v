@@ -269,11 +269,13 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
               );
 
   HazardDetectionUnit hazard_detection_unit(.clk(clk),
+                      .decode_alu_op(cu_alu_op),
                       .decode_idx_src_1(fetch_instruction_out[19:15]),
                       .decode_idx_src_2(fetch_instruction_out[24:20]),
                       .execution_idx_dst(decode_dst_address_out),
-
                       .memory_idx_src_dst(execution_dst_register_out),
+                      .rf_write_idx(rf_write_idx),
+
                       .stall(stall));
 
   DecodeRegisters decode_registers(
@@ -426,7 +428,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(negedge clk)
   begin
-    if (alu_op_done & icache_op_done)
+    if (alu_op_done & icache_op_done & ~stall)
     begin
       rm0 <= rm0 + 3'b100;
       `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));

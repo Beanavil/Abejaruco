@@ -36,6 +36,11 @@ module ALUOps_tb();
               .rm0_initial(32'b1000)
             );
 
+  always
+  begin
+    #CLK_PERIOD clk = ~clk;
+  end
+
   initial
   begin
     print_info("Testing ALU instructions (mul, add, sub)");
@@ -48,11 +53,6 @@ module ALUOps_tb();
     print_info("Testing finised");
 
     $finish;
-  end
-
-  always
-  begin
-    #CLK_PERIOD clk = ~clk;
   end
 
 endmodule

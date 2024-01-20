@@ -25,9 +25,9 @@
 `include "src/abejaruco.v"
 
 module LoadAdd_tb();
-  reg clk;
-  reg reset;
-  reg [WORD_WIDTH-1:0] rm0_initial [];
+
+  reg clk = 0;
+  reg reset = 0;
 
   parameter PROGRAM = "../../../programs/load_add.o";
 
@@ -36,6 +36,12 @@ module LoadAdd_tb();
               .clk(clk),
               .rm0_initial(32'b1000)
             );
+
+  always
+  begin
+    #CLK_PERIOD clk = ~clk;
+  end
+
   initial
   begin
     print_info("Testing load immediate followed by add");

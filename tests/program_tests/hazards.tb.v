@@ -25,9 +25,8 @@
 module Hazards_tb();
 `include "src/parameters.v"
 
-  reg clk;
-  reg reset;
-  reg [WORD_WIDTH-1:0] rm0_initial [];
+  reg clk = 0;
+  reg reset = 0;
 
   parameter PROGRAM = "../../../programs/hazards.o";
 
@@ -36,6 +35,11 @@ module Hazards_tb();
               .clk(clk),
               .rm0_initial(32'b0000)
             );
+
+  always
+  begin
+    #CLK_PERIOD clk = ~clk;
+  end
 
   initial
   begin
