@@ -28,6 +28,7 @@ module ExecutionRegisters (
     input [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
     input [WORD_WIDTH-1:0] alu_result_in,
     input alu_zero_in,
+    input alu_op_done,
     input wire active,
 
     // Out
@@ -50,24 +51,27 @@ module ExecutionRegisters (
     alu_zero_out = 0;
   end
 
-  always @(negedge clk)
+  always @(posedge clk)
   begin
-    if (active)
+    if (active & alu_op_done)
     begin
-      `EX_REGISTER_DISPLAY($sformatf("(active) alu_result_in %h", alu_result_in));
-      extended_inmediate_out = extended_inmediate_in;
-      cu_mem_to_reg_out = cu_mem_to_reg_in;
-      cu_reg_write_out = cu_reg_write_in;
-      destination_register_out = destination_register_in;
-      alu_result_out = alu_result_in;
-      alu_zero_out = alu_zero_in;
-      active_out = 1'b1;
+      `EX_REGISTER_DISPLAY($sformatf({"alu_result_in %h ",
+                                      "destination_registers_in %h"},
+                                     alu_result_in,
+                                     destination_register_in));
+      extended_inmediate_out <= extended_inmediate_in;
+      cu_mem_to_reg_out <= cu_mem_to_reg_in;
+      cu_reg_write_out <= cu_reg_write_in;
+      destination_register_out <= destination_register_in;
+      alu_result_out <= alu_result_in;
+      alu_zero_out <= alu_zero_in;
+      active_out <= 1'b1;
       `EX_REGISTER_DISPLAY($sformatf("alu_result_out %h", alu_result_out));
     end
     else
     begin
       `EX_REGISTER_DISPLAY($sformatf("(no active)"));
-      active_out = 1'b0;
+      active_out <= 1'b0;
     end
   end
 

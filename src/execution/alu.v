@@ -61,13 +61,15 @@ module ALU
                .op_done(mul_done)
              );
 
-  initial begin
+  initial
+  begin
     op_done = 1;
   end
 
   always @(posedge clk)
   begin
     op_done = 0;
+    `ALU_DISPLAY($sformatf("Perform the operation: %d", alu_op));
     case (alu_op)
       2'b00: /*add*/
       begin

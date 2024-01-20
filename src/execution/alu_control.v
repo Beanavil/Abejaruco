@@ -32,6 +32,7 @@ module ALUControl
     case (cu_alu_op)
       2'b10: /*R-type*/
       begin
+        $display("[ ALU_CONTROL ] the new instruction is: %d", inst);
         case (inst)
           7'b0000000: /*add*/
             alu_op = 2'b00;

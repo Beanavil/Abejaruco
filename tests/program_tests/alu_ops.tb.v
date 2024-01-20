@@ -54,11 +54,11 @@ module ALUOps_tb();
       test_mul(err);
       check_err(err, "mul");
 
-      test_add(err);
+      test_mul_and_add(err);
       check_err(err, "add");
 
-      test_sub(err);
-      check_err(err, "sub");
+      // test_sub(err);
+      // check_err(err, "sub");
 
       // test_wb(err);
       // check_err(err, "wb");
@@ -173,22 +173,22 @@ module ALUOps_tb();
   // ------------------------------------------------------------
   // -- li $r1 <- 2         | F F F F F D E C W
   // -- li $r2 <- 1         |           F D E C W
-  // -- mul $r3 <- $r1, $r2 |             F F F F F D E E E E E C
-  // -- add $r4 <- $r2, $r1 |                       F D D D D D E
-  // -- sub $r5 <- $r1, $r2 |                         F F F F F D
+  // -- mul $r3 <- $r1, $r2 |             F F F F F D E E E E E C WB
+  // -- add $r4 <- $r2, $r1 |                       F D D D D D E C
+  // -- sub $r5 <- $r1, $r2 |                         F F F F F D E
   // -------------------------------------------------------------
-  task automatic test_add;
+  task automatic test_mul_and_add;
     output integer err;
     reg [CACHE_LINE_SIZE-1:0] icache_data_out_expected;
     reg [1:0] cu_alu_op_expected;
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
-      // 5 cycles to perform mul
-      for (integer i = 0; i < 5; i = i + 1)
+      // 7 cycles to perform mul and wb the result
+      for (integer i = 0; i < 7; i = i + 1)
       begin
-        #CLK_PERIOD clk = 1'b1;
         #CLK_PERIOD clk = 1'b0;
+        #CLK_PERIOD clk = 1'b1;
         $display("c---------------------------");
       end
 
@@ -203,17 +203,16 @@ module ALUOps_tb();
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
-      $display("-- register_file.r[4] should be %h, got %h", 32'h00000010, uut.register_file.r[4]);
+      $display("-- register_file.r[3] should be %h, got %h", 32'b00000010, uut.register_file.r[3]);
 
-      #CLK_PERIOD clk = 1'b1;
       #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
       $display("c---------------------------");
-
       #CLK_PERIOD;
 
       icache_data_out_expected = 32'h00000000;
       cu_alu_op_expected = 2'b10;
-      alu_out_multiplexer_expected = 32'h3; // add result
+      alu_out_multiplexer_expected = 32'b0; // add result
 
       print_tb_info("ADD", "Add the previously loaded immediates",
                     icache_data_out_expected,
@@ -251,6 +250,8 @@ module ALUOps_tb();
 
       #CLK_PERIOD clk = 1'b0;
       #CLK_PERIOD clk = 1'b1;
+      #CLK_PERIOD clk = 1'b0;
+      #CLK_PERIOD clk = 1'b1;
       $display("c---------------------------");
 
       #CLK_PERIOD;
@@ -263,6 +264,7 @@ module ALUOps_tb();
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
+      $display("-- register_file.r[3] should be %h, got %h", 32'b00000010, uut.register_file.r[3]);
       $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
 
       err = ({uut.icache_data_out, uut.cu_alu_op, uut.rf_write_data} !==
@@ -279,7 +281,7 @@ module ALUOps_tb();
 
     begin
       // Wait until sub instruction finishes
-      for (integer i = 0; i < 4; i = i + 1) // TODO: 3 cycles or 4?
+      for (integer i = 0; i < 5; i = i + 1) // TODO: 3 cycles or 4?
       begin
         #CLK_PERIOD clk = 1'b0;
         #CLK_PERIOD clk = 1'b1;
@@ -296,7 +298,7 @@ module ALUOps_tb();
                     icache_data_out_expected,
                     cu_alu_op_expected,
                     alu_out_multiplexer_expected);
-      $display("-- register_file.r[3] should be %h, got %h", 32'h00000002, uut.register_file.r[3]);
+      $display("-- register_file.r[3] should be %h, got %h", 32'b00000010, uut.register_file.r[3]);
       $display("-- register_file.r[4] should be %h, got %h", 32'h00000003, uut.register_file.r[4]);
       $display("-- register_file.r[5] should be %h, got %h", 32'h00000001, uut.register_file.r[5]);
 

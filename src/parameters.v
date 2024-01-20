@@ -54,15 +54,16 @@ parameter OFFSET_SIZE = 12;
 parameter NIBBLE_WIDTH = 4;
 
 `define ABEJARUCO_VERBOSE
-// `define ALU_VERBOSE
+`define ALU_VERBOSE
 // `define MEMORY_VERBOSE
 // `define CACHE_VERBOSE
 // `define F_REGS_VERBOSE
 // `define D_REGS_VERBOSE
-// `define EX_REGS_VERBOSE
-// `define MEM_REGS_VERBOSE
+`define EX_REGISTER_VERBOSE
+`define M_REGISTER_VERBOSE
 // `define HAZARD_DETECTION_UNIT_VERBOSE
-// `define MULTIPLIER_VERBOSE
+`define MULTIPLIER_VERBOSE
+`define REGISTER_FILE_VERBOSE
 
 `ifdef F_REGISTER_VERBOSE
 `define F_REGISTER_DISPLAY(str) $display("[ F_REGISTER ] %s", str)
@@ -82,10 +83,10 @@ parameter NIBBLE_WIDTH = 4;
 `define EX_REGISTER_DISPLAY(str)
 `endif
 
-`ifdef MEM_REGISTER_VERBOSE
-`define MEM_REGISTER_DISPLAY(str) $display("[ MEM_REGISTER ] %s", str)
+`ifdef M_REGISTER_VERBOSE
+`define M_REGISTER_DISPLAY(str) $display("[ M_REGISTER ] %s", str)
 `else
-`define MEM_REGISTER_DISPLAY(str)
+`define M_REGISTER_DISPLAY(str)
 `endif
 
 `ifdef CONTROL_UNIT_VERBOSE

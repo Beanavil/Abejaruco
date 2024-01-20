@@ -27,6 +27,7 @@ module MemoryRegisters (
     input wire cu_reg_write_in,
     input wire [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
     input wire [WORD_WIDTH-1:0] alu_result_in,
+    input wire alu_op_done,
 
     // Out
     output reg [WORD_WIDTH-1:0] extended_inmediate_out,
@@ -46,13 +47,19 @@ module MemoryRegisters (
     alu_result_out = 0;
   end
 
-  always @(negedge clk)
+  always @(posedge clk)
   begin
-    `MEM_REGISTER_DISPLAY($sformatf("alu_result_in %h", alu_result_in));
-    extended_inmediate_out = extended_inmediate_in;
-    cu_mem_to_reg_out = cu_mem_to_reg_in;
-    cu_reg_write_out = cu_reg_write_in;
-    destination_register_out = destination_register_in;
-    alu_result_out = alu_result_in;
+    if (alu_op_done)
+    begin
+      `M_REGISTER_DISPLAY($sformatf({"alu_result_in %h ",
+                                     "destination_registers_in %h"}, 
+                                     alu_result_in,
+                                     destination_register_in));
+      extended_inmediate_out <= extended_inmediate_in;
+      cu_mem_to_reg_out <= cu_mem_to_reg_in;
+      cu_reg_write_out <= cu_reg_write_in;
+      destination_register_out <= destination_register_in;
+      alu_result_out <= alu_result_in;
+    end
   end
 endmodule

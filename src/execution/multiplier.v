@@ -55,13 +55,14 @@ module Multiplier
     multiplicand_reg = multiplicand;
     multiplier_reg = multiplier;
 
-    $display("Start mul value : %d", start_mul);
-
     stages_finished[4] = start_mul;
     `MULTIPLIER_DISPLAY($sformatf("stages_finished before: %b", stages_finished));
     stages_finished = stages_finished >> 1;
     `MULTIPLIER_DISPLAY($sformatf("stages_finished after: %b", stages_finished));
     
+    if (start_mul) begin
+      `MULTIPLIER_DISPLAY("Multiplier start doing the multiplication");
+    end
     op_done = stages_finished[0];
 
     for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)

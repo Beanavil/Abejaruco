@@ -230,6 +230,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
                    .cache_op_done_in(icache_op_done), //TODO think this about this
+                   .alu_op_done(alu_op_done),
                    .stall_in(stall),
 
                    // Out
@@ -242,6 +243,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   //----------------------------------------//
 
   RegisterFile register_file(
+                 // In
                  .clk(clk),
                  .write_enable(rf_write_enable),
                  .reset(reset),
@@ -249,6 +251,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                  .write_data(rf_write_data),
                  .read_idx_1(fetch_instruction_out[19:15]),
                  .read_idx_2(fetch_instruction_out[24:20]),
+
+                 // Out
                  .read_data_1(rf_read_data_1),
                  .read_data_2(rf_read_data_2));
 
@@ -298,6 +302,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .src_address_in(fetch_instruction_out[19:15]),
                     .dst_address_in(fetch_instruction_out[11:7]),
                     .offset_in(fetch_instruction_out[31:20]),
+                    .alu_op_done(alu_op_done),
                     .stall_in(stall),
 
                     // Out
@@ -361,7 +366,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
   // assign res = (is_imm) ? offset : alu_result;
-
+  // Don't move this from here
   ExecutionRegisters execution_registers(
                        // In
                        .clk(clk),
@@ -371,6 +376,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .destination_register_in(decode_dst_register_out),
                        .alu_result_in(decode_alu_result_out),
                        .alu_zero_in(decode_alu_zero_out),
+                       .alu_op_done(alu_op_done),
                        .active(alu_op_done),
 
                        // Out
@@ -395,6 +401,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
                     .cu_reg_write_in(execution_cu_reg_write_out),
                     .destination_register_in(execution_dst_register_out),
+                    .alu_op_done(alu_op_done),
 
                     // Out
                     .alu_result_out(memory_alu_result_out),
@@ -419,11 +426,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
             .out(rf_write_data)
           );
 
-  // Don't move this from here
-  StallUnit stall_unit(.clk(clk),
-                       .alu_op_done(alu_op_done),
-                       .icache_op_done(icache_op_done));
-
   initial
   begin
     rm0 = rm0_initial;
@@ -433,7 +435,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(posedge clk)
   begin
-    if (stall_unit.increase_pc)
+    if (icache_op_done & alu_op_done)
     begin
       `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
       rm0 = rm0 + 3'b100;
