@@ -41,7 +41,7 @@ module StallUnit
     increase_pc = 1;
   end
 
-  always @(negedge clk)
+  always @(posedge clk)
   begin
     increase_pc = 0;
     stall_f_registers = 0;

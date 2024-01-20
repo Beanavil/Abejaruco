@@ -43,6 +43,7 @@ module ALU
 
   reg [31:0] reg_result;
   reg reg_zero;
+  reg start_mul;
 
   Adder #(.WIDTH(32)) adder (
           .a(input_first),
@@ -56,47 +57,44 @@ module ALU
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
-               .start_mul(alu_op === 2'b10),
+               .start_mul(start_mul),
                .result(tmp_mul_result),
                .op_done(mul_done)
              );
 
   initial begin
-    op_done = 1;
+    op_done <= 1;
+    start_mul <= 0;
   end
 
-  always @(posedge clk)
+  always @(*)
   begin
-    op_done = 0;
     case (alu_op)
       2'b00: /*add*/
       begin
-        $display("Performing add of %d plus %d with result %d", input_first, input_second, tmp_sum_result);
-        {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
-        op_done = 1;
+        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
       end
 
       2'b01: /*sub*/
       begin
-        $display("Performing sub of %d minus %d with result %d", input_first, input_second, tmp_sum_result);
-        {reg_result, reg_zero} = {tmp_sum_result, tmp_sum_zero};
-        op_done = 1;
+        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
       end
 
       2'b10: /*mul*/
       begin
-        $display("op_done %d before checking mul_done %d", op_done, mul_done);
+        start_mul <= 1'b1;
+        op_done <= 1'b0;
         if(mul_done)
         begin
-          $display("Performing mul of %d times %d with result %d", input_first, input_second, tmp_mul_result);
-          {reg_result, reg_zero} = {tmp_mul_result, (tmp_mul_result == 0)};
-          op_done = 1;
+          {reg_result, reg_zero} <= {tmp_mul_result, (tmp_mul_result == 0)};
+          op_done <= 1;
+          start_mul <= 1'b0;
         end
       end
 
       default:
       begin
-        op_done = 1;
+        //op_done = 1;
       end
     endcase
   end

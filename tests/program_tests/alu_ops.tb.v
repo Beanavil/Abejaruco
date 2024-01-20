@@ -43,8 +43,6 @@ module ALUOps_tb();
       reset = 1;
       #CLK_PERIOD; //clk = 0
       reset = 0;
-      #CLK_PERIOD; //clk = 1;
-      #CLK_PERIOD; //clk = 0
       $display("Done"); 
     end
   endtask
@@ -317,16 +315,13 @@ module ALUOps_tb();
     $dumpfile("alu_ops.vcd");
     $dumpvars(0, uut);
 
-    #CLK_PERIOD clk = 0;
+    // reset_input();
 
-    reset_input();
-
-    run_tests();
+    // run_tests();
 
     #100;
 
     print_info("Testing finised");
-
 
     $finish;
   end

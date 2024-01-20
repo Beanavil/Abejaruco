@@ -22,7 +22,7 @@
 `ifndef PARAMETERS_VPetrilli
 `define PARAMETERS_V
 
-parameter CLK_PERIOD = 5;
+parameter CLK_PERIOD = 1;
 
 parameter NUM_REGS = 32;
 parameter REGISTER_INDEX_WIDTH = $clog2(NUM_REGS);

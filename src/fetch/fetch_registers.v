@@ -26,7 +26,8 @@ module FetchRegisters (
     input wire [WORD_WIDTH-1:0] instruction_in,
     input wire cache_op_done_in,
     input wire stall_in,
-
+    input wire alu_op_done,
+    
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
     output reg [WORD_WIDTH-1:0] rm0_out,
@@ -40,18 +41,18 @@ module FetchRegisters (
     instruction_out = 0;
   end
 
-  always @(negedge clk)
+  always @(posedge clk)
   begin
 
     // Reason to stall the fetch stage
     // - Cache has not finished
     // - Hazard (data)
 
-    if (cache_op_done_in && ~stall_in)
+    if (alu_op_done & cache_op_done_in & ~stall_in)
     begin
       `F_REGISTER_DISPLAY("Is not stalled");
-      rm0_out = rm0_in;
-      instruction_out = instruction_in;
+      rm0_out <= rm0_in;
+      instruction_out <= instruction_in;
       active_out = 1'b1;
     end
     else

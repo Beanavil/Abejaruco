@@ -27,18 +27,18 @@ module ALUControl
    input [1:0] cu_alu_op,
    output reg [1:0] alu_op);
 
-  always @(posedge clk)
+  always @(*)
   begin
     case (cu_alu_op)
       2'b10: /*R-type*/
       begin
         case (inst)
           7'b0000000: /*add*/
-            alu_op = 2'b00;
+            alu_op <= 2'b00;
           7'b0100000: /*sub*/
-            alu_op = 2'b01;
+            alu_op <= 2'b01;
           7'b0000001: /*mul*/
-            alu_op = 2'b10;
+            alu_op <= 2'b10;
           default:
           begin
             // TODO: que hacer aqui
@@ -48,17 +48,17 @@ module ALUControl
 
       2'b00: /*I-type & S-type*/
       begin
-        alu_op = 2'b00;
+        alu_op <= 2'b00;
       end
 
       2'b01: /*branch*/
       begin
-        alu_op = 2'b01;
+        alu_op <= 2'b01;
       end
 
       2'b11: /*jump*/
       begin
-        alu_op = 2'b00;
+        alu_op <= 2'b00;
       end
     endcase
   end

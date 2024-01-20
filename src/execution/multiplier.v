@@ -50,13 +50,14 @@ module Multiplier
     op_done = 0;
   end
 
-  always @(posedge clk)
+  always @(*)
   begin
-    multiplicand_reg = multiplicand;
-    multiplier_reg = multiplier;
+    multiplicand_reg <= multiplicand;
+    multiplier_reg <= multiplier;
 
     if(start_mul)
     begin
+      stages_finished <= {start_mul, 4'b0};
       for (i = 0; i < WORD_WIDTH/NIBBLE_WIDTH; i = i + 1)
       begin
         for (j = 0; j < WORD_WIDTH/NIBBLE_WIDTH; j = j + 1)
@@ -64,9 +65,15 @@ module Multiplier
           partial_product_1[i*WORD_WIDTH/NIBBLE_WIDTH + j] = (multiplicand_reg[i*NIBBLE_WIDTH +: NIBBLE_WIDTH]) * (multiplier_reg[j*NIBBLE_WIDTH +: NIBBLE_WIDTH]) << (i + j)* 4;
         end
       end
-      stages_finished = {start_mul, 4'b0};
     end
+    else
+    begin
+      stages_finished <= 5'b0;
+    end
+  end
 
+  always @(posedge clk)
+  begin
     if (stages_finished[4])
     begin
       for (i = 0; i < 32; i = i + 1)
@@ -104,7 +111,7 @@ module Multiplier
       stages_finished <= stages_finished >> 1;
     end
 
-    op_done <= stages_finished[0];
+    op_done <= stages_finished[1];
     overflow <= |internal_result[63:32];
     result <= internal_result[31:0];
 

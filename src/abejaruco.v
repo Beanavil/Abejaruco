@@ -25,7 +25,6 @@
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
 `include "src/decode/hazard_detection_unit.v"
-`include "src/decode/stall_unit.v"
 `include "src/execution/alu.v"
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
@@ -230,6 +229,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .instruction_in(icache_data_out),
                    .cache_op_done_in(icache_op_done), //TODO think this about this
                    .stall_in(stall),
+                   .alu_op_done(alu_op_done),
 
                    // Out
                    .rm0_out(fetch_rm0_out),
@@ -272,17 +272,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                       .decode_idx_src_1(fetch_instruction_out[19:15]),
                       .decode_idx_src_2(fetch_instruction_out[24:20]),
                       .execution_idx_dst(decode_dst_address_out),
-                      .alu_op_done(alu_op_done),
 
                       .memory_idx_src_dst(execution_dst_register_out),
-                      .mem_op_done(1'b1), //TODO modify this bit to mem_op_done of data cache
                       .stall(stall));
-
-
-  StallUnit stall_unit(.clk(clk),
-                       .alu_op_done(alu_op_done),
-                       .icache_op_done(icache_op_done),
-                       .reg_write(cu_reg_write));
 
   DecodeRegisters decode_registers(
                     // In
@@ -304,6 +296,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .dst_address_in(fetch_instruction_out[11:7]),
                     .offset_in(fetch_instruction_out[31:20]),
                     .stall_in(stall),
+                    .alu_op_done(alu_op_done),
 
                     // Out
                     .rm0_out(decode_rm0_out),
@@ -433,20 +426,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(posedge clk)
   begin
-    $display("/////////// clk %d", clk);
-    if (stall_unit.increase_pc === 1)
+    if (alu_op_done & icache_op_done)
     begin
+      rm0 <= rm0 + 3'b100;
       `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
-      rm0 = rm0 + 3'b100;
     end
-    if((icache_op_done & alu_op_done) !== stall_unit.increase_pc)
-    begin
-      $display("icache_op_done (%d) & alu_op_done (%d) !== stall_unit.increase_pc (%d)", icache_op_done, alu_op_done, stall_unit.increase_pc);
-    end
-  end
-
-  always @(negedge clk)
-  begin
-    $display("                     clk %d ///////////", clk);
   end
 endmodule

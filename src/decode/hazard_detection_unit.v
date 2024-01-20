@@ -31,9 +31,7 @@ module HazardDetectionUnit
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_src_1,
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_src_2,
     input wire [REGISTER_INDEX_WIDTH-1:0] execution_idx_dst,
-    input wire alu_op_done,
     input wire [REGISTER_INDEX_WIDTH-1:0] memory_idx_src_dst,
-    input wire mem_op_done,
 
     // Out
     output reg stall
@@ -42,35 +40,36 @@ module HazardDetectionUnit
 
   always @(posedge clk)
   begin
-    // If execution result or memory load writes in register 0 don't stall
-    // cause it's a nop.
-    if (execution_idx_dst == 0 || memory_idx_src_dst == 0)
-    begin
-      stall = 0;
-    end
-    // Data hazard
-    else if (decode_idx_src_1 == execution_idx_dst ||
-             decode_idx_src_2 == execution_idx_dst)
-    begin
-      stall = 1;
-    end
-    // Load-use hazard
-    else if (decode_idx_src_1 == memory_idx_src_dst ||
-             decode_idx_src_2 == memory_idx_src_dst)
-    begin
-      stall = 1;
-    end
-    // Store-use hazard
-    else if (decode_idx_src_1 == execution_idx_dst)
-    begin
-      stall = 1;
-    end
-    else
-    begin
-      stall = 0;
-    end
-    `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %b, decode_idx_src_2 %b, execution_idx_dst %b, memory_idx_src_dst %b, alu_op_done %b, mem_op_done %b => stall %h",
-                                   decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
-                                   memory_idx_src_dst, alu_op_done, mem_op_done, stall));
+    stall = 0;
+    // // If execution result or memory load writes in register 0 don't stall
+    // // cause it's a nop.
+    // if (execution_idx_dst == 0 || memory_idx_src_dst == 0)
+    // begin
+    //   stall = 0;
+    // end
+    // // Data hazard
+    // else if (decode_idx_src_1 == execution_idx_dst ||
+    //          decode_idx_src_2 == execution_idx_dst)
+    // begin
+    //   stall = 1;
+    // end
+    // // Load-use hazard
+    // else if (decode_idx_src_1 == memory_idx_src_dst ||
+    //          decode_idx_src_2 == memory_idx_src_dst)
+    // begin
+    //   stall = 1;
+    // end
+    // // Store-use hazard
+    // else if (decode_idx_src_1 == execution_idx_dst)
+    // begin
+    //   stall = 1;
+    // end
+    // else
+    // begin
+    //   stall = 0;
+    // end
+    // `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %b, decode_idx_src_2 %b, execution_idx_dst %b, memory_idx_src_dst %b, alu_op_done %b, mem_op_done %b => stall %h",
+    //                                decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
+    //                                memory_idx_src_dst, alu_op_done, mem_op_done, stall));
   end
 endmodule
