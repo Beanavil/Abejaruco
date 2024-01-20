@@ -27,7 +27,7 @@ module FetchRegisters (
     input wire cache_op_done_in,
     input wire stall_in,
     input wire alu_op_done,
-    
+
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
     output reg [WORD_WIDTH-1:0] rm0_out,
@@ -41,7 +41,7 @@ module FetchRegisters (
     instruction_out = 0;
   end
 
-  always @(posedge clk)
+  always @(negedge clk)
   begin
 
     // Reason to stall the fetch stage

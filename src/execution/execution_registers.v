@@ -50,7 +50,7 @@ module ExecutionRegisters (
     alu_zero_out = 0;
   end
 
-  always @(posedge clk)
+  always @(negedge clk)
   begin
     if (active)
     begin

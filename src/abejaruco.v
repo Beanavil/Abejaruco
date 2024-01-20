@@ -424,7 +424,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   end
 
   // Main pipeline execution
-  always @(posedge clk)
+  always @(negedge clk)
   begin
     if (alu_op_done & icache_op_done)
     begin

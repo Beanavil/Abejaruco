@@ -46,7 +46,7 @@ module MemoryRegisters (
     alu_result_out <= 0;
   end
 
-  always @(posedge clk)
+  always @(negedge clk)
   begin
     `MEM_REGISTER_DISPLAY($sformatf("alu_result_in %h", alu_result_in));
     extended_inmediate_out <= extended_inmediate_in;

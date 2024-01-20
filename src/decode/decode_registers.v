@@ -67,7 +67,7 @@ module DecodeRegisters(
     instruction_out = 0;
   end
 
-  always @(posedge clk)
+  always @(negedge clk)
   begin
     if(~stall_in & alu_op_done)
     begin
