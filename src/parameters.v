@@ -24,6 +24,8 @@
 
 parameter CLK_PERIOD = 1;
 
+parameter NOP_INSTRUCTION = 32'h00000033;
+
 parameter NUM_REGS = 32;
 parameter REGISTER_INDEX_WIDTH = $clog2(NUM_REGS);
 

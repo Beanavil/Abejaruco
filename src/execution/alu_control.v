@@ -21,11 +21,15 @@
 
 `default_nettype none
 
-module ALUControl
-  (input wire clk,
-   input [6:0] inst /*bytes [31,25]*/,
-   input [1:0] cu_alu_op,
-   output reg [1:0] alu_op);
+module ALUControl(
+  // In
+  input wire clk,
+  input [6:0] inst /*bytes [31,25]*/,
+  input [1:0] cu_alu_op,
+
+  // Out
+  output reg [1:0] alu_op,
+  output reg set_nop);
 
   always @(*)
   begin
@@ -44,11 +48,13 @@ module ALUControl
             // TODO: que hacer aqui
           end
         endcase
+        set_nop <= 0;
       end
 
       2'b00: /*I-type & S-type*/
       begin
         alu_op <= 2'b00;
+        set_nop <= 0;
       end
 
       2'b01: /*branch*/
@@ -59,6 +65,7 @@ module ALUControl
       2'b11: /*jump*/
       begin
         alu_op <= 2'b00;
+        set_nop <= 1;
       end
     endcase
   end

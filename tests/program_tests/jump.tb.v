@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrilli
+// Copyright : (c) 2024 Javier Beiro Piñón
+//           : (c) 2024 Beatriz Navidad Vilches
+//           : (c) 2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,25 +19,45 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-module Mux2to1 #(
-    parameter N = 32    // Default bit
-  )(
-    input sel,          // Two-bit selection input
-    input [N-1:0] in0,
-    input [N-1:0] in1,
-    output reg [N-1:0] out
-  );
+`include "tests/utils/tb_utils.v"
+`include "src/abejaruco.v"
 
-  // When any of the inputs change, the output will be updated
-  always @(in0, in1, sel)
+module Jump_tb();
+`include "src/parameters.v"
+
+  reg clk = 0;
+  reg reset = 0;
+  output reg [7:0] clk_counter = 0;
+
+  parameter PROGRAM = "../../../programs/jump.o";
+
+  Abejaruco #(.PROGRAM(PROGRAM)) uut (
+              .reset(reset),
+              .clk(clk),
+              .rm0_initial(32'b0000)
+            );
+
+  always
   begin
-    case(sel)
-      1'b0:
-        out <= in0;        // Select input in0
-      1'b1:
-        out <= in1;        // Select input in1
-      default:
-        out <= {N{1'b0}};  // Default case (N-bit 0)
-    endcase
+    #CLK_PERIOD clk = ~clk;
+    if (clk) begin
+      clk_counter = clk_counter + 1;
+    end
   end
+
+  initial
+  begin
+    print_info("Testing data hazards");
+
+    $dumpfile("jump.vcd");
+    $dumpvars(0, uut);
+    $dumpvars(0, Jump_tb);
+
+    #100;
+
+    print_info("Testing finised");
+
+    $finish;
+  end
+
 endmodule
