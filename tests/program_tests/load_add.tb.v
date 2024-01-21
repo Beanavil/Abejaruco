@@ -28,6 +28,7 @@ module LoadAdd_tb();
 
   reg clk = 0;
   reg reset = 0;
+  output reg [7:0] clk_counter = 0;
 
   parameter PROGRAM = "../../../programs/load_add.o";
 
@@ -40,6 +41,9 @@ module LoadAdd_tb();
   always
   begin
     #CLK_PERIOD clk = ~clk;
+    if (clk) begin
+      clk_counter = clk_counter + 1;
+    end
   end
 
   initial
@@ -48,6 +52,7 @@ module LoadAdd_tb();
 
     $dumpfile("load_add.vcd");
     $dumpvars(0, uut);
+    $dumpvars(0, LoadAdd_tb);
 
     #100;
 

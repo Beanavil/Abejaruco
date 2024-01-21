@@ -27,6 +27,7 @@ module Hazards_tb();
 
   reg clk = 0;
   reg reset = 0;
+  output reg [7:0] clk_counter = 0;
 
   parameter PROGRAM = "../../../programs/hazards.o";
 
@@ -39,6 +40,9 @@ module Hazards_tb();
   always
   begin
     #CLK_PERIOD clk = ~clk;
+    if (clk) begin
+      clk_counter = clk_counter + 1;
+    end
   end
 
   initial
@@ -47,6 +51,7 @@ module Hazards_tb();
 
     $dumpfile("hazards.vcd");
     $dumpvars(0, uut);
+    $dumpvars(0, Hazards_tb);
 
     #100;
 
