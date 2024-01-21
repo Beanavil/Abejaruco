@@ -63,6 +63,7 @@ module ALU
   initial begin
     op_done <= 1;
     start_mul <= 0;
+    reg_result <= 0;
   end
 
   always @(*)

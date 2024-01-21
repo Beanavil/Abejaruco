@@ -30,6 +30,10 @@ module ExecutionRegisters (
     input [WORD_WIDTH-1:0] alu_result_in,
     input alu_zero_in,
     input wire active,
+    input wire cu_d_cache_access_in,
+    input wire cu_d_cache_op_in,
+    input wire second_register_in,
+    input wire cu_is_byte_op_in,
 
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
@@ -39,7 +43,11 @@ module ExecutionRegisters (
     output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
     output reg [WORD_WIDTH-1:0] alu_result_out,
     output reg alu_zero_out,
-    output reg active_out
+    output reg active_out,
+    output reg cu_d_cache_access_out,
+    output reg cu_d_cache_op_out,
+    output reg second_register_out,
+    output reg cu_is_byte_op_out,
   );
 `include "src/parameters.v"
 

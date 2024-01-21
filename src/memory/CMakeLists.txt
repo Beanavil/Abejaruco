@@ -20,7 +20,7 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES memory cache d_cache)
+list(APPEND VERILOG_MODULES memory i_cache d_cache)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")

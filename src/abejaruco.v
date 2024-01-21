@@ -30,10 +30,10 @@
 `include "src/execution/execution_registers.v"
 `include "src/fetch/fetch_registers.v"
 
-`include "src/common/priority_encoder.v" 
+`include "src/common/priority_encoder.v"
 `include "src/common/tag_comparator.v"
 `include "src/memory/d_cache.v"
-`include "src/memory/cache.v"
+`include "src/memory/i_cache.v"
 `include "src/memory/memory.v"
 `include "src/memory/memory_registers.v"
 
@@ -72,14 +72,12 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   // -- Out wires to icache
   wire icache_mem_data_ready;
-  wire [127:0] icache_mem_data_out;
+  wire [127:0] mem_data_out;
 
-  // Data cache wires
+  //Instruction cache wires
   // -- In wires from CPU
-  reg icache_access;               // Enable the cache, to it obey the inputs
   reg [31:0] icache_address;
   reg [31:0] icache_data_in;
-  reg icache_op;
   reg icache_byte_op;
 
   // -- Out wires to CPU
@@ -87,10 +85,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire [31:0] icache_data_out;
 
   // -- Inital values
-  assign icache_access = 1'b1;
   assign icache_address = rm0;
-  assign icache_data_in = icache_mem_data_out;
-  assign icache_op = 1'b1;
   assign icache_byte_op = 1'b0;
 
   // Fetch registers wires
@@ -101,13 +96,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Control unit wires
   // -- Out wires
   wire cu_branch;
+
   wire cu_reg_write;
-  wire cu_mem_read;
-  wire cu_mem_to_reg;
-  wire cu_mem_write;
+  // wire cu_mem_read;
+  // wire cu_mem_to_reg;
+  // wire cu_mem_write;
   wire cu_alu_src;
   wire cu_is_imm;
   wire [1:0] cu_alu_op;
+  wire cu_is_byte_op;
 
   // ALU control unit wires
   // -- Out wires
@@ -125,18 +122,23 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire [31:0] decode_second_register_out;
   wire decode_cu_branch_out;
   wire decode_cu_reg_write_out;
-  wire decode_cu_mem_read_out;
-  wire decode_cu_mem_to_reg_out;
+  // wire decode_cu_mem_read_out;
+  // wire decode_cu_mem_to_reg_out;
+  // wire decode_cu_mem_write_out;
+  wire decode_cu_d_cache_access_out;
+  wire decode_cu_d_cache_op_out;
+  wire decode_cu_is_byte_op_out;
+
   wire [1:0] decode_cu_alu_op_out;
-  wire decode_cu_mem_write_out;
   wire decode_cu_is_imm_out;
   wire decode_cu_alu_src_out;
   wire [4:0] decode_src_address_out;
   wire [4:0] decode_dst_address_out;
   wire [11:0] decode_offset_out;
   wire stall;
-  // Sign extend wires
   wire [31:0] sign_extend_out;
+  wire d_cache_access;
+  wire d_cache_op;
 
   // ALU wires
   // -- In wires
@@ -156,6 +158,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire execution_cu_reg_write_out;
   wire [4:0] execution_dst_register_out;
   wire execution_active_out;
+  wire execution_cu_d_cache_access_out;
+  wire execution_cu_d_cache_op_out;
+  wire [31:0] execution_second_register_out;
+  wire execution_cu_is_byte_op_out,
 
 
   //TODO cuando se implemente la memoria de datos.
@@ -199,16 +205,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
            .memory_in_use(memory_in_use)
          );
 
-  Cache instruction_cache(
+  ICache instruction_cache(
           // In
           // -- from CPU
           .clk(clk),
           .reset(reset),
-          .access(icache_access),
           .address(icache_address),
-          .data_in(icache_data_in),
-          .op(icache_op),
           .byte_op(icache_byte_op),
+          //TODO SI MEM ENABLE WHEN IM ENTERING STOP
+
           // -- from main memory
           .mem_data_ready(icache_mem_data_ready),
           .mem_data_out(icache_mem_data_out),
@@ -232,7 +237,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .icache_op_done_in(icache_op_done),
+                   .icache_op_done_in(icache_data_ready), //TODO think this about this
                    .stall_in(stall),
                    .alu_op_done(alu_op_done),
                    .set_nop(alu_control.set_nop),
@@ -247,6 +252,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   //----------------------------------------//
 
   RegisterFile register_file(
+                 //In
                  .clk(clk),
                  .write_enable(rf_write_enable),
                  .reset(reset),
@@ -254,8 +260,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                  .write_data(rf_write_data),
                  .read_idx_1(fetch_instruction_out[19:15]),
                  .read_idx_2(fetch_instruction_out[24:20]),
+
+                 //Out
                  .read_data_1(rf_read_data_1),
                  .read_data_2(rf_read_data_2));
+
 
   ControlUnit control_unit(
                 // In
@@ -266,12 +275,17 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                 // Out
                 .branch(cu_branch),
                 .reg_write(cu_reg_write),
-                .mem_read(cu_mem_read),
-                .mem_to_reg(cu_mem_to_reg),
+                .d_cache_access(d_cache_access),
+                .d_cache_op(d_cache_op),
+                .is_imm(cu_is_imm),
                 .alu_op(cu_alu_op),
-                .mem_write(cu_mem_write),
                 .alu_src(cu_alu_src),
-                .is_imm(cu_is_imm)
+                .is_byte_op(cu_is_byte_op)
+
+
+                // .mem_read(cu_mem_read),
+                // .mem_to_reg(cu_mem_to_reg),
+                // .mem_write(cu_mem_write),
               );
 
   HazardDetectionUnit hazard_detection_unit(.clk(clk),
@@ -299,10 +313,17 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .second_register_in(rf_read_data_2),
                     .cu_branch_in(cu_branch),
                     .cu_reg_write_in(cu_reg_write),
-                    .cu_mem_read_in(cu_mem_read),
-                    .cu_mem_to_reg_in(cu_mem_to_reg),
+                    // .cu_mem_read_in(cu_mem_read),
+                    // .cu_mem_to_reg_in(cu_mem_to_reg),
+                    // .cu_mem_write_in(cu_mem_write),
+                    //--DCache
+                    .cu_d_cache_access_in(d_cache_access),
+                    .cu_d_cache_op_in(d_cache_op),
+                    .cu_is_byte_op_in(cu_is_byte_op)
+                    
+
+
                     .cu_alu_op_in(cu_alu_op),
-                    .cu_mem_write_in(cu_mem_write),
                     .cu_alu_src_in(cu_alu_src),
                     .cu_is_imm_in(cu_is_imm),
                     .src_address_in(fetch_instruction_out[19:15]),
@@ -320,10 +341,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .second_register_out(decode_second_register_out),
                     .cu_branch_out(decode_cu_branch_out),
                     .cu_reg_write_out(decode_cu_reg_write_out),
-                    .cu_mem_read_out(decode_cu_mem_read_out),
-                    .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
+                    // .cu_mem_read_out(decode_cu_mem_read_out),
+                    // .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
+                    // .cu_mem_write_out(decode_cu_mem_write_out),
+                    .cu_d_cache_access_out(decode_cu_d_cache_access_out),
+                    .cu_d_cache_op_out(decode_cu_d_cache_op_out),
+                    .cu_is_byte_op_out(decode_cu_is_byte_op_out),
+
                     .cu_alu_op_out(decode_cu_alu_op_out),
-                    .cu_mem_write_out(decode_cu_mem_write_out),
                     .cu_is_imm_out(decode_cu_is_imm_out),
                     .cu_alu_src_out(decode_cu_alu_src_out),
                     .src_address_out(decode_src_address_out),
@@ -379,85 +404,103 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   ExecutionRegisters execution_registers(
                        // In
-                       .clk(clk),
-                       .instruction_in(decode_instruction_out),
-                       .extended_inmediate_in(sign_extend_out),
-                       .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
-                       .cu_reg_write_in(decode_cu_reg_write_out),
-                       .destination_register_in(decode_dst_register_out),
-                       .alu_result_in(decode_alu_result_out),
-                       .alu_zero_in(decode_alu_zero_out),
-                       .active(alu_op_done),
+                        .clk(clk),
+                        .instruction_in(decode_instruction_out),
+                        .extended_inmediate_in(sign_extend_out),
+                        // .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
+                        .cu_d_cache_access_in(decode_cu_d_cache_access_out),
+                        .cu_d_cache_op_in(decode_cu_d_cache_op_out),
+                        .cu_is_byte_op_in(decode_cu_is_byte_op_out),
+
+                        .cu_reg_write_in(decode_cu_reg_write_out),
+                        .destination_register_in(decode_dst_register_out),
+                        .alu_result_in(decode_alu_result_out),
+                        .alu_zero_in(decode_alu_zero_out),
+                        .active(alu_op_done),
+                        .second_register_in(decode_second_register_out),
+                        
+
 
                        // Out
-                       .instruction_out(execution_instruction_out),
-                       .extended_inmediate_out(execution_sign_extend_out),
-                       .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
-                       .cu_reg_write_out(execution_cu_reg_write_out),
-                       .destination_register_out(execution_dst_register_out),
-                       .alu_result_out(execution_alu_result_out),
-                       .alu_zero_out(execution_alu_zero_out),
-                       .active_out(execution_active_out)
+                        .instruction_out(execution_instruction_out),
+                        .extended_inmediate_out(execution_sign_extend_out),
+                        .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
+                        .cu_reg_write_out(execution_cu_reg_write_out),
+                        .destination_register_out(execution_dst_register_out),
+                        .alu_zero_out(execution_alu_zero_out),
+                        .active_out(execution_active_out),
+                        
+                        //--to DCache
+                        .alu_result_out(execution_alu_result_out),
+                        .cu_d_cache_access_out(execution_cu_d_cache_access_out),
+                        .cu_d_cache_op_out(execution_cu_d_cache_op_out),
+                        .second_register_out(execution_second_register_out),
+                        .cu_is_byte_op_out(execution_cu_is_byte_op_out)
                      );
 
   //--------------------------------------------//
   //               Memory stage                 //
   //--------------------------------------------//
+  module DCache (
+    // In wires (from memory)
+    input wire mem_data_ready,
+    input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
+    input wire memory_in_use,
 
-  // DCache data_cache(// In
-  //         // -- from CPU
-  //         .clk(clk),
-  //         .reset(reset),
-  //         .access(icache_access),
-  //         .address(icache_address),
-  //         .data_in(icache_data_in),
-  //         .op(icache_op),
-  //         .byte_op(icache_byte_op),
-  //         // -- from main memory
-  //         .mem_data_ready(icache_mem_data_ready),
-  //         .mem_data_out(icache_mem_data_out),
-  //         .memory_in_use(memory_in_use),
+    // Out wires (to CPU)
+    output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
+    output reg data_ready,                     // Data in the output is valid or write operation finished
 
-  //         // Out
-  //         // -- to CPU
-  //         .data_out(icache_data_out),
-  //         .data_ready(icache_data_ready),
-  //         // -- to main memory
-  //         .mem_op_init(icache_mem_op_init),
-  //         .mem_enable(icache_mem_enable),
-  //         .mem_op(icache_mem_op),
-  //         .mem_op_done(icache_op_done),
-  //         .mem_address(icache_mem_address),
-  //         .mem_data_in(icache_mem_data_in)
-  //       );
+    // Out wires (to memory)
+    output reg mem_enable,                      // Enable the memory module to read/write
+    output reg mem_op,                          // Select read/write operation
+    output reg mem_op_init,                     // Tell memory that we are going to use it
+    output reg mem_op_done,                     // The caché finished reading the returned data
+    output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
+    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
+  );
 
-  //   module DCache (
-  //   // In wires (from CPU)
-  //   input wire clk,
-  //   input wire access,
-  //   input wire reset,
-  //   input wire [ADDRESS_WIDTH-1:0] address,
-  //   input wire [WORD_WIDTH-1:0] data_in,        // Data to be written in the cache
-  //   input wire op,
-  //   input wire byte_op,
+  DCache data_cache(
+          //In
+          //--from CPU
+          .clk(clk),
+          .access(execution_cu_d_cache_access_out),
+          .reset(0), //TODO reset at some point? (should not matter)
+          .address(execution_alu_result_out),
+          .data_in(execution_second_register_out),
+          .op(execution_cu_d_cache_op_out),
+          .byte_op(execution_cu_is_byte_op_out),
 
-  //   // In wires (from memory)
-  //   input wire mem_data_ready,
-  //   input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
-  //   input wire memory_in_use,
+          //--from memory
+          .mem_data_ready(icache_mem_data_ready),
+          .mem_data_out(icache_mem_data_out),
+          .memory_in_use(memory_in_use),
 
-  //   // Out wires (to CPU)
-  //   output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
-  //   output wire data_ready,                     // Data in the output is valid or write operation finished
+  );
+            // In
+          // -- from CPU
+          .clk(clk),
+          .reset(reset),
+          .address(icache_address),
+          .byte_op(icache_byte_op),
 
-  //   // Out wires (to memory)
-  //   output reg mem_enable,                      // Enable the memory module to read/write
-  //   output reg mem_op,                          // Select read/write operation
-  //   output reg mem_op_init,                     // Tell memory that we are going to use it
-  //   output reg mem_op_done,                     // The caché finished reading the returned data
-  //   output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
-  //   output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
-  // );
+          // -- from main memory
+          .mem_data_ready(icache_mem_data_ready),
+          .mem_data_out(icache_mem_data_out),
+          .memory_in_use(memory_in_use),
+
+          // Out
+          // -- to CPU
+          .data_out(icache_data_out),
+          .data_ready(icache_data_ready),
+          // -- to main memory
+          .mem_op_init(icache_mem_op_init),
+          .mem_enable(icache_mem_enable),
+          .mem_op(icache_mem_op),
+          .mem_op_done(icache_op_done),
+          .mem_address(icache_mem_address),
+          .mem_data_in(icache_mem_data_in)
+        );
 
 
 
