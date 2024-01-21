@@ -27,10 +27,11 @@
 module HazardDetectionUnit
   (
     // In
-    input wire clk, 
-    input wire [1:0] decode_alu_op,
+    input wire clk,
+    input wire [6:0] decode_op_code,
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_src_1,
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_src_2,
+    input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_dst,
     input wire [REGISTER_INDEX_WIDTH-1:0] execution_idx_dst,
     input wire [REGISTER_INDEX_WIDTH-1:0] memory_idx_src_dst,
     input wire [REGISTER_INDEX_WIDTH-1:0] rf_write_idx,
@@ -41,39 +42,72 @@ module HazardDetectionUnit
 `include "src/parameters.v"
 
   reg [REGISTER_INDEX_WIDTH-1:0] conflict_reg_idx = 0;
+  integer case_if; // TODO DEBUG ONLY
 
   always @(*)
   begin
-    if (decode_alu_op === 2'bxx)
+    if (decode_op_code === 7'bx)
     begin
       stall <= 0;
     end
-    // If execution result or memory load writes in register 0 don't stall
-    // cause it's a nop.
-    else if ((decode_alu_op == 2'b10 & execution_idx_dst == 0) ||
-            (decode_alu_op == 2'b00 & memory_idx_src_dst == 0))
+    // If it's a nop don't stall
+    else if (decode_op_code == 7'b0110011 & decode_idx_dst == 0 &
+             decode_idx_src_1 == 0 & decode_idx_src_2 == 0)
     begin
       stall <= 0;
+      case_if <= 0;
     end
-    // Data hazard
-    else if (decode_idx_src_1 == execution_idx_dst ||
-             decode_idx_src_2 == execution_idx_dst)
+    // If it's not the first instruction:
+    else if (execution_idx_dst != 0)
     begin
-      stall <= 1;
-      conflict_reg_idx <= execution_idx_dst;
+      // Data hazard from execution stage
+      if ((decode_idx_src_1 == execution_idx_dst ||
+              decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b0110011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= execution_idx_dst;
+        case_if = 1;
+      end
+      // Load-use hazard from execution stage
+      else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b0000011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= execution_idx_dst;
+        case_if = 3;
+      end
+      // Store-use hazard from execution stage
+      else if (decode_idx_src_2 == execution_idx_dst & decode_op_code == 7'b0100011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= execution_idx_dst;
+        case_if = 3;
+      end
     end
-    // Load-use hazard
-    else if (decode_idx_src_1 == memory_idx_src_dst ||
-             decode_idx_src_2 == memory_idx_src_dst)
+    // If it's not the second instruction:
+    else if (memory_idx_src_dst != 0)
     begin
-      stall <= 1;
-      conflict_reg_idx <= memory_idx_src_dst;
-    end
-    // Store-use hazard
-    else if (decode_idx_src_1 == execution_idx_dst)
-    begin
-      stall <= 1;
-      conflict_reg_idx <= execution_idx_dst;
+      // Data hazard from memory stage
+      if ((decode_idx_src_1 == memory_idx_src_dst ||
+              decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b0110011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= memory_idx_src_dst;
+        case_if = 2;
+      end
+      // Load-use hazard from memory stage
+      else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b0000011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= memory_idx_src_dst;
+        case_if = 4;
+      end
+      // Store-use hazard from memory stage
+      else if (decode_idx_src_2 == memory_idx_src_dst & decode_op_code == 7'b0100011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= memory_idx_src_dst;
+        case_if = 4;
+      end
     end
     else
     begin

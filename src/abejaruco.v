@@ -269,13 +269,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
               );
 
   HazardDetectionUnit hazard_detection_unit(.clk(clk),
-                      .decode_alu_op(cu_alu_op),
+                      // In
+                      .decode_op_code(fetch_instruction_out[6:0]),
                       .decode_idx_src_1(fetch_instruction_out[19:15]),
                       .decode_idx_src_2(fetch_instruction_out[24:20]),
-                      .execution_idx_dst(decode_dst_address_out),
+                      .execution_idx_dst(decode_dst_register_out),
                       .memory_idx_src_dst(execution_dst_register_out),
                       .rf_write_idx(rf_write_idx),
 
+                      // Out
                       .stall(stall));
 
   DecodeRegisters decode_registers(
