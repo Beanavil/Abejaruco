@@ -40,6 +40,7 @@ module DecodeRegisters(
     input wire [OFFSET_SIZE-1:0] offset_in,
     input wire stall_in,
     input wire alu_op_done,
+    input wire set_nop,
 
     // Out
     output reg [WORD_WIDTH-1:0] rm0_out,
@@ -69,33 +70,59 @@ module DecodeRegisters(
 
   always @(negedge clk)
   begin
-    if(~stall_in & alu_op_done)
+    if(~stall_in & alu_op_done & set_nop !== 1)
     begin
-      rm0_out <= rm0_in;
-      instruction_out <= instruction_in;
-      destination_register_out <= destination_register_in;
-      first_register_out <= first_register_in;
-      second_register_out <= second_register_in;
-      cu_branch_out <= cu_branch_in;
-      cu_reg_write_out <= cu_reg_write_in;
-      cu_mem_read_out <= cu_mem_read_in;
-      cu_mem_to_reg_out <= cu_mem_to_reg_in;
-      cu_alu_op_out <= cu_alu_op_in;
-      cu_mem_write_out <= cu_mem_write_in;
-      cu_alu_src_out <= cu_alu_src_in;
-      cu_mem_write_out <= cu_mem_write_in;
-      cu_alu_src_out <= cu_alu_src_in;
-      cu_is_imm_out <= cu_is_imm_in;
-      src_address_out <= src_address_in;
-      dst_address_out <= dst_address_in;
-      offset_out <= offset_in;
-
-      `D_REGISTER_DISPLAY($sformatf({"DecodeRegisters: rm0_in = %h,",
-                                     "instruction_in = %h, src1 = %h,",
-                                     "src2 = %h, dst = %h"},
-                                    rm0_in, instruction_in, first_register_out,
-                                    second_register_out,
-                                    destination_register_out));
+      update_registers;
+    end
+    else if(set_nop === 1)
+    begin
+      update_registers_to_nop;
     end
   end
+
+  task update_registers;
+  begin
+    rm0_out <= rm0_in;
+    instruction_out <= instruction_in;
+    destination_register_out <= destination_register_in;
+    first_register_out <= first_register_in;
+    second_register_out <= second_register_in;
+    cu_branch_out <= cu_branch_in;
+    cu_reg_write_out <= cu_reg_write_in;
+    cu_mem_read_out <= cu_mem_read_in;
+    cu_mem_to_reg_out <= cu_mem_to_reg_in;
+    cu_alu_op_out <= cu_alu_op_in;
+    cu_mem_write_out <= cu_mem_write_in;
+    cu_alu_src_out <= cu_alu_src_in;
+    cu_mem_write_out <= cu_mem_write_in;
+    cu_alu_src_out <= cu_alu_src_in;
+    cu_is_imm_out <= cu_is_imm_in;
+    src_address_out <= src_address_in;
+    dst_address_out <= dst_address_in;
+    offset_out <= offset_in;
+  end
+  endtask
+
+  task update_registers_to_nop;
+  begin
+    rm0_out <= rm0_in;
+    instruction_out <= NOP_INSTRUCTION;
+    destination_register_out <= 0;
+    first_register_out <= 0;
+    second_register_out <= 0;
+    cu_branch_out <= 0;
+    cu_reg_write_out <= 0;
+    cu_mem_read_out <= cu_mem_read_in;
+    cu_mem_to_reg_out <= cu_mem_to_reg_in;
+    cu_alu_op_out <= cu_alu_op_in;
+    cu_mem_write_out <= cu_mem_write_in;
+    cu_alu_src_out <= cu_alu_src_in;
+    cu_mem_write_out <= cu_mem_write_in;
+    cu_alu_src_out <= cu_alu_src_in;
+    cu_is_imm_out <= cu_is_imm_in;
+    src_address_out <= src_address_in;
+    dst_address_out <= dst_address_in;
+    offset_out <= offset_in;
+  end
+  endtask
 endmodule

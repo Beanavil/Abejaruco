@@ -230,6 +230,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .cache_op_done_in(icache_op_done), //TODO think this about this
                    .stall_in(stall),
                    .alu_op_done(alu_op_done),
+                   .set_nop(alu_control.set_nop),
 
                    // Out
                    .rm0_out(fetch_rm0_out),
@@ -301,6 +302,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .offset_in(fetch_instruction_out[31:20]),
                     .stall_in(stall),
                     .alu_op_done(alu_op_done),
+                    .set_nop(alu_control.set_nop),
 
                     // Out
                     .rm0_out(decode_rm0_out),
@@ -345,8 +347,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
          decode_src_address_out : decode_dst_address_out;
   assign alu_first_input = (decode_cu_alu_src_out) ?
          alu_address : decode_first_register_out;
-  assign alu_second_input = (decode_cu_alu_src_out) ?
-         {20'b0, decode_offset_out} : decode_second_register_out;
+
+  assign alu_second_input = (decode_cu_branch_out) ?
+    {decode_instruction_out[31:25], decode_instruction_out[11:7]} :
+    ((decode_cu_alu_src_out) ?
+         decode_offset_out : decode_second_register_out);
 
   ALU alu(
         //IN
@@ -430,10 +435,15 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // Main pipeline execution
   always @(negedge clk)
   begin
-    if (alu_op_done & icache_op_done & ~stall)
+    if (decode_registers.cu_branch_out)
+    begin
+        rm0 <= alu.result;
+    end
+    else if (alu_op_done & icache_op_done & ~stall)
     begin
       rm0 <= rm0 + 3'b100;
-      `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
     end
+
+    `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
   end
 endmodule

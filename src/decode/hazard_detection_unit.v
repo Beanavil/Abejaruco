@@ -49,6 +49,7 @@ module HazardDetectionUnit
     if (decode_op_code === 7'bx)
     begin
       stall <= 0;
+      case_if <= 99;
     end
     // If it's a nop don't stall
     else if (decode_op_code == 7'b0110011 & decode_idx_dst == 0 &
@@ -66,21 +67,27 @@ module HazardDetectionUnit
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if = 1;
+        case_if <= 1;
       end
       // Load-use hazard from execution stage
       else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if = 3;
+        case_if <= 3;
       end
       // Store-use hazard from execution stage
       else if (decode_idx_src_2 == execution_idx_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if = 3;
+        case_if <= 3;
+      end
+      else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b1100111)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= decode_idx_src_1;
+        case_if <= 4;
       end
     end
     // If it's not the second instruction:
@@ -92,26 +99,33 @@ module HazardDetectionUnit
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if = 2;
+        case_if <= 5;
       end
       // Load-use hazard from memory stage
       else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if = 4;
+        case_if <= 6;
       end
       // Store-use hazard from memory stage
       else if (decode_idx_src_2 == memory_idx_src_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if = 4;
+        case_if <= 7;
+      end
+      else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b1100111)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= execution_idx_dst;
+        case_if <= 8;
       end
     end
     else
     begin
       stall <= 0;
+      case_if <= 100;
     end
     `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %b, decode_idx_src_2 %b, execution_idx_dst %b, memory_idx_src_dst %b, alu_op_done %b, mem_op_done %b => stall %h",
                                    decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
