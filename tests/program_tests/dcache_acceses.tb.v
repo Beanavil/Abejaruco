@@ -41,8 +41,8 @@ module DCacheOps_tb();
       $display("*** Resetting input ***");
       clk = 0;
       reset = 1;
-      #CLK_PERIOD reset = 0;
-      clk = 1;
+      #CLK_PERIOD;
+      reset = 0;
       $display("Done");
     end
   endtask
@@ -86,6 +86,7 @@ module DCacheOps_tb();
     reg [WORD_WIDTH-1:0] alu_out_multiplexer_expected;
 
     begin
+
       // 5 cycles to fetch li (icache miss)
       for (integer i = 0; i < 5; i = i + 1)
       begin

@@ -23,7 +23,7 @@
 
 `include "tests/utils/tb_utils.v"
 
-`include "src/memory/cache.v"
+`include "src/memory/d_cache.v"
 
 `include "src/parameters.v"
 
@@ -53,7 +53,8 @@ module Cache_tb;
   wire [CACHE_LINE_SIZE-1:0] mem_data_in;
   wire [MEMORY_ADDRESS_SIZE-1:0] mem_address;
 
-  Cache uut (
+//TODO revisar estas pruebas
+  DCache uut (
           .clk(clk),
           .access(access),
           .reset(reset),

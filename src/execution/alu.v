@@ -65,6 +65,7 @@ module ALU
       end
     endcase
   end
+
   assign result = reg_result;
   assign zero = reg_zero;
 endmodule
