@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2024 Javier Beiro Piñón
 //           : (c) 2024 Beatriz Navidad Vilches
-//           : (c) 2024 Stefano Petrili
+//           : (c) 2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,12 +19,11 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module SignExtend(
     input [SIGN_EXTENDER_INPUT_SIZE-1:0] in,
     output [WORD_WIDTH-1:0] out
   );
+`include "src/parameters.v"
 
   localparam EXTEND_SIZE = WORD_WIDTH - SIGN_EXTENDER_INPUT_SIZE;
 

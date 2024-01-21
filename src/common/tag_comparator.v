@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
 // : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrili
+// : (c) 2023 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,13 +19,13 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module tag_comparator(
     input wire [TAG_WIDTH-1:0] input_tag,
     input wire [TAG_WIDTH-1:0] stored_tag,
     input wire valid,
     output wire hit
   );
+`include "src/parameters.v"
+
   assign hit = valid ? (input_tag == stored_tag) : 1'b0;
 endmodule

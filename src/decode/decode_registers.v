@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -18,8 +18,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
-
-`include "src/parameters.v"
 
 module DecodeRegisters(
     // In
@@ -40,6 +38,8 @@ module DecodeRegisters(
     input wire [REGISTER_INDEX_WIDTH-1:0] src_address_in,
     input wire [REGISTER_INDEX_WIDTH-1:0] dst_address_in,
     input wire [OFFSET_SIZE-1:0] offset_in,
+    input wire stall_in,
+    input wire alu_op_done,
 
     // Out
     output reg [WORD_WIDTH-1:0] rm0_out,
@@ -59,35 +59,43 @@ module DecodeRegisters(
     output reg [REGISTER_INDEX_WIDTH-1:0] dst_address_out,
     output reg [OFFSET_SIZE-1:0] offset_out
   );
+`include "src/parameters.v"
 
   initial
   begin
-    rm0_out = 0;
-    instruction_out = 0;
     rm0_out = 0;
     instruction_out = 0;
   end
 
   always @(negedge clk)
   begin
-    $display("DecodeRegisters: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
-    rm0_out = rm0_in;
-    instruction_out = instruction_in;
-    first_register_out = first_register_in;
-    second_register_out = second_register_in;
-    cu_branch_out = cu_branch_in;
-    cu_reg_write_out = cu_reg_write_in;
-    cu_mem_read_out = cu_mem_read_in;
-    cu_mem_to_reg_out = cu_mem_to_reg_in;
-    cu_alu_op_out = cu_alu_op_in;
-    cu_mem_write_out = cu_mem_write_in;
-    cu_alu_src_out = cu_alu_src_in;
-    cu_mem_write_out = cu_mem_write_in;
-    cu_alu_src_out = cu_alu_src_in;
-    cu_is_imm_out = cu_is_imm_in;
-    src_address_out = src_address_in;
-    dst_address_out = dst_address_in;
-    offset_out = offset_in;
-    destination_register_out = destination_register_in;
+    if(~stall_in & alu_op_done)
+    begin
+      rm0_out <= rm0_in;
+      instruction_out <= instruction_in;
+      destination_register_out <= destination_register_in;
+      first_register_out <= first_register_in;
+      second_register_out <= second_register_in;
+      cu_branch_out <= cu_branch_in;
+      cu_reg_write_out <= cu_reg_write_in;
+      cu_mem_read_out <= cu_mem_read_in;
+      cu_mem_to_reg_out <= cu_mem_to_reg_in;
+      cu_alu_op_out <= cu_alu_op_in;
+      cu_mem_write_out <= cu_mem_write_in;
+      cu_alu_src_out <= cu_alu_src_in;
+      cu_mem_write_out <= cu_mem_write_in;
+      cu_alu_src_out <= cu_alu_src_in;
+      cu_is_imm_out <= cu_is_imm_in;
+      src_address_out <= src_address_in;
+      dst_address_out <= dst_address_in;
+      offset_out <= offset_in;
+
+      `D_REGISTER_DISPLAY($sformatf({"DecodeRegisters: rm0_in = %h,",
+                                     "instruction_in = %h, src1 = %h,",
+                                     "src2 = %h, dst = %h"},
+                                    rm0_in, instruction_in, first_register_out,
+                                    second_register_out,
+                                    destination_register_out));
+    end
   end
 endmodule

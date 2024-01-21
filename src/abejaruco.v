@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,27 +19,26 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
+`include "src/common/mux2to1.v"
+`include "src/common/sign_extend.v"
 `include "src/decode/control_unit.v"
 `include "src/decode/decode_registers.v"
 `include "src/decode/register_file.v"
+`include "src/decode/hazard_detection_unit.v"
+`include "src/execution/alu.v"
+`include "src/execution/alu_control.v"
+`include "src/execution/execution_registers.v"
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
-`include "src/execution/alu.v"
-`include "src/common/sign_extend.v"
-`include "src/execution/execution_registers.v"
 `include "src/memory/memory_registers.v"
-`include "src/common/mux2to1.v"
 
-module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
-                     NUM_REGS = 32,
-                     INDEX_WIDTH = $clog2(NUM_REGS))(
-                       input wire clk,
-                       input wire reset,
-                       input wire [31:0] rm0_initial
-                     );
+module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
+    input wire clk,
+    input wire reset,
+    input wire [31:0] rm0_initial
+  );
+`include "src/parameters.v"
 
   // Special registers
   reg [31:0] rm0; /*return PC on exception*/
@@ -71,7 +70,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire icache_mem_data_ready;
   wire [127:0] icache_mem_data_out;
 
-
   // Data cache wires
   // -- In wires from CPU
   reg icache_access;               // Enable the cache, to it obey the inputs
@@ -95,7 +93,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   // -- Out wires
   wire [31:0] fetch_rm0_out;
   wire [31:0] fetch_instruction_out;
-  wire fetch_active_out;
 
   // Control unit wires
   // -- Out wires
@@ -107,6 +104,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire cu_alu_src;
   wire cu_is_imm;
   wire [1:0] cu_alu_op;
+
+  // ALU control unit wires
+  // -- Out wires
+  wire [1:0] alu_ctrl_alu_op;
+  wire alu_op_done;
 
   // Decode registers wires
   // -- Out wires
@@ -128,14 +130,14 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire [4:0] decode_src_address_out;
   wire [4:0] decode_dst_address_out;
   wire [11:0] decode_offset_out;
-
+  wire stall;
   // Sign extend wires
   wire [31:0] sign_extend_out;
 
   // ALU wires
   // -- In wires
-  wire [31:0] alu_first_register;
-  wire [31:0] alu_second_register;
+  wire [31:0] alu_first_input;
+  wire [31:0] alu_second_input;
   wire [31:0] alu_address;
 
   // -- Out wires
@@ -148,6 +150,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   wire execution_cu_mem_to_reg_out;
   wire execution_cu_reg_write_out;
   wire [4:0] execution_dst_register_out;
+  wire execution_active_out;
 
 
   //TODO cuando se implemente la memoria de datos.
@@ -224,12 +227,13 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .active(icache_op_done),
+                   .cache_op_done_in(icache_op_done), //TODO think this about this
+                   .stall_in(stall),
+                   .alu_op_done(alu_op_done),
 
                    // Out
                    .rm0_out(fetch_rm0_out),
-                   .instruction_out(fetch_instruction_out),
-                   .active_out(fetch_active_out)
+                   .instruction_out(fetch_instruction_out)
                  );
 
   //----------------------------------------//
@@ -264,6 +268,18 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                 .is_imm(cu_is_imm)
               );
 
+  HazardDetectionUnit hazard_detection_unit(.clk(clk),
+                      // In
+                      .decode_op_code(fetch_instruction_out[6:0]),
+                      .decode_idx_src_1(fetch_instruction_out[19:15]),
+                      .decode_idx_src_2(fetch_instruction_out[24:20]),
+                      .execution_idx_dst(decode_dst_register_out),
+                      .memory_idx_src_dst(execution_dst_register_out),
+                      .rf_write_idx(rf_write_idx),
+
+                      // Out
+                      .stall(stall));
+
   DecodeRegisters decode_registers(
                     // In
                     .clk(clk),
@@ -283,6 +299,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                     .src_address_in(fetch_instruction_out[19:15]),
                     .dst_address_in(fetch_instruction_out[11:7]),
                     .offset_in(fetch_instruction_out[31:20]),
+                    .stall_in(stall),
+                    .alu_op_done(alu_op_done),
 
                     // Out
                     .rm0_out(decode_rm0_out),
@@ -315,21 +333,32 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                .out(sign_extend_out)
              );
 
-  // If alu_op is store/load, use destination/source and offset as arguments of the operation. Else, use registers' contents.
-  assign alu_address = (1/*ld*/) ? decode_src_address_out : decode_dst_address_out;
-  assign alu_first_register = (decode_cu_alu_src_out) ? alu_address : decode_first_register_out;
-  assign alu_second_register = (decode_cu_alu_src_out) ? decode_offset_out : decode_second_register_out;
+  ALUControl alu_control
+             (.clk(clk),
+              .inst(decode_offset_out[11:5]),
+              .cu_alu_op(decode_cu_alu_op_out),
+              .alu_op(alu_ctrl_alu_op));
+
+  // If alu_op is store/load, use destination/source and offset as arguments
+  // of the operation. Else, use registers' contents.
+  assign alu_address = (1/*ld*/) ?
+         decode_src_address_out : decode_dst_address_out;
+  assign alu_first_input = (decode_cu_alu_src_out) ?
+         alu_address : decode_first_register_out;
+  assign alu_second_input = (decode_cu_alu_src_out) ?
+         {20'b0, decode_offset_out} : decode_second_register_out;
 
   ALU alu(
         //IN
         .clk(clk),
-        .input_first(alu_first_register),
-        .input_second(alu_second_register),
-        .alu_op(decode_cu_alu_op_out),
+        .input_first(alu_first_input),
+        .input_second(alu_second_input),
+        .alu_op(alu_ctrl_alu_op),
 
         //OUT
         .zero(alu_zero),
-        .result(decode_alu_result_out)
+        .result(decode_alu_result_out),
+        .op_done(alu_op_done)
       );
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
@@ -344,6 +373,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                        .destination_register_in(decode_dst_register_out),
                        .alu_result_in(decode_alu_result_out),
                        .alu_zero_in(decode_alu_zero_out),
+                       .active(alu_op_done),
 
                        // Out
                        .extended_inmediate_out(execution_sign_extend_out),
@@ -351,7 +381,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
                        .cu_reg_write_out(execution_cu_reg_write_out),
                        .destination_register_out(execution_dst_register_out),
                        .alu_result_out(execution_alu_result_out),
-                       .alu_zero_out(execution_alu_zero_out)
+                       .alu_zero_out(execution_alu_zero_out),
+                       .active_out(execution_active_out)
                      );
 
   //--------------------------------------------//
@@ -393,21 +424,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o",
   initial
   begin
     rm0 = rm0_initial;
+    `ABEJARUCO_DISPLAY($sformatf("[ ABEJARUCO ] - Initial rm0 = %h, clk = %b", rm0, clk));
   end
 
   // Main pipeline execution
-  always @(posedge clk)
+  always @(negedge clk)
   begin
-    if (icache_op_done)
+    if (alu_op_done & icache_op_done & ~stall)
     begin
-      $display("[ ABEJARUCO ] - Update rm0");
-      rm0 = rm0 + 3'b100;
-    end
-
-    $display("Fetch stage values: rm0 = %h, instruction = %h", fetch_rm0_out, fetch_instruction_out);
-    if (fetch_active_out)
-    begin
-      $display("Control unit values: branch = %b, reg_write = %b, mem_read = %b, mem_to_reg = %b, alu_op = %b, mem_write = %b, alu_src = %b", cu_branch, cu_reg_write, cu_mem_read, cu_mem_to_reg, cu_alu_op, cu_mem_write, cu_alu_src);
+      rm0 <= rm0 + 3'b100;
+      `ABEJARUCO_DISPLAY($sformatf("Update rm0, the new program counter is: %h", rm0));
     end
   end
 endmodule

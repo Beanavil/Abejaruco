@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
   (input wire clk,
@@ -34,6 +32,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
    output reg data_ready,
    output reg memory_in_use                   // Memory is use by another module
   );
+`include "src/parameters.v"
 
   reg [7:0] memory [0:MEMORY_LOCATIONS-1];
 
@@ -64,7 +63,8 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
   always @(posedge clk)
   begin
-    $display("[ MEMORY ] - the address is %h", address);
+    `MEMORY_DISPLAY($sformatf("The address is %h, the state is %h", address, enable));
+
     if (enable)
     begin
       case (state)
@@ -76,7 +76,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
         2'b01: /*WAIT*/
         begin
-          $display("Entra en wait %d", counter);
+          `MEMORY_DISPLAY($sformatf("Enter in wait %d", counter));
           if (counter < MEMORY_OP_DELAY_CYCLES-1)
           begin
             counter = counter + 1;
@@ -89,10 +89,10 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
         2'b10: /*WRITE or READ*/
         begin
-          $display("op = %b", op);
+          `MEMORY_DISPLAY($sformatf("op = %b", op));
           if (op) /*write*/
           begin
-            $display("Entra en write");
+            `MEMORY_DISPLAY("Enter in write");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
               memory[address + i] = data_in[i*8 +: 8];
@@ -100,7 +100,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
           end
           else /*read*/
           begin
-            $display("Entra en read");
+            `MEMORY_DISPLAY("Enter in read");
             for (integer i = 0; i < CACHE_LINE_SIZE / 8; i = i + 1)
             begin
               data_out[i*8 +: 8] = memory[address + i];
@@ -110,9 +110,6 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
           state = 2'b00;
         end
       endcase
-      // $display("Address: %h", address);
-      // $display("Data written: %h", data_in);
-      // $display("Data read: %h", data_out);
     end
 
 

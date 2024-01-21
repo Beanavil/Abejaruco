@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -22,90 +22,95 @@
 `default_nettype none
 
 module ControlUnit
-  (input wire clk,
-   input [6:0] opcode,
-   input [2:0] funct3,
-   output reg branch,
-   output reg reg_write,
-   output reg mem_read,
-   output reg mem_to_reg,
-   output reg [1:0] alu_op,
-   output reg mem_write,
-   output reg alu_src,
-   output reg is_imm);
+  (
+    // In
+    input wire clk,
+    input [6:0] opcode,
+    input [2:0] funct3,
 
-  always @(clk)
+    // Out
+    output reg branch,
+    output reg reg_write,
+    output reg mem_read,
+    output reg mem_to_reg,
+    output reg [1:0] alu_op,
+    output reg mem_write,
+    output reg alu_src,
+    output reg is_imm);
+`include "src/parameters.v"
+
+  always @(*)
   begin
-    $display("---------> Opcode: %b", opcode);
+    `CONTROL_UNIT_DISPLAY($sformatf("---------> Opcode: %b", opcode));
     case (opcode)
       7'b0110011: /*R-type*/
       begin
-        branch = 1'b0;
-        reg_write = 1'b1;
-        mem_read = 1'b0;
-        mem_to_reg = 1'b0;
-        alu_op = 2'b10;
-        mem_write = 1'b0;
-        alu_src = 1'b0;
-        is_imm = 1'b0;
+        branch <= 1'b0;
+        reg_write <= 1'b1;
+        mem_read <= 1'b0;
+        mem_to_reg <= 1'b0;
+        alu_op <= 2'b10;
+        mem_write <= 1'b0;
+        alu_src <= 1'b0;
+        is_imm <= 1'b0;
       end
 
       7'b0000011: /*I-type*/
       begin
-        branch = 1'b0;
-        reg_write = 1'b1;
-        mem_read = 1'b1;
-        mem_to_reg = 1'b1;
-        alu_op = 2'b00;
-        mem_write = 1'b0;
-        alu_src = 1'b1;
+        branch <= 1'b0;
+        reg_write <= 1'b1;
+        mem_read <= 1'b1;
+        mem_to_reg <= 1'b1;
+        alu_op <= 2'b00;
+        mem_write <= 1'b0;
+        alu_src <= 1'b1;
         case (funct3)
           3'b001:
-            is_imm = 1'b1;
+            is_imm <= 1'b1;
           default:
-            is_imm = 1'b0;
+            is_imm <= 1'b0;
         endcase
       end
 
       7'b0100011: /*S-type*/
       begin
-        branch = 1'b0;
-        reg_write = 1'b0;
-        mem_read = 1'b0;
-        mem_to_reg = 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
-        alu_op = 2'b00;
-        mem_write = 1'b1;
-        alu_src = 1'b1;
+        branch <= 1'b0;
+        reg_write <= 1'b0;
+        mem_read <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
+        alu_op <= 2'b00;
+        mem_write <= 1'b1;
+        alu_src <= 1'b1;
         case (funct3)
           3'b001:
-            is_imm = 1'b1;
+            is_imm <= 1'b1;
           default:
-            is_imm = 1'b0;
+            is_imm <= 1'b0;
         endcase
       end
 
       7'b1100011: /*branch*/
       begin
-        branch = 1'b1;
-        reg_write = 1'b0;
-        mem_read = 1'b0;
-        mem_to_reg = 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
-        alu_op = 2'b01;
-        mem_write = 1'b0;
-        alu_src = 1'b0;
-        is_imm = 1'b0;
+        branch <= 1'b1;
+        reg_write <= 1'b0;
+        mem_read <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
+        alu_op <= 2'b01;
+        mem_write <= 1'b0;
+        alu_src <= 1'b0;
+        is_imm <= 1'b0;
       end
 
       7'b1100111: /*jump*/
       begin
-        branch = 1'b1;
-        reg_write = 1'b0;
-        mem_read = 1'b0;
-        mem_to_reg = 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
-        alu_op = 2'b11;
-        mem_write = 1'b0;
-        alu_src = 1'b0;
-        is_imm = 1'b0;
+        branch <= 1'b1;
+        reg_write <= 1'b0;
+        mem_read <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
+        alu_op <= 2'b11;
+        mem_write <= 1'b0;
+        alu_src <= 1'b0;
+        is_imm <= 1'b0;
       end
 
       default:

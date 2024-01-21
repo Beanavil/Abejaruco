@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+// Copyright : (c) 2024 Javier Beiro Piñón
+//           : (c) 2024 Beatriz Navidad Vilches
+//           : (c) 2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,24 +19,45 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
+`include "tests/utils/tb_utils.v"
+`include "src/abejaruco.v"
+
+module Hazards_tb();
 `include "src/parameters.v"
 
-module flipFlop (
-    input clk,
-    input reset,
-    input [WORD_SIZE-1:0] d,
-    output reg [WORD_SIZE-1:0] q
-  );
-  always @(posedge clk or posedge reset)
+  reg clk = 0;
+  reg reset = 0;
+  output reg [7:0] clk_counter = 0;
+
+  parameter PROGRAM = "../../../programs/hazards.o";
+
+  Abejaruco #(.PROGRAM(PROGRAM)) uut (
+              .reset(reset),
+              .clk(clk),
+              .rm0_initial(32'b0000)
+            );
+
+  always
   begin
-    if (reset)
-    begin
-      q <= {WORD_SIZE{1'b0}};  // Reset the register to 0 (WORD_SIZE bits)
+    #CLK_PERIOD clk = ~clk;
+    if (clk) begin
+      clk_counter = clk_counter + 1;
     end
-    else
-    begin
-      q <= d;          // On each clock cycle, store the input data in the register
-    end
+  end
+
+  initial
+  begin
+    print_info("Testing data hazards");
+
+    $dumpfile("hazards.vcd");
+    $dumpvars(0, uut);
+    $dumpvars(0, Hazards_tb);
+
+    #100;
+
+    print_info("Testing finised");
+
+    $finish;
   end
 
 endmodule

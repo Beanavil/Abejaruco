@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,8 +19,6 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module RegisterFile (
     input wire clk,
     input wire write_enable,
@@ -32,6 +30,8 @@ module RegisterFile (
     output reg [WORD_WIDTH-1:0] read_data_1,
     output reg [WORD_WIDTH-1:0] read_data_2
   );
+`include "src/parameters.v"
+
   reg [WORD_WIDTH-1:0] r[NUM_REGS]; /*registers + zero*/
 
   initial
@@ -50,8 +50,8 @@ module RegisterFile (
     end
     else if(write_enable)
     begin
-      r[write_idx] <= write_data;
-      $display("---->Register %d has been written with %b", write_idx, write_data);
+      r[write_idx] = write_data;
+      `REGISTER_FILE_DISPLAY($sformatf("---->Register %d has been written with %b", write_idx, write_data));
     end
   end
 

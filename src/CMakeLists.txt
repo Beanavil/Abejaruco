@@ -2,7 +2,7 @@
 #
 # Copyright : (c) 2023 Javier Beiro Piñón
 #           : (c) 2023 Beatriz Navidad Vilches
-#           : (c) 2023 Stefano Petrili
+#           : (c) 2023 Stefano Petrilli
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #
@@ -21,7 +21,7 @@
 
 include(AddModule)
 
-list(APPEND MAIN_MODULE abejaruco parameters)
+list(APPEND MAIN_MODULE abejaruco parameters stall_unit)
 
 add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
 

@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
 //           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+//           : (c) 2023 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,24 +19,31 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 `include "src/common/adder.v"
 `include "src/execution/multiplier.v"
 
 module ALU
-  (input wire clk,
-   input [31:0] input_first,
-   input [31:0] input_second,
-   input [1:0] alu_op,
-   output zero,
-   output [31:0] result);
+  (
+    // In
+    input wire clk,
+    input wire [31:0] input_first,
+    input wire [31:0] input_second,
+    input wire [1:0] alu_op,
+
+    // Out
+    output reg zero,
+    output reg [31:0] result,
+    output reg op_done);
+
+`include "src/parameters.v"
 
   wire [31:0] tmp_sum_result, tmp_mul_result;
   wire tmp_sum_zero;
+  wire mul_done;
 
   reg [31:0] reg_result;
   reg reg_zero;
+  reg start_mul;
 
   Adder #(.WIDTH(32)) adder (
           .a(input_first),
@@ -50,12 +57,18 @@ module ALU
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
-               .result(tmp_mul_result)
+               .start_mul(start_mul),
+               .result(tmp_mul_result),
+               .op_done(mul_done)
              );
+
+  initial begin
+    op_done <= 1;
+    start_mul <= 0;
+  end
 
   always @(*)
   begin
-    $display("[ ALU ] - Value of first register: %d  Value of second register: %d Operation %d", input_first, input_second, alu_op);
     case (alu_op)
       2'b00: /*add*/
       begin
@@ -69,12 +82,19 @@ module ALU
 
       2'b10: /*mul*/
       begin
-        {reg_result, reg_zero} <= {tmp_mul_result, (tmp_mul_result == 0)};
+        start_mul <= 1'b1;
+        op_done <= 1'b0;
+        if(mul_done)
+        begin
+          {reg_result, reg_zero} <= {tmp_mul_result, (tmp_mul_result == 0)};
+          op_done <= 1;
+          start_mul <= 1'b0;
+        end
       end
 
       default:
       begin
-        // TODO: que hacer aqui
+        //op_done = 1;
       end
     endcase
   end

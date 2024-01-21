@@ -1,8 +1,8 @@
 # GNU General Public License
 #
-# Copyright : (c) 2023 Javier Beiro Piñón
-#           : (c) 2023 Beatriz Navidad Vilches
-#           : (c) 2023 Stefano Petrili
+# Copyright : (c) 2023-2024 Javier Beiro Piñón
+#           : (c) 2023-2024 Beatriz Navidad Vilches
+#           : (c) 2023-2024 Stefano Petrilli
 #
 # This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 #
@@ -21,7 +21,7 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES load_add)
+list(APPEND VERILOG_MODULES alu_ops hazards load_add)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET "${MODULE}.tb" INCLUDES "${PROJECT_SOURCE_DIR}")

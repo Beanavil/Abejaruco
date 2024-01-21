@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023 Javier Beiro Piñón
 //           : (c) 2023 Beatriz Navidad Vilches
-//           : (c) 2023 Stefano Petrili
+//           : (c) 2023 Stefano Petrilli
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -32,7 +32,7 @@ module BaseMultiplier #(parameter WIDTH = 4)
   begin
     if (WIDTH > 4)
     begin
-      $display("\033[31mMultiplier instantiated with WIDTH > 4. WIDTH = %0d\033[0m", WIDTH);
+      // $display("\033[31mMultiplier instantiated with WIDTH > 4. WIDTH = %0d\033[0m", WIDTH);
     end
   end
 

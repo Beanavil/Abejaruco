@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,17 +19,21 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
 module FetchRegisters (
+    // In
     input wire clk,
     input wire [WORD_WIDTH-1:0] rm0_in,
-    output reg [WORD_WIDTH-1:0] rm0_out,
     input wire [WORD_WIDTH-1:0] instruction_in,
+    input wire cache_op_done_in,
+    input wire stall_in,
+    input wire alu_op_done,
+
+    // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
-    input wire active,
+    output reg [WORD_WIDTH-1:0] rm0_out,
     output reg active_out
   );
+`include "src/parameters.v"
 
   initial
   begin
@@ -39,16 +43,25 @@ module FetchRegisters (
 
   always @(negedge clk)
   begin
-    if (active)
+
+    // Reason to stall the fetch stage
+    // - Cache has not finished
+    // - Hazard (data)
+
+    if (alu_op_done & cache_op_done_in & ~stall_in)
     begin
-      $display("FetchRegisters: rm0_in = %h, instruction_in = %h", rm0_in, instruction_in);
-      rm0_out = rm0_in;
-      instruction_out = instruction_in;
+      `F_REGISTER_DISPLAY("Is not stalled");
+      rm0_out <= rm0_in;
+      instruction_out <= instruction_in;
       active_out = 1'b1;
     end
     else
     begin
       active_out = 1'b0;
     end
+
+    `F_REGISTER_DISPLAY($sformatf("rm0_in = %h, instruction_in = %h",
+                                  rm0_in, instruction_in));
+
   end
 endmodule

@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023-2024 Javier Beiro Piñón
-//           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrilli
+// Copyright : (c) 2024 Javier Beiro Piñón
+//           : (c) 2024 Beatriz Navidad Vilches
+//           : (c) 2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -19,18 +19,17 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https:// www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
-`include "tests/utils/tb_utils.v"
 `include "src/abejaruco.v"
+`include "tests/utils/tb_utils.v"
 
-module LoadAdd_tb();
+module ALUOps_tb();
+`include "src/parameters.v"
 
   reg clk = 0;
   reg reset = 0;
   output reg [7:0] clk_counter = 0;
 
-  parameter PROGRAM = "../../../programs/load_add.o";
+  parameter PROGRAM = "../../../programs/alu_ops.o";
 
   Abejaruco #(.PROGRAM(PROGRAM)) uut (
               .reset(reset),
@@ -48,11 +47,11 @@ module LoadAdd_tb();
 
   initial
   begin
-    print_info("Testing load immediate followed by add");
+    print_info("Testing ALU instructions (mul, add, sub)");
 
-    $dumpfile("load_add.vcd");
+    $dumpfile("alu_ops.vcd");
     $dumpvars(0, uut);
-    $dumpvars(0, LoadAdd_tb);
+    $dumpvars(0, ALUOps_tb);
 
     #100;
 

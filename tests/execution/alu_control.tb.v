@@ -2,7 +2,7 @@
 //
 // Copyright : (c) 2023-2024 Javier Beiro Piñón
 //           : (c) 2023-2024 Beatriz Navidad Vilches
-//           : (c) 2023-2024 Stefano Petrili
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https://github.com/Beanavil/Abejaruco>.
 //
@@ -19,20 +19,21 @@
 // along with Abejaruco placed on the LICENSE.md file of the root folder.
 // If not, see <https://www.gnu.org/licenses/>.
 
-`include "src/parameters.v"
-
-`include "tests/utils/tb_utils.v"
 `include "src/execution/alu_control.v"
+`include "tests/utils/tb_utils.v"
 
 module ALUControl_tb();
+`include "src/parameters.v"
+
   reg clk;
   reg [6:0] inst;
-  reg [1:0] ctrl_alu_op;
+  reg [1:0] cu_alu_op;
   wire [1:0] alu_op;
 
   ALUControl alu_control
-             (.inst(inst),
-              .ctrl_alu_op(ctrl_alu_op),
+             (.clk(clk),
+              .inst(inst),
+              .cu_alu_op(cu_alu_op),
               .alu_op(alu_op));
 
   task automatic reset_input;
@@ -40,7 +41,7 @@ module ALUControl_tb();
       $display("*** Resetting input ***");
       clk = 1'b0;
       inst = 7'd0;
-      ctrl_alu_op = 2'b00;
+      cu_alu_op = 2'b00;
       #CLK_PERIOD;
       $display("Done");
     end
@@ -79,7 +80,7 @@ module ALUControl_tb();
     input string test_name;
     input [1:0] alu_op_expected;
     begin
-      $display("Test %s: assert when inst (func7) = %b and ctrl_alu_op = %b", test_name, inst, ctrl_alu_op);
+      $display("Test %s: assert when inst (func7) = %b and cu_alu_op = %b", test_name, inst, cu_alu_op);
       $display("-- alu_op should be %b, got %b", alu_op_expected, alu_op);
     end
   endtask
@@ -95,7 +96,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'b0000000;
-      ctrl_alu_op = 2'b10;
+      cu_alu_op = 2'b10;
 
       alu_op_expected = 2'b00;
 
@@ -117,7 +118,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'b0100000;
-      ctrl_alu_op = 2'b10;
+      cu_alu_op = 2'b10;
 
       alu_op_expected = 2'b01;
 
@@ -139,7 +140,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'b0000001;
-      ctrl_alu_op = 2'b10;
+      cu_alu_op = 2'b10;
 
       alu_op_expected = 2'b10;
 
@@ -161,7 +162,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'd0; /*we don't care*/
-      ctrl_alu_op = 2'b00;
+      cu_alu_op = 2'b00;
 
       alu_op_expected = 2'b00;
 
@@ -183,7 +184,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'd0; /*we don't care*/
-      ctrl_alu_op = 2'b00;
+      cu_alu_op = 2'b00;
 
       alu_op_expected = 2'b00;
 
@@ -205,7 +206,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'd0; /*we don't care*/
-      ctrl_alu_op = 2'b01;
+      cu_alu_op = 2'b01;
 
       alu_op_expected = 2'b01;
 
@@ -227,7 +228,7 @@ module ALUControl_tb();
       #CLK_PERIOD;
       clk = 1;
       inst =  7'd0; /*we don't care*/
-      ctrl_alu_op = 2'b11;
+      cu_alu_op = 2'b11;
 
       alu_op_expected = 2'b00;
 
