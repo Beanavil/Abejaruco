@@ -35,22 +35,22 @@ module DCache (
     input wire op,
     input wire byte_op,
 
-    // In wires (from memory)
+    // In wires (from arbitrer)
     input wire mem_data_ready,
     input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
-    input wire memory_in_use,
+    input wire allow_op,
 
     // Out wires (to CPU)
     output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
-    output reg data_ready,                     // Data in the output is valid or write operation finished
+    output reg data_ready,                      // Data in the output is valid or write operation finished
 
-    // Out wires (to memory)
-    output reg mem_enable,                      // Enable the memory module to read/write
-    output reg mem_op,                          // Select read/write operation
-    output reg mem_op_init,                     // Tell memory that we are going to use it
-    output reg mem_op_done,                     // The caché finished reading the returned data
-    output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
-    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
+    // Out wires (to arbiter)
+    output reg mem_op_init,                             // Tell arbiter we want to access memory
+    output reg mem_op_done,                             // Tell arbiter we finish doing the memory access
+    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address,   // Address to be read/written in memory
+    output reg mem_op,                                  //read/write
+    output reg [CACHE_LINE_SIZE-1:0] mem_data_in,        // Data to be written in memory
+    output reg start_access
   );
 `include "src/parameters.v"
 
@@ -79,7 +79,6 @@ module DCache (
   wire [1:0] line_number;
   priority_encoder encoder(.hit(hit_signals), .line_number(line_number));
 
-  //TODO do we need to use <= instead of = in the following lines?
   // Function to update LRU counters
   task update_lru;
     input [1:0] accessed_line; // Updated the size to match line_number
@@ -111,27 +110,26 @@ module DCache (
     data_ready = 0;
     mem_op_init = 0;
     mem_op_done = 0;
-    mem_enable = 0;
-    mem_op = 0;
+    hit = 0;
+    start_access = 0;
   end
 
 
   always @(negedge clk) begin
-    if (data_ready) begin
-        data_ready = 0;
+    if (mem_op_done)
+    begin
+      mem_op_done = 0;
     end
-end
-
+  end
 
   always @(posedge clk or posedge reset)
   begin
     `CACHE_DISPLAY($sformatf("The access is: %b", access));
+    if (data_ready) begin
+        data_ready = 0;
+    end
     if (access)
     begin
-      if (mem_op_done === 1'b1)
-      begin
-        mem_op_done = 1'b0;
-      end
 
       if (reset)
       begin
@@ -141,11 +139,10 @@ end
           lru_counters[i] = i;
           dirty_array[i] = 0;
         end
-        mem_op_init = 1'b0;
-        mem_op_done = 1'b0;
-        mem_enable = 1'b0;
-        mem_op = 1'b0;
-        data_ready = 1'b0;
+        data_ready = 0;
+        mem_op_init = 0;
+        mem_op_done = 0;
+        hit = 0;
       end
       else if (op == 1'b0) /*write*/
       begin
@@ -165,17 +162,17 @@ end
           begin
             `CACHE_DISPLAY($sformatf("Warning: byte_op is not 0 or 1"));
           end
-          mem_op_done = 1;
+          data_ready = 1;
           update_lru(line_number);
-
         end
-        else /*miss*/ //TODO revisar  mucho
+        else /*miss*/
         begin
-          if (~mem_enable)
-          begin
-            `CACHE_DISPLAY("----> Miss");
-            `CACHE_DISPLAY($sformatf("Miss values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready));
+          //1. Ask arbiter for memory access
+          mem_op_init = 1;
 
+          //2. If arbiter allows operation continues writing the ejected
+          if(allow_op)
+          begin
             // Find the line to replace based on LRU
             replace_index = 0;
             for (j = 0; j < CACHE_NUM_LINES; j = j + 1)
@@ -186,57 +183,50 @@ end
               end
             end
 
-            `CACHE_DISPLAY($sformatf("----> Valid: %b", valid_array[replace_index]));
-            `CACHE_DISPLAY($sformatf("----> Dirty: %b", dirty_array[replace_index]));
-
             if (valid_array[replace_index] && dirty_array[replace_index])
             begin
-              `CACHE_DISPLAY("----> Memory access to write");
-
               // Tell memory to write the line
-              if(memory_in_use == 0) // Wait until memory is available
-              begin
-                mem_op_init = 1;
-                mem_data_in[31:0] = data_array[replace_index][0];
-                mem_data_in[63:32] = data_array[replace_index][1];
-                mem_data_in[95:64] = data_array[replace_index][2];
-                mem_data_in[127:96] = data_array[replace_index][3];
+              mem_op_init = 1;
+              mem_data_in[31:0] = data_array[replace_index][0];
+              mem_data_in[63:32] = data_array[replace_index][1];
+              mem_data_in[95:64] = data_array[replace_index][2];
+              mem_data_in[127:96] = data_array[replace_index][3];
 
-                mem_address[INIT_TAG:END_TAG] = tag_array[replace_index];
-                mem_address[INIT_WORD_OFFSET:END_BYTE_OFFSET] = 0;
-                mem_op = 1'b1;
-                mem_enable = 1'b1;
-              end
-              /*If this module inited a memory op and the memory module tell us that it finished
-              we can now read the data of the writen line*/
-              else if (mem_op_init && mem_data_ready)
+              mem_address[INIT_TAG:END_TAG] = tag_array[replace_index];
+              mem_address[INIT_WORD_OFFSET:END_BYTE_OFFSET] = 0;
+
+              mem_op = 1'b1;
+              start_access = 1;
+
+              if(mem_data_ready)
               begin
                 // Finish the write operation
-                mem_op_done = 1;
-                valid_array[replace_index] = 0;
-                mem_enable = 0;
+                dirty_array[replace_index] = 0;
+                start_access = 0;
               end
             end
-            else if (valid_array[replace_index] == 0 && dirty_array[replace_index])
+            end
+            else if (valid_array[replace_index] && dirty_array[replace_index] == 0)
             begin
               `CACHE_DISPLAY("----> Memory access to read");
               mem_op_done = 0;
               mem_address = address;
               mem_op = 1'b0;
-              mem_enable = 1'b1;
 
-              if(mem_op_init && mem_data_ready)
+
+              start_access = 1;
+              if(mem_data_ready)
               begin
                 data_array[replace_index][0] = mem_data_out[31:0];
                 data_array[replace_index][1] = mem_data_out[63:32];
                 data_array[replace_index][2] = mem_data_out[95:64];
                 data_array[replace_index][3] = mem_data_out[127:96];
+                dirty_array[replace_index] = 0;
 
                 // Unblock memory module
-                mem_enable = 0;
-                mem_op_init = 0;
+                start_access = 0;
                 mem_op_done = 1;
-                dirty_array[replace_index] = 0;
+                data_ready = 1;
               end
             end
             else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0)
@@ -260,8 +250,7 @@ end
               valid_array[replace_index] = 1;
               dirty_array[replace_index] = 1;
               update_lru(replace_index);
-              mem_op_done = 1;
-              mem_enable = 0;
+              mem_op_init = 0;
             end
           end
         end
@@ -273,7 +262,7 @@ end
         begin
           `CACHE_DISPLAY("----> Hit");
           `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b, data_in=%h, op=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, data_in, op, byte_op, ~hit, mem_data_ready));
-          mem_enable = 0;
+
           if (byte_op)
           begin
             data_out[WORD_WIDTH:8] = 0;
@@ -293,14 +282,13 @@ end
         end
         else /*miss*/
         begin
-          //If memory is bussy with (ICacache)
-          if (~mem_enable)
+          //1. Ask arbiter for memory access
+          mem_op_init = 1;
+
+          //2. If arbiter allow operation continues
+          if (allow_op) //CLOSE THIS
           begin
-            `CACHE_DISPLAY("----> Miss");
             mem_address = {address[31:4], 4'b0000};
-            mem_enable = 1;
-            mem_op_done = 0;
-            mem_op = 0;
 
             `CACHE_DISPLAY($sformatf("The cache address is: %b", address));
             `CACHE_DISPLAY($sformatf("The cache address value is: %h", data_out));
@@ -317,6 +305,7 @@ end
               end
             end
 
+            start_access = 1;
             // When memory returns data, store it in the cache
             if(mem_data_ready)
             begin
@@ -331,17 +320,27 @@ end
               valid_array[replace_index] = 1;
               update_lru(replace_index);
 
+              if (byte_op)
+              begin
+                data_out[WORD_WIDTH:8] = 0;
+                data_out[7:0] = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
+              end
+              else if (~byte_op)
+              begin
+                data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+              end
+              else
+              begin
+                `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
+              end
 
-              //Notify the memmory the operation if finished
+              start_access = 0;
               mem_op_done = 1;
-              mem_enable = 0;
-
               data_ready = 1;
-              data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+              mem_op_init = 0;
             end
           end
-        end 
-      end
+        end
 
       // FOR TESTING --- Print cache contents
       `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
@@ -356,7 +355,6 @@ end
         end
         `CACHE_WRITE("\n");
       end
-      // `CACHE_DISPLAY("\n");
     end
-  end
+  end 
 endmodule

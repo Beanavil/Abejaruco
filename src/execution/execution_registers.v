@@ -32,7 +32,7 @@ module ExecutionRegisters (
     input wire active,
     input wire cu_d_cache_access_in,
     input wire cu_d_cache_op_in,
-    input wire second_register_in,
+    input wire [WORD_WIDTH-1:0] second_register_in,
     input wire cu_is_byte_op_in,
 
     // Out
@@ -46,8 +46,8 @@ module ExecutionRegisters (
     output reg active_out,
     output reg cu_d_cache_access_out,
     output reg cu_d_cache_op_out,
-    output reg second_register_out,
-    output reg cu_is_byte_op_out,
+    output reg [WORD_WIDTH-1:0] second_register_out,
+    output reg cu_is_byte_op_out
   );
 `include "src/parameters.v"
 
@@ -74,6 +74,9 @@ module ExecutionRegisters (
       alu_result_out <= alu_result_in;
       alu_zero_out <= alu_zero_in;
       active_out <= 1'b1;
+      cu_d_cache_access_out <= cu_d_cache_access_in;
+      cu_d_cache_op_out <= cu_d_cache_op_in;
+      `EX_REGISTER_DISPLAY($sformatf("alu_result_out %h", alu_result_out));
     end
     else
     begin

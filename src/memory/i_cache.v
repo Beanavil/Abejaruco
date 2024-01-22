@@ -30,24 +30,21 @@ module ICache (
     input wire clk,
     input wire reset,
     input wire [ADDRESS_WIDTH-1:0] address,
-    input wire byte_op,
 
-    // In wires (from memory)
+    // In wires (from arbiter)
     input wire mem_data_ready,
     input wire [CACHE_LINE_SIZE-1:0] mem_data_out,
-    input wire memory_in_use,
+    input wire allow_op,
 
     // Out wires (to CPU)
-    output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
-    output reg data_ready,                     // Data in the output is valid or write operation finished
+    output reg [WORD_WIDTH-1:0] data_out,             // Data returned by the cache
+    output reg data_ready,                            // Data in the output is valid or write operation finished
 
-    // Out wires (to memory)
-    output reg mem_enable,                      // Enable the memory module to read/write
-    output reg mem_op,                          // Select read/write operation
-    output reg mem_op_init,                     // Tell memory that we are going to use it
-    output reg mem_op_done,                     // The caché finished reading the returned data
-    output reg [CACHE_LINE_SIZE-1:0] mem_data_in,     // Data to be written in memory
-    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address  // Address to be read/written in memory
+    // Out wires (to arbiter)
+    output reg mem_op_init,                           // Tell arbiter we want to access memory
+    output reg mem_op_done,                           // Tell arbiter we finish doing the memory access
+    output reg [MEMORY_ADDRESS_SIZE-1:0] mem_address,  // Address to be read in memory
+    output reg start_access
   );
 `include "src/parameters.v"
 
@@ -106,23 +103,24 @@ module ICache (
     data_ready = 0;
     mem_op_init = 0;
     mem_op_done = 0;
-    mem_enable = 0;
-    mem_op = 0;
+    hit = 0;
+    start_access = 0;
   end
 
   //Reset data ready after i_cache data is taken by CPU
   always @(negedge clk) begin
-    if (data_ready) begin
-        data_ready = 0;
+    if (mem_op_done)
+    begin
+      mem_op_done = 0;
     end
   end
 
   //Main functionality
   always @(posedge clk or posedge reset)
   begin
-    if (mem_op_done === 1'b1)
-    begin
-      mem_op_done = 1'b0;
+
+    if (data_ready) begin
+        data_ready = 0;
     end
 
     if (reset)
@@ -135,8 +133,6 @@ module ICache (
       end
       mem_op_init = 1'b0;
       mem_op_done = 1'b0;
-      mem_enable = 1'b0;
-      mem_op = 1'b0;
       data_ready = 1'b0;
     end
     else begin
@@ -144,35 +140,22 @@ module ICache (
       if (hit)
       begin
         `CACHE_DISPLAY("----> Hit");
-        `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b, byte_op=%b, miss=%d, mem_data_ready=%d", clk, reset, address, byte_op, ~hit, mem_data_ready));
-        mem_enable = 0;
-        if (byte_op)
-        begin
-          data_out[WORD_WIDTH:8] = 0;
-          data_out[7:0] = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8];
-        end
-        else if (~byte_op)
-        begin
-          data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
-        end
-        else
-        begin
-          `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
-        end
-
+        `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b miss=%d, mem_data_ready=%d", clk, reset, address ~hit, mem_data_ready));
+        data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+        
         data_ready = 1;
         update_lru(line_number);
       end
       else /*miss*/
       begin
-        //If memory is not in use (by DCACHE)
-        if (~mem_enable)
+        //1. Ask arbiter for memory access
+        mem_op_init = 1;
+
+        //2. If arbiter allow operation continues
+        if (allow_op)
         begin
           `CACHE_DISPLAY("----> Miss");
           mem_address = {address[31:4], 4'b0000};
-          mem_enable = 1;
-          mem_op_done = 0;
-          mem_op = 0;
 
           `CACHE_DISPLAY($sformatf("The cache address is: %b", address));
           `CACHE_DISPLAY($sformatf("The cache address value is: %h", data_out));
@@ -188,7 +171,7 @@ module ICache (
               replace_index = j;
             end
           end
-
+          start_access = 1;
           // When memory returns data, store it in the cache
           if(mem_data_ready)
           begin
@@ -203,15 +186,15 @@ module ICache (
             valid_array[replace_index] = 1;
             update_lru(replace_index);
 
-            //Notify the memmory the operation if finished
+            data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];            
+            start_access = 0;
             mem_op_done = 1;
-            mem_enable = 0;
-
             data_ready = 1;
-            data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
+            mem_op_init = 0;
           end
+
         end
-      end 
+      end
     end
 
     // FOR TESTING --- Print cache contents
