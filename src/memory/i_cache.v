@@ -139,8 +139,8 @@ module ICache (
       hit = |hit_signals;
       if (hit)
       begin
-        `CACHE_DISPLAY("----> Hit");
-        `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b miss=%d, mem_data_ready=%d", clk, reset, address ~hit, mem_data_ready));
+        // `CACHE_DISPLAY("----> Hit");
+        // `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b miss=%d, mem_data_ready=%d", clk, reset, address ~hit, mem_data_ready));
         data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
         
         data_ready = 1;
@@ -154,13 +154,13 @@ module ICache (
         //2. If arbiter allow operation continues
         if (allow_op)
         begin
-          `CACHE_DISPLAY("----> Miss");
+          // `CACHE_DISPLAY("----> Miss");
           mem_address = {address[31:4], 4'b0000};
 
-          `CACHE_DISPLAY($sformatf("The cache address is: %b", address));
-          `CACHE_DISPLAY($sformatf("The cache address value is: %h", data_out));
-          `CACHE_DISPLAY($sformatf("The memory address is: %b", mem_address));
-          `CACHE_DISPLAY($sformatf("The memory address value is: %h", mem_data_out));
+          // `CACHE_DISPLAY($sformatf("The cache address is: %b", address));
+          // `CACHE_DISPLAY($sformatf("The cache address value is: %h", data_out));
+          // `CACHE_DISPLAY($sformatf("The memory address is: %b", mem_address));
+          // `CACHE_DISPLAY($sformatf("The memory address value is: %h", mem_data_out));
 
           // Find the line to replace based on LRU
           replace_index = 0;
@@ -175,7 +175,7 @@ module ICache (
           // When memory returns data, store it in the cache
           if(mem_data_ready)
           begin
-            `CACHE_DISPLAY("----> Load");
+            // `CACHE_DISPLAY("----> Load");
             data_array[replace_index][0] = mem_data_out[31:0];
             data_array[replace_index][1] = mem_data_out[63:32];
             data_array[replace_index][2] = mem_data_out[95:64];
@@ -197,19 +197,19 @@ module ICache (
       end
     end
 
-    // FOR TESTING --- Print cache contents
-    `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
-    for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
-    begin
-      `CACHE_DISPLAY($sformatf("Line %0d: Valid = %0b, Tag = %h, Data =", i, valid_array[i], tag_array[i]));
-      `CACHE_WRITE($sformatf("\t"));
-      for (j = 0; j < CACHE_WORDS_PER_LINE; j = j + 1)
-      begin
-        `CACHE_WRITE($sformatf("%h ", data_array[i][j]));
-      end
-      `CACHE_WRITE("\n");
-    end
-      `CACHE_DISPLAY("\n");
+    // // FOR TESTING --- Print cache contents
+    // `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
+    // for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
+    // begin
+    //   `CACHE_DISPLAY($sformatf("Line %0d: Valid = %0b, Tag = %h, Data =", i, valid_array[i], tag_array[i]));
+    //   `CACHE_WRITE($sformatf("\t"));
+    //   for (j = 0; j < CACHE_WORDS_PER_LINE; j = j + 1)
+    //   begin
+    //     `CACHE_WRITE($sformatf("%h ", data_array[i][j]));
+    //   end
+    //   `CACHE_WRITE("\n");
+    // end
+    //   `CACHE_DISPLAY("\n");
 
 
   end
