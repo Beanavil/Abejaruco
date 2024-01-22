@@ -37,9 +37,6 @@ module ALU
 
 `include "src/parameters.v"
 
-  wire [31:0] tmp_sum_result, tmp_mul_result;
-  wire tmp_zero;
-  wire mul_done;
   wire [31:0] input_second_mod;
   wire [31:0] input_second_neg;
 
@@ -53,18 +50,14 @@ module ALU
   Adder #(.WIDTH(32)) adder (
           .a(input_first),
           .b(input_second_mod),
-          .carry_in(1'b0),
-          .sum(tmp_sum_result),
-          .carry_out(tmp_sum_zero)
+          .carry_in(1'b0)
         );
 
   Multiplier multiplier (
                .clk(clk),
                .multiplicand(input_first),
                .multiplier(input_second),
-               .start_mul(start_mul),
-               .result(tmp_mul_result),
-               .op_done(mul_done)
+               .start_mul(start_mul)
              );
 
   initial begin
@@ -77,21 +70,21 @@ module ALU
     case (alu_op)
       2'b00: /*add*/
       begin
-        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
+        {reg_result, reg_zero} <= {adder.sum, adder.carry_out};
       end
 
       2'b01: /*sub*/
       begin
-        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_result == 0};
+        {reg_result, reg_zero} <= {adder.sum, adder.is_zero};
       end
 
       2'b10: /*mul*/
       begin
         start_mul <= 1'b1;
         op_done <= 1'b0;
-        if(mul_done)
+        if(multiplier.op_done)
         begin
-          {reg_result, reg_zero} <= {tmp_mul_result, (tmp_mul_result == 0)};
+          {reg_result, reg_zero} <= {multiplier.result, (multiplier.result == 0)};
           op_done <= 1;
           start_mul <= 1'b0;
         end

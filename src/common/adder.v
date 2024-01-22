@@ -28,7 +28,8 @@ module Adder #(parameter WIDTH = 8)
    input [WIDTH-1:0] b,
    input carry_in,
    output [WIDTH-1:0] sum,
-   output carry_out);
+   output carry_out,
+   output is_zero);
 
   wire [WIDTH - 1:0] carry;
 
@@ -46,4 +47,5 @@ module Adder #(parameter WIDTH = 8)
     end
   endgenerate
   assign carry_out = carry[WIDTH - 1];
+  assign is_zero = sum == 0;
 endmodule
