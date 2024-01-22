@@ -144,6 +144,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire alu_zero;
 
   // Execution registers wires
+  wire [31:0] execution_instruction_out;
   wire [31:0] execution_alu_result_out;
   wire execution_alu_zero_out;
   wire [31:0] execution_sign_extend_out;
@@ -227,7 +228,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .cache_op_done_in(icache_op_done), //TODO think this about this
+                   .icache_op_done_in(icache_op_done),
                    .stall_in(stall),
                    .alu_op_done(alu_op_done),
                    .set_nop(alu_control.set_nop),
@@ -275,8 +276,11 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                       .decode_idx_src_1(fetch_instruction_out[19:15]),
                       .decode_idx_src_2(fetch_instruction_out[24:20]),
                       .execution_idx_dst(decode_dst_register_out),
+                      .execution_instruction(decode_registers.instruction_out),
                       .memory_idx_src_dst(execution_dst_register_out),
+                      .memory_instruction(execution_registers.instruction_out),
                       .rf_write_idx(rf_write_idx),
+                      .wb_instruction(memory_registers.instruction_out),
 
                       // Out
                       .stall(stall));
@@ -382,6 +386,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .active(alu_op_done),
 
                        // Out
+                       .instruction_out(execution_instruction_out),
                        .extended_inmediate_out(execution_sign_extend_out),
                        .cu_mem_to_reg_out(execution_cu_mem_to_reg_out),
                        .cu_reg_write_out(execution_cu_reg_write_out),
@@ -398,6 +403,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   MemoryRegisters memory_registers(
                     // In
                     .clk(clk),
+                    .instruction_in(execution_instruction_out),
                     .alu_result_in(execution_alu_result_out),
                     .extended_inmediate_in(execution_sign_extend_out),
                     .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),

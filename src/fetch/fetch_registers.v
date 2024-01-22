@@ -24,7 +24,7 @@ module FetchRegisters (
     input wire clk,
     input wire [WORD_WIDTH-1:0] rm0_in,
     input wire [WORD_WIDTH-1:0] instruction_in,
-    input wire cache_op_done_in,
+    input wire icache_op_done_in,
     input wire stall_in,
     input wire alu_op_done,
     input wire set_nop,
@@ -44,7 +44,7 @@ module FetchRegisters (
 
   always @(negedge clk)
   begin
-    if (~stall_in & alu_op_done & cache_op_done_in & set_nop !== 1)
+    if (~stall_in & alu_op_done & icache_op_done_in & set_nop !== 1)
     begin
       update_registers;
     end

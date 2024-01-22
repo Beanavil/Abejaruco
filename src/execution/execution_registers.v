@@ -45,18 +45,18 @@ module ExecutionRegisters (
 
   initial
   begin
-    extended_inmediate_out = 0;
-    cu_mem_to_reg_out = 0;
-    cu_reg_write_out = 0;
-    alu_result_out = 0;
-    alu_zero_out = 0;
+    instruction_out <= 0;
+    extended_inmediate_out <= 0;
+    cu_mem_to_reg_out <= 0;
+    cu_reg_write_out <= 0;
+    alu_result_out <= 0;
+    alu_zero_out <= 0;
   end
 
   always @(negedge clk)
   begin
     if (active)
     begin
-      `EX_REGISTER_DISPLAY($sformatf("(active) alu_result_in %h", alu_result_in));
       instruction_out <= instruction_in;
       extended_inmediate_out <= extended_inmediate_in;
       cu_mem_to_reg_out <= cu_mem_to_reg_in;
@@ -65,11 +65,9 @@ module ExecutionRegisters (
       alu_result_out <= alu_result_in;
       alu_zero_out <= alu_zero_in;
       active_out <= 1'b1;
-      `EX_REGISTER_DISPLAY($sformatf("alu_result_out %h", alu_result_out));
     end
     else
     begin
-      `EX_REGISTER_DISPLAY($sformatf("(no active)"));
       active_out <= 1'b0;
     end
   end
