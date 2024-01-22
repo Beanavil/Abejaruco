@@ -58,10 +58,10 @@ module HazardDetectionUnit
       stall <= 0;
       case_if <= 0;
     end
-    // If it's not the first instruction:
+    // If it's not the first instruction, detect hazards from execution stage:
     else if (execution_idx_dst != 0)
     begin
-      // Data hazard from execution stage
+      // Data hazard
       if ((decode_idx_src_1 == execution_idx_dst ||
               decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b0110011)
       begin
@@ -69,31 +69,40 @@ module HazardDetectionUnit
         conflict_reg_idx <= execution_idx_dst;
         case_if <= 1;
       end
-      // Load-use hazard from execution stage
+      // Load-use hazard
       else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
         case_if <= 3;
       end
-      // Store-use hazard from execution stage
+      // Store-use hazard
       else if (decode_idx_src_2 == execution_idx_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
         case_if <= 3;
       end
+      // Jump-use hazard
       else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b1100111)
       begin
         stall <= 1;
-        conflict_reg_idx <= decode_idx_src_1;
+        conflict_reg_idx <= execution_idx_dst;
         case_if <= 4;
       end
+      // Branch-use hazard
+      else if ((decode_idx_src_1 == execution_idx_dst ||
+                decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b1100011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= execution_idx_dst;
+        case_if <= 44;
+      end
     end
-    // If it's not the second instruction:
+    // If it's not the second instruction, detect hazards from memory stage:
     else if (memory_idx_src_dst != 0)
     begin
-      // Data hazard from memory stage
+      // Data hazard
       if ((decode_idx_src_1 == memory_idx_src_dst ||
               decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b0110011)
       begin
@@ -101,25 +110,34 @@ module HazardDetectionUnit
         conflict_reg_idx <= memory_idx_src_dst;
         case_if <= 5;
       end
-      // Load-use hazard from memory stage
+      // Load-use hazard
       else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
         case_if <= 6;
       end
-      // Store-use hazard from memory stage
+      // Store-use hazard
       else if (decode_idx_src_2 == memory_idx_src_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
         case_if <= 7;
       end
+      // Jump-use hazard
       else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b1100111)
       begin
         stall <= 1;
-        conflict_reg_idx <= execution_idx_dst;
+        conflict_reg_idx <= memory_idx_src_dst;
         case_if <= 8;
+      end
+      // Branch-use hazard
+      else if ((decode_idx_src_1 == memory_idx_src_dst ||
+                decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b1100011)
+      begin
+        stall <= 1;
+        conflict_reg_idx <= memory_idx_src_dst;
+        case_if <= 9;
       end
     end
     else

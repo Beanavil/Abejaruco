@@ -21,7 +21,7 @@
 
 include(AddModule)
 
-list(APPEND MAIN_MODULE abejaruco parameters stall_unit)
+list(APPEND MAIN_MODULE abejaruco parameters)
 
 add_module(TARGET ${MAIN_MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")
 

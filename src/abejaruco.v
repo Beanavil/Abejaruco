@@ -348,7 +348,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   assign alu_first_input = (decode_cu_alu_src_out) ?
          alu_address : decode_first_register_out;
 
-  assign alu_second_input = (decode_cu_branch_out) ?
+  assign alu_second_input = (decode_cu_branch_out & decode_instruction_out[6:0] === 7'b1100111) ?
     {decode_instruction_out[31:25], decode_instruction_out[11:7]} :
     ((decode_cu_alu_src_out) ?
          decode_offset_out : decode_second_register_out);
@@ -372,6 +372,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   ExecutionRegisters execution_registers(
                        // In
                        .clk(clk),
+                       .instruction_in(decode_instruction_out),
                        .extended_inmediate_in(sign_extend_out),
                        .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
                        .cu_reg_write_in(decode_cu_reg_write_out),
@@ -432,14 +433,33 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
     `ABEJARUCO_DISPLAY($sformatf("[ ABEJARUCO ] - Initial rm0 = %h, clk = %b", rm0, clk));
   end
 
+  reg take_jump, take_branch, increment_pc;
+  reg [7:0] branch_pc_value;
+
   // Main pipeline execution
   always @(negedge clk)
   begin
-    if (decode_registers.cu_branch_out)
+
+    take_jump = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100111;
+    take_branch = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100011 & alu_zero;
+    increment_pc = alu_op_done & icache_op_done & ~stall;
+    branch_pc_value = {execution_registers.instruction_in[31],
+                execution_registers.instruction_in[7],
+                execution_registers.instruction_in[30:25],
+                execution_registers.instruction_in[11:8]};
+
+    // Jump pc
+    if (take_jump)
     begin
         rm0 <= alu.result;
     end
-    else if (alu_op_done & icache_op_done & ~stall)
+    // Branch pc
+    else if (take_branch)
+    begin
+        rm0 <= branch_pc_value;
+    end
+    // pc + 4
+    else if (increment_pc)
     begin
       rm0 <= rm0 + 3'b100;
     end

@@ -77,7 +77,8 @@ module ALU
 
       2'b01: /*sub*/
       begin
-        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_zero};
+        // FIXME(stefanopetrilli): do the sub in the alu by doing the 2-complement of one of the two operands
+        {reg_result, reg_zero} <= {input_first - input_second, input_first == input_second};
       end
 
       2'b10: /*mul*/
