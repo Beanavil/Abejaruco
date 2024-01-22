@@ -130,7 +130,6 @@ module DCache (
     end
     if (access)
     begin
-
       if (reset)
       begin
         for (i = 0; i < CACHE_NUM_LINES; i = i + 1)
@@ -147,7 +146,6 @@ module DCache (
       else if (op == 1'b0) /*write*/
       begin
         hit = |hit_signals;
-
         if (hit)
         begin
           if (byte_op)
@@ -183,6 +181,7 @@ module DCache (
               end
             end
 
+            //If we have to evict 
             if (valid_array[replace_index] && dirty_array[replace_index])
             begin
               // Tell memory to write the line
@@ -202,55 +201,52 @@ module DCache (
               begin
                 // Finish the write operation
                 dirty_array[replace_index] = 0;
+                valid_array[replace_index] = 0;
                 start_access = 0;
               end
             end
-            end
-            else if (valid_array[replace_index] && dirty_array[replace_index] == 0)
+            else if(valid_array[replace_index] == 0)
             begin
-              `CACHE_DISPLAY("----> Memory access to read");
-              mem_op_done = 0;
               mem_address = address;
               mem_op = 1'b0;
-
 
               start_access = 1;
               if(mem_data_ready)
               begin
+                //Get memory line
                 data_array[replace_index][0] = mem_data_out[31:0];
                 data_array[replace_index][1] = mem_data_out[63:32];
                 data_array[replace_index][2] = mem_data_out[95:64];
                 data_array[replace_index][3] = mem_data_out[127:96];
                 dirty_array[replace_index] = 0;
 
+                //Write new data
+                `CACHE_DISPLAY("----> Write");
+                if (byte_op)
+                begin
+                  data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
+                end
+                else if (~byte_op)
+                begin
+                  data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
+                end
+                else
+                begin
+                  `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
+                end
+
                 // Unblock memory module
                 start_access = 0;
                 mem_op_done = 1;
                 data_ready = 1;
-              end
-            end
-            else if(valid_array[replace_index] == 0 &&  dirty_array[replace_index] == 0)
-            begin
-              `CACHE_DISPLAY("----> Write");
-              if (byte_op)
-              begin
-                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]][address[INIT_BYTE_OFFSET:END_BYTE_OFFSET]*8 +: 8] = data_in[7:0];
-              end
-              else if (~byte_op)
-              begin
-                data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]] = data_in;
-              end
-              else
-              begin
-                `CACHE_DISPLAY("Warning: byte_op is not 0 or 1");
-              end
 
-              // Update line control information
-              tag_array[replace_index] = address[INIT_TAG:END_TAG];
-              valid_array[replace_index] = 1;
-              dirty_array[replace_index] = 1;
-              update_lru(replace_index);
-              mem_op_init = 0;
+                // Update line control information
+                tag_array[replace_index] = address[INIT_TAG:END_TAG];
+                valid_array[replace_index] = 1;
+                dirty_array[replace_index] = 1;
+                update_lru(replace_index);
+                mem_op_init = 0;
+              end
             end
           end
         end
@@ -341,6 +337,7 @@ module DCache (
             end
           end
         end
+      end 
 
       // FOR TESTING --- Print cache contents
       `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
@@ -356,5 +353,5 @@ module DCache (
         `CACHE_WRITE("\n");
       end
     end
-  end 
+  end
 endmodule

@@ -125,7 +125,7 @@ module MemArbiter (
     always @(*)
     begin
       //icache
-      if(icache_mem_op_init & ~dcache_mem_op_init)
+      if(icache_mem_op_init & ~dcache_in_exec)
       begin
         
         icache_in_exec = 1;
@@ -139,8 +139,8 @@ module MemArbiter (
       end
 
       //dcache
-      if((~icache_mem_op_init & dcache_mem_op_init) |
-        (icache_mem_op_init & dcache_mem_op_init & ~dcache_in_exec & ~icache_in_exec))
+      if((~icache_in_exec & dcache_mem_op_init) |
+        (icache_mem_op_init & dcache_mem_op_init & (~dcache_in_exec & ~icache_in_exec)))
       begin
         dcache_in_exec = 1;
         dcache_allow_op = 1;

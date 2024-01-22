@@ -77,6 +77,7 @@ module DecodeRegisters(
     rm0_out = 0;
     instruction_out = 0;
     cu_reg_write_out = 0;
+    cu_d_cache_access_out <= 0;
   end
 
   always @(negedge clk)
@@ -107,6 +108,8 @@ module DecodeRegisters(
     src_address_out <= src_address_in;
     dst_address_out <= dst_address_in;
     offset_out <= offset_in;
+
+    cu_is_byte_op_out <= cu_is_byte_op_in;
   end
   endtask
 

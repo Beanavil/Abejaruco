@@ -321,7 +321,6 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                 .alu_src(cu_alu_src),
                 .is_byte_op(cu_is_byte_op)
 
-
                 // .mem_read(cu_mem_read),
                 // .mem_to_reg(cu_mem_to_reg),
                 // .mem_write(cu_mem_write),
@@ -455,7 +454,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                         .alu_zero_in(decode_alu_zero_out),
                         .active(alu_op_done),
                         .second_register_in(decode_second_register_out),
-
+                        .unlock(dcache_op_done),
+                        .stall_in(stall),
 
                        // Out
                         .instruction_out(execution_instruction_out),

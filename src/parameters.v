@@ -58,7 +58,7 @@ parameter NIBBLE_WIDTH = 4;
 `define ABEJARUCO_VERBOSE
 // `define ALU_VERBOSE
 // `define MEMORY_VERBOSE
-// `define CACHE_VERBOSE
+`define CACHE_VERBOSE
 // `define F_REGS_VERBOSE
 // `define D_REGS_VERBOSE
 // `define EX_REGS_VERBOSE
