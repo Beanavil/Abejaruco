@@ -72,32 +72,37 @@ module ControlUnit
 
       7'b0000011: /*I-type*/
       begin
-
+  
         //LDW/LDB
-        branch <= 1'b0;
-        reg_write <= 1'b1;
-        alu_op <= 2'b00;
-        alu_src <= 1'b1;
+        if(funct3 === 3'b000 | funct3 === 3'b010 | funct3 === 3'b011)
+        begin
+          branch <= 1'b0;
+          reg_write <= 1'b1;
+          alu_op <= 2'b00;
+          alu_src <= 1'b1;
+          is_imm = 1'b0;
 
-        d_cache_access = 1'b1;
-        d_cache_op = 1'b1;
-        // mem_read <= 1'b1;
-        // mem_to_reg <= 1'b1;
-        // mem_write <= 1'b0;
+          d_cache_access = 1'b1;
+          d_cache_op = 1'b1;
 
-        //LDI
-        case (funct3)
-          3'b001:
-            begin
-              is_imm <= 1'b1;
-              d_cache_access <= 1'b0;
-            end
-          default:
-            begin
-              is_imm <= 1'b0;
-              d_cache_access <= 1'b0;
-            end
-        endcase
+          if(funct3 === 3'b000)
+          begin
+            is_byte_op = 1;
+          end
+          else
+          begin
+            is_byte_op = 0;
+          end
+        end
+        else
+        begin
+          alu_op <= 2'b00;
+          branch <= 1'b0;
+          reg_write <= 1'b1;
+          is_imm <= 1'b1;
+          d_cache_access <= 1'b0;
+          alu_src = 1'b0;
+        end
       end
 
       7'b0100011: /*S-type*/
