@@ -38,16 +38,21 @@ module ALU
 `include "src/parameters.v"
 
   wire [31:0] tmp_sum_result, tmp_mul_result;
-  wire tmp_sum_zero;
+  wire tmp_zero;
   wire mul_done;
+  wire [31:0] input_second_mod;
+  wire [31:0] input_second_neg;
 
   reg [31:0] reg_result;
   reg reg_zero;
   reg start_mul;
 
+  assign input_second_neg = ~input_second + 1'b1;
+  assign input_second_mod = (alu_op == 2'b01) ? input_second_neg : input_second;
+
   Adder #(.WIDTH(32)) adder (
           .a(input_first),
-          .b(input_second),
+          .b(input_second_mod),
           .carry_in(1'b0),
           .sum(tmp_sum_result),
           .carry_out(tmp_sum_zero)
@@ -77,8 +82,7 @@ module ALU
 
       2'b01: /*sub*/
       begin
-        // FIXME(stefanopetrilli): do the sub in the alu by doing the 2-complement of one of the two operands
-        {reg_result, reg_zero} <= {input_first - input_second, input_first == input_second};
+        {reg_result, reg_zero} <= {tmp_sum_result, tmp_sum_result == 0};
       end
 
       2'b10: /*mul*/
