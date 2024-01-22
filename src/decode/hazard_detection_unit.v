@@ -33,8 +33,11 @@ module HazardDetectionUnit
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_src_2,
     input wire [REGISTER_INDEX_WIDTH-1:0] decode_idx_dst,
     input wire [REGISTER_INDEX_WIDTH-1:0] execution_idx_dst,
+    input wire [WORD_WIDTH-1:0] execution_instruction,
     input wire [REGISTER_INDEX_WIDTH-1:0] memory_idx_src_dst,
+    input wire [WORD_WIDTH-1:0] memory_instruction,
     input wire [REGISTER_INDEX_WIDTH-1:0] rf_write_idx,
+    input wire [WORD_WIDTH-1:0] wb_instruction,
 
     // Out
     output reg stall
@@ -49,46 +52,52 @@ module HazardDetectionUnit
     if (decode_op_code === 7'bx)
     begin
       stall <= 0;
-      case_if <= 99;
+      case_if <= 0;
     end
     // If it's a nop don't stall
     else if (decode_op_code == 7'b0110011 & decode_idx_dst == 0 &
              decode_idx_src_1 == 0 & decode_idx_src_2 == 0)
     begin
       stall <= 0;
-      case_if <= 0;
+      case_if <= 1;
     end
     // If it's not the first instruction, detect hazards from execution stage:
     else if (execution_idx_dst != 0)
     begin
+      // Instruction already wrote the register in conflict
+      if(execution_instruction === wb_instruction)
+      begin
+        stall <= 0;
+        case_if <= 2;
+      end
       // Data hazard
-      if ((decode_idx_src_1 == execution_idx_dst ||
+      else if ((decode_idx_src_1 == execution_idx_dst ||
               decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b0110011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if <= 1;
+        case_if <= 3;
       end
       // Load-use hazard
       else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if <= 3;
+        case_if <= 4;
       end
       // Store-use hazard
       else if (decode_idx_src_2 == execution_idx_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if <= 3;
+        case_if <= 5;
       end
       // Jump-use hazard
       else if (decode_idx_src_1 == execution_idx_dst & decode_op_code == 7'b1100111)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if <= 4;
+        case_if <= 6;
       end
       // Branch-use hazard
       else if ((decode_idx_src_1 == execution_idx_dst ||
@@ -96,40 +105,46 @@ module HazardDetectionUnit
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
-        case_if <= 44;
+        case_if <= 7;
       end
     end
     // If it's not the second instruction, detect hazards from memory stage:
     else if (memory_idx_src_dst != 0)
     begin
+      // Instruction already wrote the register in conflict
+      if(memory_instruction === wb_instruction)
+      begin
+        stall <= 0;
+        case_if <= 8;
+      end
       // Data hazard
       if ((decode_idx_src_1 == memory_idx_src_dst ||
               decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b0110011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if <= 5;
+        case_if <= 9;
       end
       // Load-use hazard
       else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b0000011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if <= 6;
+        case_if <= 10;
       end
       // Store-use hazard
       else if (decode_idx_src_2 == memory_idx_src_dst & decode_op_code == 7'b0100011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if <= 7;
+        case_if <= 11;
       end
       // Jump-use hazard
       else if (decode_idx_src_1 == memory_idx_src_dst & decode_op_code == 7'b1100111)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if <= 8;
+        case_if <= 12;
       end
       // Branch-use hazard
       else if ((decode_idx_src_1 == memory_idx_src_dst ||
@@ -137,13 +152,13 @@ module HazardDetectionUnit
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
-        case_if <= 9;
+        case_if <= 13;
       end
     end
     else
     begin
       stall <= 0;
-      case_if <= 100;
+      case_if <= 14;
     end
     `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %b, decode_idx_src_2 %b, execution_idx_dst %b, memory_idx_src_dst %b, alu_op_done %b, mem_op_done %b => stall %h",
                                    decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
@@ -155,6 +170,7 @@ module HazardDetectionUnit
     if (rf_write_idx == conflict_reg_idx)
     begin
       stall <= 0;
+      case_if <= 15;
     end
   end
 endmodule
