@@ -21,7 +21,7 @@
 
 include(AddModule)
 
-list(APPEND VERILOG_MODULES alu_ops branch buffer_sum dcache_acceses hazards jump load_add)
+list(APPEND VERILOG_MODULES alu_ops branch buffer_sum dcache_acceses hazards jump load_add mem_copy)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET "${MODULE}.tb" INCLUDES "${PROJECT_SOURCE_DIR}")
