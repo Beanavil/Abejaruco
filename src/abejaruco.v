@@ -182,7 +182,7 @@ wire mem_data_ready;
 
 
 // Memory registers wires
-wire [31:0] memory_alu_result_out;
+wire [31:0] memory_dst_reg_data;
 wire memory_alu_zero_out;
 wire [31:0] memory_sign_extend_out;
 wire memory_cu_mem_to_reg_out;
@@ -547,6 +547,7 @@ DCache data_cache(
          .data_in(execution_registers.second_input_out),
          .op(execution_cu_d_cache_op_out),
          .byte_op(execution_cu_is_byte_op_out),
+         .cu_reg_write_in(execution_cu_reg_write_out),
 
          //--from arbiter
          .mem_data_ready(dcache_mem_data_ready),
@@ -567,18 +568,20 @@ DCache data_cache(
          .start_access(dcache_start_access)
        );
 
+
 MemoryRegisters memory_registers(
                   // In
                   .clk(clk),
                   .instruction_in(execution_instruction_out),
-                  .alu_result_in(execution_alu_result_out),
+                  .dst_reg_data_in(data_cache.data_ready ? data_cache.data_out : execution_alu_result_out),
                   .extended_inmediate_in(execution_sign_extend_out),
                   .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
-                  .cu_reg_write_in(execution_cu_reg_write_out),
+                  .cu_reg_write_in(data_cache.cu_reg_write_out),
                   .destination_register_in(data_cache.destination_register_out),
+                  // .dcache_out(data_cache.data_out),
 
                   // Out
-                  .alu_result_out(memory_alu_result_out),
+                  .dst_reg_data_out(memory_dst_reg_data),
                   .extended_inmediate_out(memory_sign_extend_out),
                   .cu_mem_to_reg_out(memory_cu_mem_to_reg_out),
                   .cu_reg_write_out(rf_write_enable),
@@ -589,11 +592,10 @@ MemoryRegisters memory_registers(
 //              Write Back stage             //
 ////----------------------------------------///
 
-// TODO: When adding ALU this will change to add the ALU result
 Mux2to1 reg_write_mux(
           // In
-          .sel(memory_cu_mem_to_reg_out),
-          .in0(memory_alu_result_out),
+          .sel(memory_cu_mem_to_reg_out || ~data_cache.data_ready),
+          .in0(memory_dst_reg_data),
           .in1(memory_sign_extend_out),
 
           // Out

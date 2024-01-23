@@ -35,6 +35,7 @@ module DCache (
     input wire [WORD_WIDTH-1:0] data_in,        // Data to be written in the cache
     input wire op,
     input wire byte_op,
+    input wire cu_reg_write_in,
 
     // In wires (from arbitrer)
     input wire mem_data_ready,
@@ -45,6 +46,7 @@ module DCache (
     output reg [WORD_WIDTH-1:0] data_out,       // Data returned by the cache
     output reg data_ready,                      // Data in the output is valid or write operation finished
     output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
+    output reg cu_reg_write_out,
 
     // Out wires (to arbiter)
     output reg mem_op_init,                             // Tell arbiter we want to access memory
@@ -127,6 +129,7 @@ module DCache (
   always @(posedge clk or posedge reset)
   begin
     destination_register_out <= destination_register_in;
+    cu_reg_write_out <= cu_reg_write_in;
 
     `CACHE_DISPLAY($sformatf("The access is: %b", access));
     if (data_ready) begin

@@ -27,11 +27,11 @@ module MemoryRegisters (
     input wire cu_mem_to_reg_in,
     input wire cu_reg_write_in,
     input wire [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
-    input wire [WORD_WIDTH-1:0] alu_result_in,
+    input wire [WORD_WIDTH-1:0] dst_reg_data_in,
 
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
-    output reg [WORD_WIDTH-1:0] alu_result_out,
+    output reg [WORD_WIDTH-1:0] dst_reg_data_out,
     output reg [WORD_WIDTH-1:0] extended_inmediate_out,
     output reg cu_mem_to_reg_out,
     output reg cu_reg_write_out,
@@ -47,7 +47,7 @@ module MemoryRegisters (
     cu_mem_to_reg_out <= 0;
     cu_reg_write_out <= 0;
     destination_register_out <= 0;
-    alu_result_out <= 0;
+    dst_reg_data_out <= 0;
   end
 
   always @(negedge clk)
@@ -57,6 +57,6 @@ module MemoryRegisters (
     cu_mem_to_reg_out <= cu_mem_to_reg_in;
     cu_reg_write_out <= cu_reg_write_in;
     destination_register_out <= destination_register_in;
-    alu_result_out <= alu_result_in;
+    dst_reg_data_out <= dst_reg_data_in;
   end
 endmodule
