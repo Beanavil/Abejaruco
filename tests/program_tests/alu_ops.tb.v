@@ -59,10 +59,4 @@ module ALUOps_tb();
 
     $finish;
   end
-
-  always
-  begin
-    #CLK_PERIOD clk = ~clk;
-  end
-
 endmodule

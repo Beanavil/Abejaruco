@@ -31,7 +31,7 @@ module ControlUnit
     // Out
     // output reg mem_write,
     // output reg mem_read,
-    // output reg mem_to_reg,
+    output reg mem_to_reg,
     output reg d_cache_access,
     output reg d_cache_op,
     output reg branch,
@@ -44,12 +44,16 @@ module ControlUnit
 
   initial
   begin
-    // mem_write = 0;
-    reg_write = 0;
-    branch = 0;
-    // mem_to_reg = 0;
-    alu_src = 0;
-    is_imm = 0;
+    reg_write <= 0;
+    branch <= 0;
+    mem_to_reg <= 0;
+    alu_src <= 0;
+    is_imm <= 0;
+    d_cache_access <= 1'b0;
+    d_cache_op <= 1'b0;
+
+    // mem_read <= 0;
+    // mem_write <= 0;
   end
 
   always @(*)
@@ -60,80 +64,80 @@ module ControlUnit
       begin
         branch <= 1'b0;
         reg_write <= 1'b1;
-        // mem_read <= 1'b0;
-        // mem_to_reg <= 1'b0;
+        mem_to_reg <= 1'b0;
         alu_op <= 2'b10;
-        // mem_write <= 1'b0;
         alu_src <= 1'b0;
         is_imm <= 1'b0;
 
-        d_cache_access = 1'b0;
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
+        // mem_read <= 1'b0;
+        // mem_write <= 1'b0;
       end
 
       7'b0000011: /*I-type*/
       begin
-  
-        //LDW/LDB
-        if(funct3 === 3'b000 | funct3 === 3'b010 | funct3 === 3'b011)
+        if(funct3 === 3'b000 | funct3 === 3'b010 | funct3 === 3'b011) /*LB, LW, LH*/
         begin
+          alu_op <= 2'b00;
           branch <= 1'b0;
           reg_write <= 1'b1;
-          alu_op <= 2'b00;
+          mem_to_reg <= 1'b1;
           alu_src <= 1'b1;
           is_imm = 1'b0;
-
-          d_cache_access = 1'b1;
-          d_cache_op = 1'b1;
-
           if(funct3 === 3'b000)
           begin
-            is_byte_op = 1;
+            is_byte_op <= 1'b1;
           end
           else
           begin
-            is_byte_op = 0;
+            is_byte_op <= 1'b0;
           end
+
+          d_cache_access <= 1'b1;
+          d_cache_op <= 1'b1;
         end
-        else
+        else /*LI*/
         begin
           alu_op <= 2'b00;
           branch <= 1'b0;
           reg_write <= 1'b1;
-          is_imm <= 1'b1;
-          d_cache_access <= 1'b0;
+          mem_to_reg <= 1'b1;
           alu_src = 1'b0;
+          is_imm <= 1'b1;
+          is_byte_op <= 1'b0;
+
+          d_cache_access <= 1'b0;
+          d_cache_op <= 1'b0;
         end
       end
 
       7'b0100011: /*S-type*/
       begin
-        d_cache_access = 1'b1;
-        d_cache_op = 1'b0;
+        alu_op <= 2'b00;
         branch <= 1'b0;
         reg_write <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_src <= 1'b1;
-        alu_op <= 2'b00;
+        is_imm <= 1'b0;
 
         case (funct3)
-          3'b000:
+          3'b000: /*SB*/
             begin
-              is_byte_op <= 1;
+              is_byte_op <= 1'b1;
             end
-              default:
+          default: /*SW,SH*/
             begin
-              is_byte_op <= 0;
+              is_byte_op <= 1'b0;
             end
         endcase
 
+        d_cache_access <= 1'b1;
+        d_cache_op <= 1'b0;
+
         // mem_write <= 1'b1;
         // mem_read <= 1'b0;
-        // mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
-        // case (funct3)
-        //   3'b001:
-        //     is_imm <= 1'b1;
-        //   default:
-        //     is_imm <= 1'b0;
-        // endcase
       end
 
       7'b1100011: /*branch*/
@@ -141,11 +145,14 @@ module ControlUnit
         branch <= 1'b1;
         reg_write <= 1'b0;
         alu_op <= 2'b01;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_src <= 1'b0;
         is_imm <= 1'b0;
 
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
         // mem_read <= 1'b0;
-        // mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         // mem_write <= 1'b0;
       end
 
@@ -154,22 +161,28 @@ module ControlUnit
         branch <= 1'b1;
         reg_write <= 1'b0;
         alu_op <= 2'b11;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_src <= 1'b0;
         is_imm <= 1'b0;
 
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
         // mem_read <= 1'b0;
-        // mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         // mem_write <= 1'b0;
       end
 
       default:
       begin
-        d_cache_access = 0;
-        branch = 0;
-        reg_write = 0;
-        alu_op = 0;
-        alu_src = 0;
-        is_imm = 0;
+        d_cache_access <= 1'b0;
+        branch <= 1'b0;
+        reg_write <= 1'b0;
+        alu_op = 1'b0;
+        mem_to_reg <= 1'b0;
+        alu_src <= 1'b0;
+        is_imm <= 1'b0;
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
       end
     endcase
   end

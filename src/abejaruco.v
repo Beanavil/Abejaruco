@@ -104,13 +104,13 @@ wire [31:0] fetch_instruction_out;
 wire cu_branch;
 
 wire cu_reg_write;
-// wire cu_mem_read;
-// wire cu_mem_to_reg;
-// wire cu_mem_write;
+wire cu_mem_to_reg;
 wire cu_alu_src;
 wire cu_is_imm;
 wire [1:0] cu_alu_op;
 wire cu_is_byte_op;
+// wire cu_mem_read;
+// wire cu_mem_write;
 
 // ALU control unit wires
 // -- Out wires
@@ -129,6 +129,7 @@ wire [31:0] decode_second_input_out;
 wire decode_cu_branch_out;
 wire decode_cu_reg_write_out;
 wire decode_cu_d_cache_access_out;
+wire decode_cu_mem_to_reg_out;
 wire decode_cu_d_cache_op_out;
 wire decode_cu_is_byte_op_out;
 
@@ -323,10 +324,10 @@ ControlUnit control_unit(
               .is_imm(cu_is_imm),
               .alu_op(cu_alu_op),
               .alu_src(cu_alu_src),
-              .is_byte_op(cu_is_byte_op)
+              .is_byte_op(cu_is_byte_op),
 
               // .mem_read(cu_mem_read),
-              // .mem_to_reg(cu_mem_to_reg),
+              .mem_to_reg(cu_mem_to_reg)
               // .mem_write(cu_mem_write),
             );
 
@@ -356,7 +357,7 @@ DecodeRegisters decode_registers(
                   .cu_branch_in(cu_branch),
                   .cu_reg_write_in(cu_reg_write),
                   // .cu_mem_read_in(cu_mem_read),
-                  // .cu_mem_to_reg_in(cu_mem_to_reg),
+                  .cu_mem_to_reg_in(cu_mem_to_reg),
                   // .cu_mem_write_in(cu_mem_write),
                   //--DCache
                   .cu_d_cache_access_in(d_cache_access),
@@ -383,7 +384,7 @@ DecodeRegisters decode_registers(
                   .cu_branch_out(decode_cu_branch_out),
                   .cu_reg_write_out(decode_cu_reg_write_out),
                   // .cu_mem_read_out(decode_cu_mem_read_out),
-                  // .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
+                  .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
                   // .cu_mem_write_out(decode_cu_mem_write_out),
                   .cu_d_cache_access_out(decode_cu_d_cache_access_out),
                   .cu_d_cache_op_out(decode_cu_d_cache_op_out),
@@ -519,13 +520,14 @@ ExecutionRegisters execution_registers(
                      .clk(clk),
                      .instruction_in(decode_instruction_out),
                      .extended_inmediate_in(sign_extend_out),
-                     //  .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
+                     .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
                      .cu_d_cache_access_in(decode_cu_d_cache_access_out),
                      .cu_d_cache_op_in(decode_cu_d_cache_op_out),
                      .cu_is_byte_op_in(decode_cu_is_byte_op_out),
 
                      .cu_reg_write_in(decode_cu_reg_write_out),
                      .destination_register_in(alu_control.is_mul ? mul4_to_mul5_registers.destination_register_out : decode_dst_register_out),
+                     .second_input_in(decode_registers.second_input_out),
                      .alu_result_in(alu_control.is_mul ? multiplier.result : alu.result),//decode_alu_result_out),
                      .alu_zero_in(decode_alu_zero_out),
                      .active(execution_op_done),
@@ -545,7 +547,6 @@ ExecutionRegisters execution_registers(
                      .alu_result_out(execution_alu_result_out),
                      .cu_d_cache_access_out(execution_cu_d_cache_access_out),
                      .cu_d_cache_op_out(execution_cu_d_cache_op_out),
-                     .second_register_out(execution_second_register_out),
                      .cu_is_byte_op_out(execution_cu_is_byte_op_out)
                    );
 
@@ -560,7 +561,8 @@ DCache data_cache(
          .access(execution_cu_d_cache_access_out),
          .reset(1'b0),
          .address(execution_alu_result_out),
-         .data_in(execution_second_register_out),
+         .destination_register_out(execution_dst_register_out),
+         .data_in(execution_registers.second_input_out),
          .op(execution_cu_d_cache_op_out),
          .byte_op(execution_cu_is_byte_op_out),
 
@@ -591,7 +593,7 @@ MemoryRegisters memory_registers(
                   .extended_inmediate_in(execution_sign_extend_out),
                   .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
                   .cu_reg_write_in(execution_cu_reg_write_out),
-                  .destination_register_in(execution_dst_register_out),
+                  .destination_register_in(data_cache.destination_register_out),
 
                   // Out
                   .alu_result_out(memory_alu_result_out),
@@ -629,9 +631,13 @@ reg [7:0] branch_pc_value;
 always @(negedge clk)
 begin
 
-  take_jump = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100111;
-  take_branch = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100011 & alu_zero;
-  increment_pc = icache_op_done & ~stall & execution_op_done ~(execution_cu_d_cache_access_out & ~dcache_op_done);
+  take_jump = decode_registers.cu_branch_out &
+              decode_registers.instruction_out[6:0] === 7'b1100111;
+  take_branch = decode_registers.cu_branch_out &
+                decode_registers.instruction_out[6:0] === 7'b1100011 & alu_zero;
+  increment_pc = icache_data_ready & ~stall &
+                 execution_op_done &
+                 ~(execution_cu_d_cache_access_out & ~dcache_op_done);
   branch_pc_value = {execution_registers.instruction_in[31],
                      execution_registers.instruction_in[7],
                      execution_registers.instruction_in[30:25],
