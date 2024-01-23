@@ -72,7 +72,7 @@ module HazardDetectionUnit
       end
       // Data hazard
       else if ((decode_idx_src_1 == execution_idx_dst ||
-              decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b0110011)
+                decode_idx_src_2 == execution_idx_dst) & decode_op_code == 7'b0110011)
       begin
         stall <= 1;
         conflict_reg_idx <= execution_idx_dst;
@@ -119,7 +119,7 @@ module HazardDetectionUnit
       end
       // Data hazard
       if ((decode_idx_src_1 == memory_idx_src_dst ||
-              decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b0110011)
+           decode_idx_src_2 == memory_idx_src_dst) & decode_op_code == 7'b0110011)
       begin
         stall <= 1;
         conflict_reg_idx <= memory_idx_src_dst;
@@ -160,9 +160,6 @@ module HazardDetectionUnit
       stall <= 0;
       case_if <= 14;
     end
-    `HAZARD_DETECTION_UNIT_DISPLAY($sformatf("Decode_idx_src_1: %b, decode_idx_src_2 %b, execution_idx_dst %b, memory_idx_src_dst %b, alu_op_done %b, mem_op_done %b => stall %h",
-                                   decode_idx_src_1, decode_idx_src_2, execution_idx_dst,
-                                   memory_idx_src_dst, alu_op_done, mem_op_done, stall));
   end
 
   always @(rf_write_idx)

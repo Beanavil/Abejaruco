@@ -32,8 +32,7 @@ module ALU
 
     // Out
     output reg zero,
-    output reg [31:0] result,
-    output reg op_done);
+    output reg [31:0] result);
 
 `include "src/parameters.v"
 
@@ -42,7 +41,6 @@ module ALU
 
   reg [31:0] reg_result;
   reg reg_zero;
-  reg start_mul;
 
   assign input_second_neg = ~input_second + 1'b1;
   assign input_second_mod = (alu_op == 2'b01) ? input_second_neg : input_second;
@@ -52,18 +50,6 @@ module ALU
           .b(input_second_mod),
           .carry_in(1'b0)
         );
-
-  Multiplier multiplier (
-               .clk(clk),
-               .multiplicand(input_first),
-               .multiplier(input_second),
-               .start_mul(start_mul)
-             );
-
-  initial begin
-    op_done <= 1;
-    start_mul <= 0;
-  end
 
   always @(*)
   begin
@@ -76,23 +62,6 @@ module ALU
       2'b01: /*sub*/
       begin
         {reg_result, reg_zero} <= {adder.sum, adder.is_zero};
-      end
-
-      2'b10: /*mul*/
-      begin
-        start_mul <= 1'b1;
-        op_done <= 1'b0;
-        if(multiplier.op_done)
-        begin
-          {reg_result, reg_zero} <= {multiplier.result, (multiplier.result == 0)};
-          op_done <= 1;
-          start_mul <= 1'b0;
-        end
-      end
-
-      default:
-      begin
-        //op_done = 1;
       end
     endcase
   end
