@@ -109,8 +109,6 @@ wire cu_alu_src;
 wire cu_is_imm;
 wire [1:0] cu_alu_op;
 wire cu_is_byte_op;
-// wire cu_mem_read;
-// wire cu_mem_write;
 
 // ALU control unit wires
 // -- Out wires
@@ -119,7 +117,6 @@ wire mul_done;
 
 // Decode registers wires
 // -- Out wires
-// wire [31:0] decode_alu_result_out;
 wire decode_alu_zero_out;
 wire [31:0] decode_rm0_out;
 wire [31:0] decode_instruction_out;
@@ -136,8 +133,6 @@ wire decode_cu_is_byte_op_out;
 wire [1:0] decode_cu_alu_op_out;
 wire decode_cu_is_imm_out;
 wire decode_cu_alu_src_out;
-wire [4:0] decode_src_address_out;
-wire [4:0] decode_dst_address_out;
 wire [11:0] decode_offset_out;
 wire stall;
 wire [31:0] sign_extend_out;
@@ -302,8 +297,8 @@ RegisterFile register_file(
                .reset(reset),
                .write_idx(rf_write_idx),
                .write_data(rf_write_data),
-               .read_idx_1(fetch_instruction_out[19:15]),
-               .read_idx_2(fetch_instruction_out[24:20]),
+               .read_idx_1(fetch_registers.instruction_out[19:15]),
+               .read_idx_2(fetch_registers.instruction_out[24:20]),
 
                //Out
                .read_data_1(rf_read_data_1),
@@ -326,9 +321,7 @@ ControlUnit control_unit(
               .alu_src(cu_alu_src),
               .is_byte_op(cu_is_byte_op),
 
-              // .mem_read(cu_mem_read),
               .mem_to_reg(cu_mem_to_reg)
-              // .mem_write(cu_mem_write),
             );
 
 HazardDetectionUnit hazard_detection_unit(.clk(clk),
@@ -356,9 +349,7 @@ DecodeRegisters decode_registers(
                   .second_input_in(rf_read_data_2),
                   .cu_branch_in(cu_branch),
                   .cu_reg_write_in(cu_reg_write),
-                  // .cu_mem_read_in(cu_mem_read),
                   .cu_mem_to_reg_in(cu_mem_to_reg),
-                  // .cu_mem_write_in(cu_mem_write),
                   //--DCache
                   .cu_d_cache_access_in(d_cache_access),
                   .cu_d_cache_op_in(d_cache_op),
@@ -367,9 +358,6 @@ DecodeRegisters decode_registers(
                   .cu_alu_op_in(cu_alu_op),
                   .cu_alu_src_in(cu_alu_src),
                   .cu_is_imm_in(cu_is_imm),
-                  // .is_mul_in(cu_alu_op === 10 && fetch_instruction_out[25]),
-                  .src_address_in(fetch_instruction_out[19:15]),
-                  .dst_address_in(fetch_instruction_out[11:7]),
                   .offset_in(fetch_instruction_out[31:20]),
                   .stall_in(stall),
                   .execution_empty(execution_op_done),
@@ -383,9 +371,7 @@ DecodeRegisters decode_registers(
                   .second_input_out(decode_second_input_out),
                   .cu_branch_out(decode_cu_branch_out),
                   .cu_reg_write_out(decode_cu_reg_write_out),
-                  // .cu_mem_read_out(decode_cu_mem_read_out),
                   .cu_mem_to_reg_out(decode_cu_mem_to_reg_out),
-                  // .cu_mem_write_out(decode_cu_mem_write_out),
                   .cu_d_cache_access_out(decode_cu_d_cache_access_out),
                   .cu_d_cache_op_out(decode_cu_d_cache_op_out),
                   .cu_is_byte_op_out(decode_cu_is_byte_op_out),
@@ -393,8 +379,6 @@ DecodeRegisters decode_registers(
                   .cu_alu_op_out(decode_cu_alu_op_out),
                   .cu_is_imm_out(decode_cu_is_imm_out),
                   .cu_alu_src_out(decode_cu_alu_src_out),
-                  .src_address_out(decode_src_address_out),
-                  .dst_address_out(decode_dst_address_out),
                   .offset_out(decode_offset_out)
                 );
 
@@ -418,8 +402,9 @@ ALUControl alu_control
 
 // If alu_op is store/load, use destination/source and offset as arguments
 // of the operation. Else, use registers' contents.
-assign alu_address = (1/*ld*/) ?
-       decode_src_address_out : decode_dst_address_out;
+// If it's a load, address is source address. For stores we use destination address.
+assign alu_address = (decode_registers.instruction_out[6:0] == 7'b0000011) ?
+       decode_registers.first_input_out : decode_registers.second_input_out;
 
 assign op_first_input = (decode_cu_alu_src_out) ?
        alu_address : decode_first_input_out;
@@ -427,7 +412,7 @@ assign op_first_input = (decode_cu_alu_src_out) ?
 assign op_second_input = (decode_cu_branch_out & decode_instruction_out[6:0] === 7'b1100111) ?
        {decode_instruction_out[31:25], decode_instruction_out[11:7]} :
        ((decode_cu_alu_src_out) ?
-        decode_offset_out : decode_second_input_out);
+        sign_extend_out : decode_second_input_out);
 
 //-------------------------------------------//
 //                ALU pipeline               //
@@ -443,8 +428,6 @@ ALU alu(
 
       //OUT
       .zero(alu_zero)
-      // .result(decode_alu_result_out),
-      // .op_done(alu_op_done)
     );
 
 //-------------------------------------------//
@@ -458,7 +441,6 @@ MulRegisters mul1_to_mul2_registers(
                .first_input_in(op_first_input),
                .second_input_in(op_second_input),
                .mul_result_in(64'd0),
-               //  .is_mul_in(alu_control.is_mul),
                .init_op(alu_control.is_mul),
                .set_nop(alu_control.set_nop),
                .stall_in(stall)

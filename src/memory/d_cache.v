@@ -185,7 +185,7 @@ module DCache (
               end
             end
 
-            //If we have to evict 
+            //If we have to evict
             if (valid_array[replace_index] && dirty_array[replace_index])
             begin
               // Tell memory to write the line
@@ -341,7 +341,7 @@ module DCache (
             end
           end
         end
-      end 
+      end
 
       // FOR TESTING --- Print cache contents
       `CACHE_DISPLAY($sformatf("Printing Cache Contents at Time: %0d", $time));
