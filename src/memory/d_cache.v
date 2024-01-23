@@ -304,7 +304,7 @@ module DCache (
                 replace_index = j;
               end
             end
-
+            mem_op = 1'b0;
             start_access = 1;
             // When memory returns data, store it in the cache
             if(mem_data_ready)

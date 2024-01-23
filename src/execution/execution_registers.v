@@ -67,6 +67,12 @@ module ExecutionRegisters (
     lock <= 0;
   end
 
+  always @(posedge unlock)
+  begin
+      cu_d_cache_access_out <= 0;
+      lock <= 0;
+  end
+
   always @(negedge clk)
   begin
     if(~stall_in)
@@ -95,10 +101,6 @@ module ExecutionRegisters (
       if(cu_d_cache_access_in)
       begin
         lock <= 1;
-      end
-      if(unlock)
-      begin
-        lock <= 0;
       end
     end
   end

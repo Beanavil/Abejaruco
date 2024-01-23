@@ -561,7 +561,7 @@ DCache data_cache(
          .access(execution_cu_d_cache_access_out),
          .reset(1'b0),
          .address(execution_alu_result_out),
-         .destination_register_out(execution_dst_register_out),
+         .destination_register_in(execution_dst_register_out),
          .data_in(execution_registers.second_input_out),
          .op(execution_cu_d_cache_op_out),
          .byte_op(execution_cu_is_byte_op_out),
