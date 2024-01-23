@@ -27,6 +27,7 @@ module RegisterFile (
     input wire [WORD_WIDTH-1:0] write_data,
     input wire [REGISTER_INDEX_WIDTH-1:0] read_idx_1,
     input wire [REGISTER_INDEX_WIDTH-1:0] read_idx_2,
+    
     output reg [WORD_WIDTH-1:0] read_data_1,
     output reg [WORD_WIDTH-1:0] read_data_2
   );

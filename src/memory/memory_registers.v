@@ -31,11 +31,12 @@ module MemoryRegisters (
 
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
+    output reg [WORD_WIDTH-1:0] alu_result_out,
     output reg [WORD_WIDTH-1:0] extended_inmediate_out,
     output reg cu_mem_to_reg_out,
     output reg cu_reg_write_out,
-    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
-    output reg [WORD_WIDTH-1:0] alu_result_out
+    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out
+
   );
 `include "src/parameters.v"
 

@@ -59,5 +59,4 @@ module ALUOps_tb();
 
     $finish;
   end
-
 endmodule

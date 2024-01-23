@@ -47,7 +47,7 @@ module HazardDetectionUnit
   reg [REGISTER_INDEX_WIDTH-1:0] conflict_reg_idx = 0;
   integer case_if; // TODO DEBUG ONLY
 
-  always @(*)
+  always @(negedge clk)
   begin
     if (decode_op_code === 7'bx)
     begin

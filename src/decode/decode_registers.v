@@ -29,12 +29,18 @@ module DecodeRegisters(
     input wire [WORD_WIDTH-1:0] second_input_in,
     input wire cu_branch_in,
     input wire cu_reg_write_in,
-    input wire cu_mem_read_in,
+    // input wire cu_mem_read_in,
     input wire cu_mem_to_reg_in,
+    // input wire cu_mem_write_in,
     input wire [1:0] cu_alu_op_in,
-    input wire cu_mem_write_in,
     input wire cu_alu_src_in,
     input wire cu_is_imm_in,
+
+    input wire cu_d_cache_access_in,
+    input wire cu_d_cache_op_in,
+    input wire cu_is_byte_op_in,
+
+
     input wire [REGISTER_INDEX_WIDTH-1:0] src_address_in,
     input wire [REGISTER_INDEX_WIDTH-1:0] dst_address_in,
     input wire [OFFSET_SIZE-1:0] offset_in,
@@ -50,10 +56,14 @@ module DecodeRegisters(
     output reg [WORD_WIDTH-1:0] second_input_out,
     output reg cu_branch_out,
     output reg cu_reg_write_out,
-    output reg cu_mem_read_out,
+    // output reg cu_mem_read_out,
     output reg cu_mem_to_reg_out,
+    // output reg cu_mem_write_out,
+    output reg cu_d_cache_access_out,
+    output reg cu_d_cache_op_out,
+    output reg cu_is_byte_op_out,
+
     output reg [1:0] cu_alu_op_out,
-    output reg cu_mem_write_out,
     output reg cu_alu_src_out,
     output reg cu_is_imm_out,
     // output reg cu_is_mul_out,
@@ -67,6 +77,9 @@ module DecodeRegisters(
   begin
     rm0_out = 0;
     instruction_out = 0;
+    cu_mem_to_reg_out = 0;
+    cu_reg_write_out = 0;
+    cu_d_cache_access_out <= 0;
   end
 
   always @(negedge clk)
@@ -80,7 +93,6 @@ module DecodeRegisters(
       update_registers;
     end
   end
-
   task update_registers;
     begin
       rm0_out <= rm0_in;
@@ -90,15 +102,13 @@ module DecodeRegisters(
       second_input_out <= second_input_in;
       cu_branch_out <= cu_branch_in;
       cu_reg_write_out <= cu_reg_write_in;
-      cu_mem_read_out <= cu_mem_read_in;
-      cu_mem_to_reg_out <= cu_mem_to_reg_in;
       cu_alu_op_out <= cu_alu_op_in;
-      cu_mem_write_out <= cu_mem_write_in;
       cu_alu_src_out <= cu_alu_src_in;
-      cu_mem_write_out <= cu_mem_write_in;
-      cu_alu_src_out <= cu_alu_src_in;
+      cu_d_cache_access_out <= cu_d_cache_access_in;
+      cu_d_cache_op_out <= cu_d_cache_op_in;
+      cu_is_byte_op_out <= cu_is_byte_op_in;
       cu_is_imm_out <= cu_is_imm_in;
-      // cu_is_mul_out <= is_mul_in;
+      cu_mem_to_reg_out <= cu_mem_to_reg_in;
       src_address_out <= src_address_in;
       dst_address_out <= dst_address_in;
       offset_out <= offset_in;
@@ -114,15 +124,13 @@ module DecodeRegisters(
       second_input_out <= 0;
       cu_branch_out <= 0;
       cu_reg_write_out <= 0;
-      cu_mem_read_out <= cu_mem_read_in;
-      cu_mem_to_reg_out <= cu_mem_to_reg_in;
       cu_alu_op_out <= cu_alu_op_in;
-      cu_mem_write_out <= cu_mem_write_in;
       cu_alu_src_out <= cu_alu_src_in;
-      cu_mem_write_out <= cu_mem_write_in;
-      cu_alu_src_out <= cu_alu_src_in;
+      cu_is_byte_op_out <= cu_is_byte_op_in;
+      cu_d_cache_access_out <= 0;
+      cu_d_cache_op_out <= 0;
       cu_is_imm_out <= cu_is_imm_in;
-      // cu_is_mul_out <= 0;
+      cu_mem_to_reg_out <= 0;
       src_address_out <= src_address_in;
       dst_address_out <= dst_address_in;
       offset_out <= offset_in;

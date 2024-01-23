@@ -29,15 +29,32 @@ module ControlUnit
     input [2:0] funct3,
 
     // Out
+    // output reg mem_write,
+    // output reg mem_read,
+    output reg mem_to_reg,
+    output reg d_cache_access,
+    output reg d_cache_op,
     output reg branch,
     output reg reg_write,
-    output reg mem_read,
-    output reg mem_to_reg,
     output reg [1:0] alu_op,
-    output reg mem_write,
     output reg alu_src,
-    output reg is_imm);
+    output reg is_imm,
+    output reg is_byte_op);
 `include "src/parameters.v"
+
+  initial
+  begin
+    reg_write <= 0;
+    branch <= 0;
+    mem_to_reg <= 0;
+    alu_src <= 0;
+    is_imm <= 0;
+    d_cache_access <= 1'b0;
+    d_cache_op <= 1'b0;
+
+    // mem_read <= 0;
+    // mem_write <= 0;
+  end
 
   always @(*)
   begin
@@ -47,75 +64,125 @@ module ControlUnit
       begin
         branch <= 1'b0;
         reg_write <= 1'b1;
-        mem_read <= 1'b0;
         mem_to_reg <= 1'b0;
         alu_op <= 2'b10;
-        mem_write <= 1'b0;
         alu_src <= 1'b0;
         is_imm <= 1'b0;
+
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
+        // mem_read <= 1'b0;
+        // mem_write <= 1'b0;
       end
 
       7'b0000011: /*I-type*/
       begin
-        branch <= 1'b0;
-        reg_write <= 1'b1;
-        mem_read <= 1'b1;
-        mem_to_reg <= 1'b1;
-        alu_op <= 2'b00;
-        mem_write <= 1'b0;
-        alu_src <= 1'b1;
-        case (funct3)
-          3'b001:
-            is_imm <= 1'b1;
-          default:
-            is_imm <= 1'b0;
-        endcase
+        if(funct3 === 3'b000 | funct3 === 3'b010 | funct3 === 3'b011) /*LB, LW, LH*/
+        begin
+          alu_op <= 2'b00;
+          branch <= 1'b0;
+          reg_write <= 1'b1;
+          mem_to_reg <= 1'b1;
+          alu_src <= 1'b1;
+          is_imm = 1'b0;
+          if(funct3 === 3'b000)
+          begin
+            is_byte_op <= 1'b1;
+          end
+          else
+          begin
+            is_byte_op <= 1'b0;
+          end
+
+          d_cache_access <= 1'b1;
+          d_cache_op <= 1'b1;
+        end
+        else /*LI*/
+        begin
+          alu_op <= 2'b00;
+          branch <= 1'b0;
+          reg_write <= 1'b1;
+          mem_to_reg <= 1'b1;
+          alu_src = 1'b0;
+          is_imm <= 1'b1;
+          is_byte_op <= 1'b0;
+
+          d_cache_access <= 1'b0;
+          d_cache_op <= 1'b0;
+        end
       end
 
       7'b0100011: /*S-type*/
       begin
+        alu_op <= 2'b00;
         branch <= 1'b0;
         reg_write <= 1'b0;
-        mem_read <= 1'b0;
         mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
-        alu_op <= 2'b00;
-        mem_write <= 1'b1;
         alu_src <= 1'b1;
+        is_imm <= 1'b0;
+
         case (funct3)
-          3'b001:
-            is_imm <= 1'b1;
-          default:
-            is_imm <= 1'b0;
+          3'b000: /*SB*/
+            begin
+              is_byte_op <= 1'b1;
+            end
+          default: /*SW,SH*/
+            begin
+              is_byte_op <= 1'b0;
+            end
         endcase
+
+        d_cache_access <= 1'b1;
+        d_cache_op <= 1'b0;
+
+        // mem_write <= 1'b1;
+        // mem_read <= 1'b0;
       end
 
       7'b1100011: /*branch*/
       begin
         branch <= 1'b1;
         reg_write <= 1'b0;
-        mem_read <= 1'b0;
-        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_op <= 2'b01;
-        mem_write <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_src <= 1'b0;
         is_imm <= 1'b0;
+
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
+        // mem_read <= 1'b0;
+        // mem_write <= 1'b0;
       end
 
       7'b1100111: /*jump*/
       begin
         branch <= 1'b1;
         reg_write <= 1'b0;
-        mem_read <= 1'b0;
-        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_op <= 2'b11;
-        mem_write <= 1'b0;
+        mem_to_reg <= 1'b0; /*reg_write is 0, so we do not actually care about this bit*/
         alu_src <= 1'b0;
         is_imm <= 1'b0;
+
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
+
+        // mem_read <= 1'b0;
+        // mem_write <= 1'b0;
       end
 
       default:
       begin
-        // TODO: que se hace aqui
+        d_cache_access <= 1'b0;
+        branch <= 1'b0;
+        reg_write <= 1'b0;
+        alu_op = 1'b0;
+        mem_to_reg <= 1'b0;
+        alu_src <= 1'b0;
+        is_imm <= 1'b0;
+        d_cache_access <= 1'b0;
+        d_cache_op <= 1'b0;
       end
     endcase
   end

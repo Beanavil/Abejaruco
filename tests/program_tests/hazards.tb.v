@@ -53,7 +53,7 @@ module Hazards_tb();
     $dumpvars(0, uut);
     $dumpvars(0, Hazards_tb);
 
-    #100;
+    #150;
 
     print_info("Testing finised");
 

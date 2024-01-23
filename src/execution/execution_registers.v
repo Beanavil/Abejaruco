@@ -26,10 +26,16 @@ module ExecutionRegisters (
     input wire [WORD_WIDTH-1:0] extended_inmediate_in,
     input wire cu_mem_to_reg_in,
     input wire cu_reg_write_in,
-    input [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
-    input [WORD_WIDTH-1:0] alu_result_in,
-    input alu_zero_in,
+    input wire [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
+    input wire [WORD_WIDTH-1:0] alu_result_in,
+    input wire alu_zero_in,
     input wire active,
+    input wire cu_d_cache_access_in,
+    input wire cu_d_cache_op_in,
+    input wire [WORD_WIDTH-1:0] second_input_in,
+    input wire cu_is_byte_op_in,
+    input wire unlock,
+    input wire stall_in,
 
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
@@ -39,9 +45,14 @@ module ExecutionRegisters (
     output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
     output reg [WORD_WIDTH-1:0] alu_result_out,
     output reg alu_zero_out,
-    output reg active_out
+    output reg active_out,
+    output reg cu_d_cache_access_out,
+    output reg cu_d_cache_op_out,
+    output reg [WORD_WIDTH-1:0] second_input_out,
+    output reg cu_is_byte_op_out
   );
 `include "src/parameters.v"
+  reg lock;
 
   initial
   begin
@@ -52,25 +63,45 @@ module ExecutionRegisters (
     alu_result_out <= 0;
     alu_zero_out <= 0;
     active_out <= 1'b0;
+    cu_d_cache_access_out <= 0;
+    lock <= 0;
+  end
+
+  always @(posedge unlock)
+  begin
+      cu_d_cache_access_out <= 0;
+      lock <= 0;
   end
 
   always @(negedge clk)
   begin
-    if (active)
+    if(~stall_in)
     begin
-      instruction_out <= instruction_in;
-      extended_inmediate_out <= extended_inmediate_in;
-      cu_mem_to_reg_out <= cu_mem_to_reg_in;
-      cu_reg_write_out <= cu_reg_write_in;
-      destination_register_out <= destination_register_in;
-      alu_result_out <= alu_result_in;
-      alu_zero_out <= alu_zero_in;
-      active_out <= 1'b1;
-    end
-    else
-    begin
-      active_out <= 1'b0;
+      if (active & ~lock)
+      begin
+        instruction_out <= instruction_in;
+        extended_inmediate_out <= extended_inmediate_in;
+        cu_mem_to_reg_out <= cu_mem_to_reg_in;
+        cu_reg_write_out <= cu_reg_write_in;
+        destination_register_out <= destination_register_in;
+        second_input_out <= second_input_in;
+        alu_result_out <= alu_result_in;
+        alu_zero_out <= alu_zero_in;
+        active_out <= 1'b1;
+        cu_d_cache_access_out <= cu_d_cache_access_in;
+        cu_d_cache_op_out <= cu_d_cache_op_in;
+        cu_is_byte_op_out <= cu_is_byte_op_in;
+        `EX_REGISTER_DISPLAY($sformatf("alu_result_out %h", alu_result_out));
+      end
+      else
+      begin
+        active_out <= 1'b0;
+      end
+
+      if(cu_d_cache_access_in)
+      begin
+        lock <= 1;
+      end
     end
   end
-
 endmodule
