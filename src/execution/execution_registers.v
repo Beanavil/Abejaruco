@@ -51,6 +51,7 @@ module ExecutionRegisters (
     cu_reg_write_out <= 0;
     alu_result_out <= 0;
     alu_zero_out <= 0;
+    active_out <= 1'b0;
   end
 
   always @(negedge clk)

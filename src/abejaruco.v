@@ -28,6 +28,7 @@
 `include "src/execution/alu.v"
 `include "src/execution/alu_control.v"
 `include "src/execution/execution_registers.v"
+`include "src/execution/mul_registers.v"
 `include "src/fetch/fetch_registers.v"
 `include "src/memory/cache.v"
 `include "src/memory/memory.v"
@@ -108,17 +109,17 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // ALU control unit wires
   // -- Out wires
   wire [1:0] alu_ctrl_alu_op;
-  wire alu_op_done;
+  wire mul_done;
 
   // Decode registers wires
   // -- Out wires
-  wire [31:0] decode_alu_result_out;
+  // wire [31:0] decode_alu_result_out;
   wire decode_alu_zero_out;
   wire [31:0] decode_rm0_out;
   wire [31:0] decode_instruction_out;
   wire [4:0] decode_dst_register_out;
-  wire [31:0] decode_first_register_out;
-  wire [31:0] decode_second_register_out;
+  wire [31:0] decode_first_input_out;
+  wire [31:0] decode_second_input_out;
   wire decode_cu_branch_out;
   wire decode_cu_reg_write_out;
   wire decode_cu_mem_read_out;
@@ -136,8 +137,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
   // ALU wires
   // -- In wires
-  wire [31:0] alu_first_input;
-  wire [31:0] alu_second_input;
+  wire [31:0] op_first_input;
+  wire [31:0] op_second_input;
   wire [31:0] alu_address;
 
   // -- Out wires
@@ -172,12 +173,13 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire memory_alu_zero_out;
   wire [31:0] memory_sign_extend_out;
   wire memory_cu_mem_to_reg_out;
+  reg execution_op_done;
 
   // Instantiations
 
-  //----------------------------------------//
-  //              Fetch stage               //
-  //----------------------------------------//
+  ////----------------------------------------///
+  //                Fetch stage                //
+  ////----------------------------------------///
 
   Memory #(.PROGRAM(PROGRAM)) main_memory (
            // In
@@ -223,14 +225,16 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
           .mem_data_in(icache_mem_data_in)
         );
 
+
+
   FetchRegisters fetch_registers(
                    // In
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .icache_op_done_in(icache_op_done),
+                   .icache_op_done(icache_op_done),
                    .stall_in(stall),
-                   .alu_op_done(alu_op_done),
+                   .execution_empty(execution_op_done),
                    .set_nop(alu_control.set_nop),
 
                    // Out
@@ -238,9 +242,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .instruction_out(fetch_instruction_out)
                  );
 
-  //----------------------------------------//
-  //             Decode stage               //
-  //----------------------------------------//
+  ////----------------------------------------///
+  //               Decode stage                //
+  ////----------------------------------------///
 
   RegisterFile register_file(
                  .clk(clk),
@@ -291,8 +295,8 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .rm0_in(fetch_rm0_out),
                     .instruction_in(fetch_instruction_out),
                     .destination_register_in(fetch_instruction_out[11:7]),
-                    .first_register_in(rf_read_data_1),
-                    .second_register_in(rf_read_data_2),
+                    .first_input_in(rf_read_data_1),
+                    .second_input_in(rf_read_data_2),
                     .cu_branch_in(cu_branch),
                     .cu_reg_write_in(cu_reg_write),
                     .cu_mem_read_in(cu_mem_read),
@@ -301,19 +305,20 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .cu_mem_write_in(cu_mem_write),
                     .cu_alu_src_in(cu_alu_src),
                     .cu_is_imm_in(cu_is_imm),
+                    // .is_mul_in(cu_alu_op === 10 && fetch_instruction_out[25]),
                     .src_address_in(fetch_instruction_out[19:15]),
                     .dst_address_in(fetch_instruction_out[11:7]),
                     .offset_in(fetch_instruction_out[31:20]),
                     .stall_in(stall),
-                    .alu_op_done(alu_op_done),
+                    .execution_empty(execution_op_done),
                     .set_nop(alu_control.set_nop),
 
                     // Out
                     .rm0_out(decode_rm0_out),
                     .instruction_out(decode_instruction_out),
                     .destination_register_out(decode_dst_register_out),
-                    .first_register_out(decode_first_register_out),
-                    .second_register_out(decode_second_register_out),
+                    .first_input_out(decode_first_input_out),
+                    .second_input_out(decode_second_input_out),
                     .cu_branch_out(decode_cu_branch_out),
                     .cu_reg_write_out(decode_cu_reg_write_out),
                     .cu_mem_read_out(decode_cu_mem_read_out),
@@ -327,9 +332,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .offset_out(decode_offset_out)
                   );
 
-  //--------------------------------------------//
-  //               Execution stage              //
-  //--------------------------------------------//
+  ////----------------------------------------///
+  //               Execution stage             //
+  ////----------------------------------------///
 
   SignExtend sign_extend(
                // In (offset is the same as the immediate)
@@ -349,29 +354,100 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // of the operation. Else, use registers' contents.
   assign alu_address = (1/*ld*/) ?
          decode_src_address_out : decode_dst_address_out;
-  assign alu_first_input = (decode_cu_alu_src_out) ?
-         alu_address : decode_first_register_out;
 
-  assign alu_second_input = (decode_cu_branch_out & decode_instruction_out[6:0] === 7'b1100111) ?
-    {decode_instruction_out[31:25], decode_instruction_out[11:7]} :
-    ((decode_cu_alu_src_out) ?
-         decode_offset_out : decode_second_register_out);
+  assign op_first_input = (decode_cu_alu_src_out) ?
+         alu_address : decode_first_input_out;
+
+  assign op_second_input = (decode_cu_branch_out & decode_instruction_out[6:0] === 7'b1100111) ?
+         {decode_instruction_out[31:25], decode_instruction_out[11:7]} :
+         ((decode_cu_alu_src_out) ?
+          decode_offset_out : decode_second_input_out);
+
+  //-------------------------------------------//
+  //                ALU pipeline               //
+  //-------------------------------------------//
+
 
   ALU alu(
         //IN
         .clk(clk),
-        .input_first(alu_first_input),
-        .input_second(alu_second_input),
+        .input_first(op_first_input),
+        .input_second(op_second_input),
         .alu_op(alu_ctrl_alu_op),
 
         //OUT
-        .zero(alu_zero),
-        .result(decode_alu_result_out),
-        .op_done(alu_op_done)
+        .zero(alu_zero)
+        // .result(decode_alu_result_out),
+        // .op_done(alu_op_done)
       );
+
+  //-------------------------------------------//
+  //            Multiplier pipeline            //
+  //-------------------------------------------//
+
+  MulRegisters mul1_to_mul2_registers(
+                 .clk(clk),
+                 .instruction_in(decode_registers.instruction_out),
+                 .destination_register_in(decode_registers.destination_register_out),
+                 .first_input_in(op_first_input),
+                 .second_input_in(op_second_input),
+                 .mul_result_in(64'd0),
+                 //  .is_mul_in(alu_control.is_mul),
+                 .init_op(alu_control.is_mul),
+                 .set_nop(alu_control.set_nop),
+                 .stall_in(stall)
+               );
+
+  MulRegisters mul2_to_mul3_registers(
+                 .clk(clk),
+                 .instruction_in(mul1_to_mul2_registers.instruction_out),
+                 .destination_register_in(mul1_to_mul2_registers.destination_register_out),
+                 .first_input_in(mul1_to_mul2_registers.first_input_out),
+                 .second_input_in(mul1_to_mul2_registers.second_input_out),
+                 .mul_result_in(mul1_to_mul2_registers.mul_result_out),
+                 .init_op(mul1_to_mul2_registers.op_done),
+                 .set_nop(alu_control.set_nop),
+                 .stall_in(stall)
+               );
+
+  MulRegisters mul3_to_mul4_registers(
+                 .clk(clk),
+                 .instruction_in(mul2_to_mul3_registers.instruction_out),
+                 .destination_register_in(mul2_to_mul3_registers.destination_register_out),
+                 .first_input_in(mul2_to_mul3_registers.first_input_out),
+                 .second_input_in(mul2_to_mul3_registers.second_input_out),
+                 .mul_result_in(mul2_to_mul3_registers.mul_result_out),
+                 .init_op(mul2_to_mul3_registers.op_done),
+                 .set_nop(alu_control.set_nop),
+                 .stall_in(stall)
+               );
+
+  MulRegisters mul4_to_mul5_registers(
+                 .clk(clk),
+                 .instruction_in(mul3_to_mul4_registers.instruction_out),
+                 .destination_register_in(mul3_to_mul4_registers.destination_register_out),
+                 .first_input_in(mul3_to_mul4_registers.first_input_out),
+                 .second_input_in(mul3_to_mul4_registers.second_input_out),
+                 .mul_result_in(mul3_to_mul4_registers.mul_result_out),
+                 .init_op(mul3_to_mul4_registers.op_done),
+                 .set_nop(alu_control.set_nop),
+                 .stall_in(stall)
+               );
+
+  Multiplier multiplier(.clk(clk),
+                        .multiplicand(mul4_to_mul5_registers.first_input_out),
+                        .multiplier(mul4_to_mul5_registers.second_input_out));
 
   // res = alu_res o offset (mux) -> mux que elige entre el alu result y el offset (immediate) en caso que sea una immediate
   // assign res = (is_imm) ? offset : alu_result;
+
+
+  //-------------------------------------------//
+  //              End of execution             //
+  //-------------------------------------------//
+
+
+  assign execution_op_done = (alu_control.is_mul & mul4_to_mul5_registers.op_done === 1) || ~alu_control.is_mul;
 
   ExecutionRegisters execution_registers(
                        // In
@@ -380,10 +456,10 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .extended_inmediate_in(sign_extend_out),
                        .cu_mem_to_reg_in(decode_cu_mem_to_reg_out),
                        .cu_reg_write_in(decode_cu_reg_write_out),
-                       .destination_register_in(decode_dst_register_out),
-                       .alu_result_in(decode_alu_result_out),
+                       .destination_register_in(alu_control.is_mul ? mul4_to_mul5_registers.destination_register_out : decode_dst_register_out),
+                       .alu_result_in(alu_control.is_mul ? multiplier.result : alu.result),//decode_alu_result_out),
                        .alu_zero_in(decode_alu_zero_out),
-                       .active(alu_op_done),
+                       .active(execution_op_done),
 
                        // Out
                        .instruction_out(execution_instruction_out),
@@ -396,9 +472,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                        .active_out(execution_active_out)
                      );
 
-  //--------------------------------------------//
-  //               Memory stage                 //
-  //--------------------------------------------//
+  ////----------------------------------------///
+  //               Memory stage                //
+  ////----------------------------------------///
 
   MemoryRegisters memory_registers(
                     // In
@@ -418,9 +494,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                     .destination_register_out(rf_write_idx)
                   );
 
-  //--------------------------------------------//
-  //              Write Back stage              //
-  //--------------------------------------------//
+  ////----------------------------------------///
+  //              Write Back stage             //
+  ////----------------------------------------///
 
   // TODO: When adding ALU this will change to add the ALU result
   Mux2to1 reg_write_mux(
@@ -448,21 +524,21 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
 
     take_jump = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100111;
     take_branch = decode_registers.cu_branch_out & decode_registers.instruction_out[6:0] === 7'b1100011 & alu_zero;
-    increment_pc = alu_op_done & icache_op_done & ~stall;
+    increment_pc = icache_op_done & ~stall & execution_op_done;
     branch_pc_value = {execution_registers.instruction_in[31],
-                execution_registers.instruction_in[7],
-                execution_registers.instruction_in[30:25],
-                execution_registers.instruction_in[11:8]};
+                       execution_registers.instruction_in[7],
+                       execution_registers.instruction_in[30:25],
+                       execution_registers.instruction_in[11:8]};
 
     // Jump pc
     if (take_jump)
     begin
-        rm0 <= alu.result;
+      rm0 <= alu.result;
     end
     // Branch pc
     else if (take_branch)
     begin
-        rm0 <= branch_pc_value;
+      rm0 <= branch_pc_value;
     end
     // pc + 4
     else if (increment_pc)
