@@ -52,6 +52,7 @@ module ExecutionRegisters (
     output reg cu_is_byte_op_out
   );
 `include "src/parameters.v"
+
   reg lock;
 
   initial
@@ -69,8 +70,8 @@ module ExecutionRegisters (
 
   always @(posedge unlock)
   begin
-      cu_d_cache_access_out <= 0;
-      lock <= 0;
+    cu_d_cache_access_out <= 0;
+    lock <= 0;
   end
 
   always @(negedge clk)

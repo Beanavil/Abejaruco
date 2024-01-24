@@ -21,13 +21,8 @@
 
 include(AddModule)
 
-list(
-  APPEND
-  VERILOG_MODULES
-  control_unit
-  decode_registers
-  register_file
-  hazard_detection_unit)
+list(APPEND VERILOG_MODULES control_unit decode_registers register_file
+     hazard_detection_unit)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")

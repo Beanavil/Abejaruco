@@ -119,7 +119,8 @@ module DCache (
   end
 
 
-  always @(negedge clk) begin
+  always @(negedge clk)
+  begin
     if (mem_op_done)
     begin
       mem_op_done = 0;
@@ -133,8 +134,9 @@ module DCache (
     cu_reg_write_out <= cu_reg_write_in;
 
     `CACHE_DISPLAY($sformatf("The access is: %b", access));
-    if (data_ready) begin///si hay un problema puede ser esto TODO
-        data_ready = 0;
+    if (data_ready)
+    begin///si hay un problema puede ser esto TODO
+      data_ready = 0;
     end
     if (access)
     begin

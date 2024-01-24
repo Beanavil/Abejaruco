@@ -34,8 +34,7 @@ list(
   mux2to1
   priority_encoder
   sign_extend
-  tag_comparator
-  )
+  tag_comparator)
 
 foreach(MODULE IN ITEMS ${VERILOG_MODULES})
   add_module(TARGET ${MODULE} INCLUDES "${PROJECT_SOURCE_DIR}")

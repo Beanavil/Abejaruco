@@ -100,7 +100,7 @@ module DCacheOps_tb();
       #CLK_PERIOD;// clk = 1'b0;
       $display("c---------------------------");
 
-      // 
+      //
       // icache_data_out_expected = 32'h00201083;
       // cu_alu_op_expected = 2'b00;
       // alu_out_multiplexer_expected = 32'h0; // 0 cause no inst went through ALU yet

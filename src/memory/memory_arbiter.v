@@ -61,97 +61,97 @@ module MemArbiter (
 
 `include "src/parameters.v"
 
-    reg dcache_in_exec;
-    reg icache_in_exec;
+  reg dcache_in_exec;
+  reg icache_in_exec;
 
-    initial
+  initial
+  begin
+    icache_mem_data_ready = 0;
+    dcache_mem_data_ready = 0;
+    mem_enable = 0;
+    dcache_in_exec = 0;
+    icache_in_exec = 0;
+    icache_allow_op = 0;
+    dcache_allow_op = 0;
+  end
+
+  always @(negedge icache_start_access)
+  begin
+    if(icache_mem_op_init)
     begin
-      icache_mem_data_ready = 0;
-      dcache_mem_data_ready = 0;
-      mem_enable = 0;
-      dcache_in_exec = 0;
-      icache_in_exec = 0;
-      icache_allow_op = 0;
-      dcache_allow_op = 0;
-    end
-
-    always @(negedge icache_start_access)
-    begin
-      if(icache_mem_op_init)
-      begin
-        mem_enable = 0;
-      end
-    end
-
-    always @(negedge dcache_start_access)
-    begin
-      if(dcache_mem_op_init)
-      begin
-        mem_enable = 0;
-      end
-    end
-
-    always @(posedge dcache_op_done)
-    begin
-      dcache_in_exec = 0;
-      dcache_allow_op = 0;
-      dcache_mem_data_ready = 0;
-    end
-
-    always @(posedge icache_op_done)
-    begin
-      icache_in_exec = 0;
-      icache_allow_op = 0;
-      icache_mem_data_ready = 0;
-    end
-
-    //Memory finish op
-    always @(posedge mem_data_ready)
-    begin
-      mem_data_out_to_cache = mem_data_out;
-
-      if (icache_in_exec)
-      begin
-        icache_mem_data_ready = 1;
-      end
-      else if(dcache_in_exec & ~mem_op)
-      begin
-        dcache_mem_data_ready = 1;
-      end
       mem_enable = 0;
     end
+  end
 
-    //A memory petition comes form cache
-    always @(*)
+  always @(negedge dcache_start_access)
+  begin
+    if(dcache_mem_op_init)
     begin
-      //icache
-      if(icache_mem_op_init & ~dcache_in_exec)
-      begin
-        
-        icache_in_exec = 1;
-        icache_allow_op = 1;
-        if(icache_start_access)
-        begin
-          mem_address = icache_mem_address;
-          mem_op = 0; //read
-          mem_enable = 1;
-        end 
-      end
+      mem_enable = 0;
+    end
+  end
 
-      //dcache
-      if((~icache_in_exec & dcache_mem_op_init) |
+  always @(posedge dcache_op_done)
+  begin
+    dcache_in_exec = 0;
+    dcache_allow_op = 0;
+    dcache_mem_data_ready = 0;
+  end
+
+  always @(posedge icache_op_done)
+  begin
+    icache_in_exec = 0;
+    icache_allow_op = 0;
+    icache_mem_data_ready = 0;
+  end
+
+  //Memory finish op
+  always @(posedge mem_data_ready)
+  begin
+    mem_data_out_to_cache = mem_data_out;
+
+    if (icache_in_exec)
+    begin
+      icache_mem_data_ready = 1;
+    end
+    else if(dcache_in_exec & ~mem_op)
+    begin
+      dcache_mem_data_ready = 1;
+    end
+    mem_enable = 0;
+  end
+
+  //A memory petition comes form cache
+  always @(*)
+  begin
+    //icache
+    if(icache_mem_op_init & ~dcache_in_exec)
+    begin
+
+      icache_in_exec = 1;
+      icache_allow_op = 1;
+      if(icache_start_access)
+      begin
+        mem_address = icache_mem_address;
+        mem_op = 0; //read
+        mem_enable = 1;
+      end
+    end
+
+    //dcache
+    if((~icache_in_exec & dcache_mem_op_init) |
         (icache_mem_op_init & dcache_mem_op_init & (~dcache_in_exec & ~icache_in_exec)))
+    begin
+      dcache_in_exec = 1;
+      dcache_allow_op = 1;
+
+      if(dcache_start_access)
       begin
-        dcache_in_exec = 1;
-        dcache_allow_op = 1;
-        
-        if(dcache_start_access)
-        begin
-          mem_op = dcache_mem_op;
-          mem_address = dcache_mem_address;
-          mem_data_in = dcache_mem_data_in;
-          mem_enable = 1;
-        end
+        mem_op = dcache_mem_op;
+        mem_address = dcache_mem_address;
+        mem_data_in = dcache_mem_data_in;
+        mem_enable = 1;
       end
     end
+  end
 endmodule

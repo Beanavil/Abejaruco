@@ -1,8 +1,8 @@
 // GNU General Public License
 //
-// Copyright : (c) 2023 Javier Beiro Piñón
-// : (c) 2023 Beatriz Navidad Vilches
-// : (c) 2023 Stefano Petrilli
+// Copyright : (c) 2023-2024 Javier Beiro Piñón
+//           : (c) 2023-2024 Beatriz Navidad Vilches
+//           : (c) 2023-2024 Stefano Petrilli
 //
 // This file is part of Abejaruco <https:// github.com/Beanavil/Abejaruco>.
 //
@@ -25,16 +25,22 @@
 module priority_encoder(
     input wire [3:0] hit,
     output reg [1:0] line_number
-);
-    always @(*) begin
-        case(hit)
-            4'b1000: line_number = 2'b00;
-            4'b0100: line_number = 2'b01;
-            4'b0010: line_number = 2'b10;
-            4'b0001: line_number = 2'b11;
-            default: line_number = 2'bxx; // No hit or multiple hits
-        endcase
-    end
+  );
+  always @(*)
+  begin
+    case(hit)
+      4'b1000:
+        line_number = 2'b00;
+      4'b0100:
+        line_number = 2'b01;
+      4'b0010:
+        line_number = 2'b10;
+      4'b0001:
+        line_number = 2'b11;
+      default:
+        line_number = 2'bxx; // No hit or multiple hits
+    endcase
+  end
 endmodule
 
 `endif

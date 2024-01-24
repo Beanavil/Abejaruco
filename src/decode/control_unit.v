@@ -124,13 +124,13 @@ module ControlUnit
 
         case (funct3)
           3'b000: /*SB*/
-            begin
-              is_byte_op <= 1'b1;
-            end
+          begin
+            is_byte_op <= 1'b1;
+          end
           default: /*SW,SH*/
-            begin
-              is_byte_op <= 1'b0;
-            end
+          begin
+            is_byte_op <= 1'b0;
+          end
         endcase
 
         d_cache_access <= 1'b1;

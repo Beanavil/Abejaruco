@@ -29,7 +29,7 @@ module Memory #(parameter PROGRAM = "../../programs/zero.o")
 
    output reg [CACHE_LINE_SIZE-1:0] data_out,
    output reg data_ready
-  //  output reg memory_in_use                   // Memory is use by another module
+   //  output reg memory_in_use                   // Memory is use by another module
   );
 `include "src/parameters.v"
 

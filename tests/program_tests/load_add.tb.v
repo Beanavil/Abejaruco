@@ -41,7 +41,8 @@ module LoadAdd_tb();
   always
   begin
     #CLK_PERIOD clk = ~clk;
-    if (clk) begin
+    if (clk)
+    begin
       clk_counter = clk_counter + 1;
     end
   end

@@ -20,79 +20,79 @@
 // If not, see <https:// www.gnu.org/licenses/>.
 
 module FetchRegisters (
-         // In
-         input wire clk,
-         input wire [WORD_WIDTH-1:0] rm0_in,
-         input wire [WORD_WIDTH-1:0] instruction_in,
-         input wire icache_op_done,
-         input wire stall_in,
-         input wire execution_empty,
-         input wire set_nop,
+    // In
+    input wire clk,
+    input wire [WORD_WIDTH-1:0] rm0_in,
+    input wire [WORD_WIDTH-1:0] instruction_in,
+    input wire icache_op_done,
+    input wire stall_in,
+    input wire execution_empty,
+    input wire set_nop,
 
-         input wire d_cache_access,
-         input wire unlock,
+    input wire d_cache_access,
+    input wire unlock,
 
-         // Out
-         output reg [WORD_WIDTH-1:0] instruction_out,
-         output reg [WORD_WIDTH-1:0] rm0_out,
-         output reg active_out
-       );
+    // Out
+    output reg [WORD_WIDTH-1:0] instruction_out,
+    output reg [WORD_WIDTH-1:0] rm0_out,
+    output reg active_out
+  );
 `include "src/parameters.v"
 
-reg lock;
+  reg lock;
 
-always @(posedge d_cache_access)
-begin
-  lock <= 1;
-end
-
-always @(posedge unlock)
-begin
-  lock <= 0;
-end
-
-initial
-begin
-  rm0_out = 0;
-  instruction_out = 0;
-  lock <= 0;
-end
-
-always @(negedge clk)
-begin
-  if(stall_in)
+  always @(posedge d_cache_access)
   begin
-    active_out = 1'b0;
+    lock <= 1;
   end
-  else if (set_nop == 1)
-  begin
-    update_registers_to_nop;
-  end
-  else if (execution_empty & icache_op_done)
-  begin
-    update_registers;
-  end
-end
 
-task update_registers;
+  always @(posedge unlock)
   begin
-    if(~lock)
+    lock <= 0;
+  end
+
+  initial
+  begin
+    rm0_out = 0;
+    instruction_out = 0;
+    lock <= 0;
+  end
+
+  always @(negedge clk)
+  begin
+    if(stall_in)
     begin
-      rm0_out <= rm0_in;
-      instruction_out <= instruction_in;
-      active_out = 1'b1;
+      active_out = 1'b0;
+    end
+    else if (set_nop == 1)
+    begin
+      update_registers_to_nop;
+    end
+    else if (execution_empty & icache_op_done)
+    begin
+      update_registers;
     end
   end
-endtask
 
-task update_registers_to_nop;
-  begin
-    if(~lock)
+  task update_registers;
     begin
-      rm0_out <= rm0_in;
-      instruction_out <= NOP_INSTRUCTION;
-      active_out = 1'b1;
+      if(~lock)
+      begin
+        rm0_out <= rm0_in;
+        instruction_out <= instruction_in;
+        active_out = 1'b1;
+      end
     end
-  end
-endtask
+  endtask
+
+  task update_registers_to_nop;
+    begin
+      if(~lock)
+      begin
+        rm0_out <= rm0_in;
+        instruction_out <= NOP_INSTRUCTION;
+        active_out = 1'b1;
+      end
+    end
+  endtask
 endmodule

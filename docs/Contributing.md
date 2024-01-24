@@ -5,7 +5,7 @@ To keep the style of the project consistent, please follow the described guideli
 This project uses `CMake` as buildsystem, so for any addition of modules the corresponding `CMake` files should be modified when necessary.
 
 ## Code Format
-The formatting rules of the modules are enforced by [istyle-verilog-formatter](https://github.com/thomasrussellmurphy/istyle-verilog-formatter) using (Git Hooks)[https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks]. If using Visual Studio Code, the extension [verilog-formatter](https://marketplace.visualstudio.com/items?itemName=IsaacT.verilog-formatter), which is a wrapper around the `istyle-verilog-formatter`, can also be used to enforce the same options passed to the hook while writting code. We provide the `.iStylerc` file that matches our format of preference. The configuration steps for Visual Studio Code can be found below:
+The formatting rules of the modules are enforced by [istyle-verilog-formatter](https://github.com/thomasrussellmurphy/istyle-verilog-formatter). If using Visual Studio Code, the extension [verilog-formatter](https://marketplace.visualstudio.com/items?itemName=IsaacT.verilog-formatter), which is a wrapper around the `istyle-verilog-formatter`, can be used to enforce the said rules. We provide the `.iStylerc` file that matches our format of preference. The configuration steps for Visual Studio Code can be found below:
 - Install the [verilog-formatter](https://marketplace.visualstudio.com/items?itemName=IsaacT.verilog-formatter) extension and **its dependencies** as described in its information page.
 - Select the `Extension Settings` option from the drop-down menu of the extension (see image below).
 

@@ -108,7 +108,8 @@ module ICache (
   end
 
   //Reset data ready after i_cache data is taken by CPU
-  always @(negedge clk) begin
+  always @(negedge clk)
+  begin
     if (mem_op_done)
     begin
       mem_op_done = 0;
@@ -119,8 +120,9 @@ module ICache (
   always @(posedge clk or posedge reset)
   begin
 
-    if (data_ready) begin
-        data_ready = 0;
+    if (data_ready)
+    begin
+      data_ready = 0;
     end
 
     if (reset)
@@ -135,14 +137,15 @@ module ICache (
       mem_op_done = 1'b0;
       data_ready = 1'b0;
     end
-    else begin
+    else
+    begin
       hit = |hit_signals;
       if (hit)
       begin
         // `CACHE_DISPLAY("----> Hit");
         // `CACHE_DISPLAY($sformatf("Hit values: clk=%b, reset=%b, address=%b miss=%d, mem_data_ready=%d", clk, reset, address ~hit, mem_data_ready));
         data_out = data_array[line_number][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
-        
+
         data_ready = 1;
         update_lru(line_number);
       end
@@ -186,7 +189,7 @@ module ICache (
             valid_array[replace_index] = 1;
             update_lru(replace_index);
 
-            data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];            
+            data_out = data_array[replace_index][address[INIT_WORD_OFFSET:END_WORD_OFFSET]];
             start_access = 0;
             mem_op_done = 1;
             data_ready = 1;
