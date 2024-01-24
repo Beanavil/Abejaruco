@@ -22,7 +22,5 @@
 include(AddModule)
 
 add_subdirectory(common)
-add_subdirectory(decode)
 add_subdirectory(execution)
-add_subdirectory(memory)
 add_subdirectory(program_tests)
