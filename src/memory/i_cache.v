@@ -23,8 +23,6 @@
 `include "src/common/priority_encoder.v"
 `include "src/common/tag_comparator.v"
 
-//TODO add half word operations
-
 module ICache (
     // In wires (from CPU)
     input wire clk,

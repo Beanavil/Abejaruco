@@ -21,12 +21,6 @@
 
 include(CMakeParseArguments)
 
-# Usage:
-# add_module(
-#     TEST                               # optional, adds a test for the sample TODO
-#     TARGET <name>                      # specifies the name of the module
-#     INCLUDES <include0> <include1> ... # include directories
-# )
 function(add_module)
 
   set(options TEST)

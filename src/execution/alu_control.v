@@ -75,7 +75,6 @@ module ALUControl(
       begin
         alu_op <= 2'b01;
         is_mul <= 1'b0;
-        // TODO: set_nop <= 1'b0;
       end
 
       2'b11: /*jump*/

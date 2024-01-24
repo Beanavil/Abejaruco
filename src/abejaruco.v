@@ -54,9 +54,9 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   // reg [31:0] x1; /*ra*/
 
   // Register file wires
-  reg rf_write_enable; // TODO in WB stage
-  reg [REGISTER_INDEX_WIDTH-1:0] rf_write_idx; // TODO in WB stage
-  reg [31:0] rf_write_data; // TODO in WB stage
+  reg rf_write_enable;
+  reg [REGISTER_INDEX_WIDTH-1:0] rf_write_idx;
+  reg [31:0] rf_write_data;
   reg [REGISTER_INDEX_WIDTH-1:0] rf_read_idx_1;
   reg [REGISTER_INDEX_WIDTH-1:0] rf_read_idx_2;
   reg [31:0] rf_read_data_1;
@@ -77,7 +77,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
   wire dcache_mem_op_init;
   wire dcache_op_done;
   wire dcache_mem_op;
-  wire [11:0] dcache_mem_address; //TODO ESTO ES DIRECCIÓN FÍSICA
+  wire [11:0] dcache_mem_address;
   wire [127:0] dcache_mem_data_in;
   wire dcache_start_access;
 
@@ -225,7 +225,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                .mem_data_out_to_cache(arbiter_mem_data_out),
                //--Dcache
                .dcache_mem_data_ready(dcache_mem_data_ready),
-               .dcache_allow_op(dcache_allow_op), //TODO Use in DCACHE
+               .dcache_allow_op(dcache_allow_op),
                //--Icache
                .icache_mem_data_ready(icache_mem_data_ready),
                .icache_allow_op(icache_allow_op)
@@ -255,7 +255,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
            // -- from arbiter
            .mem_data_ready(icache_mem_data_ready),
            .mem_data_out(arbiter_mem_data_out),
-           .allow_op(icache_allow_op), //TODO
+           .allow_op(icache_allow_op),
            .start_access(icache_start_access),
 
            // Out
@@ -276,7 +276,7 @@ module Abejaruco #(parameter PROGRAM = "../../programs/zero.o")(
                    .clk(clk),
                    .rm0_in(rm0),
                    .instruction_in(icache_data_out),
-                   .icache_op_done(icache_data_ready), // TODO see if icache_op_done is used anywhere else
+                   .icache_op_done(icache_data_ready),
                    .stall_in(stall),
                    .execution_empty(execution_op_done),
                    .set_nop(alu_control.set_nop),

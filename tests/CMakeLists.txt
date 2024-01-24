@@ -19,19 +19,6 @@
 # Abejaruco placed on the LICENSE.md file of the root folder. If not, see
 # <https://www.gnu.org/licenses/>.
 
-# # TODO This part should be uncommented when simulator tests are added
-
-# # Set the C standard to C17 set(CMAKE_C_STANDARD 17)
-# set(CMAKE_C_STANDARD_REQUIRED ON)
-
-# # Set the CXX standard to C++17 set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON) set(CMAKE_CXX_EXTENSIONS OFF)
-
-# # Set Verilator arguments list( APPEND VERILATOR_FLAGS "-Wall" "-Wextra"
-# "-Werror" "--trace" "--pedantic")
-
-# enable_testing()
-
 include(AddModule)
 
 add_subdirectory(common)

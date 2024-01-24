@@ -24,13 +24,3 @@ foreach(DEP IN ITEMS iverilog)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/Dependencies/${DEP}")
   include(${DEP})
 endforeach()
-
-# Fetch tests dependencies TODO when using verilator
-# if(BUILD_TESTS)
-#   foreach(DEP IN ITEMS verilator)
-#     list(APPEND CMAKE_MODULE_PATH
-#          "${CMAKE_CURRENT_LIST_DIR}/Dependencies/${DEP}")
-#     include(${DEP})
-#   endforeach()
-# endif(BUILD_TESTS)
-

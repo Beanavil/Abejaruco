@@ -23,8 +23,6 @@
 `include "src/common/priority_encoder.v"
 `include "src/common/tag_comparator.v"
 
-//TODO add half word operations
-
 module DCache (
     // In wires (from CPU)
     input wire clk,
@@ -135,7 +133,7 @@ module DCache (
 
     `CACHE_DISPLAY($sformatf("The access is: %b", access));
     if (data_ready)
-    begin///si hay un problema puede ser esto TODO
+    begin
       data_ready = 0;
     end
     if (access)
