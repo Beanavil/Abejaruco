@@ -36,6 +36,7 @@ module HazardDetectionUnit
     input wire [WORD_WIDTH-1:0] execution_instruction,
     input wire [REGISTER_INDEX_WIDTH-1:0] memory_idx_src_dst,
     input wire [WORD_WIDTH-1:0] memory_instruction,
+    input wire rf_write_enable,
     input wire [REGISTER_INDEX_WIDTH-1:0] rf_write_idx,
     input wire [WORD_WIDTH-1:0] wb_instruction,
 
@@ -162,9 +163,9 @@ module HazardDetectionUnit
     end
   end
 
-  always @(rf_write_idx)
+  always @(negedge clk)
   begin
-    if (rf_write_idx == conflict_reg_idx)
+    if (rf_write_enable && rf_write_idx == conflict_reg_idx)
     begin
       stall <= 0;
       case_if <= 15;

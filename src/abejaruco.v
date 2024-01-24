@@ -280,6 +280,8 @@ FetchRegisters fetch_registers(
                  .stall_in(stall),
                  .execution_empty(execution_op_done),
                  .set_nop(alu_control.set_nop),
+                 .d_cache_access(execution_cu_d_cache_access_out),
+                 .unlock(dcache_data_ready),
 
                  // Out
                  .rm0_out(fetch_rm0_out),
@@ -333,7 +335,8 @@ HazardDetectionUnit hazard_detection_unit(.clk(clk),
                     .execution_instruction(decode_registers.instruction_out),
                     .memory_idx_src_dst(execution_dst_register_out),
                     .memory_instruction(execution_registers.instruction_out),
-                    .rf_write_idx(rf_write_idx),
+                    .rf_write_enable(rf_write_enable),
+                    .rf_write_idx(memory_registers.destination_register_out),
                     .wb_instruction(memory_registers.instruction_out),
 
                     // Out
@@ -362,6 +365,8 @@ DecodeRegisters decode_registers(
                   .stall_in(stall),
                   .execution_empty(execution_op_done),
                   .set_nop(alu_control.set_nop),
+                  .d_cache_access(execution_cu_d_cache_access_out),
+                  .unlock(dcache_data_ready),
 
                   // Out
                   .rm0_out(decode_rm0_out),
@@ -513,7 +518,7 @@ ExecutionRegisters execution_registers(
                      .alu_result_in(alu_control.is_mul ? multiplier.result : alu.result),//decode_alu_result_out),
                      .alu_zero_in(decode_alu_zero_out),
                      .active(execution_op_done),
-                     .unlock(dcache_op_done),
+                     .unlock(dcache_data_ready),
                      .stall_in(stall),
 
                      // Out
@@ -578,7 +583,9 @@ MemoryRegisters memory_registers(
                   .cu_mem_to_reg_in(execution_cu_mem_to_reg_out),
                   .cu_reg_write_in(data_cache.cu_reg_write_out),
                   .destination_register_in(data_cache.destination_register_out),
-                  // .dcache_out(data_cache.data_out),
+                  .data_cache_data_ready_in(data_cache.data_ready),
+                  .cu_d_cache_access_in(execution_cu_d_cache_access_out),
+                  .dcache_op_done_in(dcache_op_done),
 
                   // Out
                   .dst_reg_data_out(memory_dst_reg_data),
@@ -594,9 +601,9 @@ MemoryRegisters memory_registers(
 
 Mux2to1 reg_write_mux(
           // In
-          .sel(memory_cu_mem_to_reg_out || ~data_cache.data_ready),
-          .in0(memory_dst_reg_data),
-          .in1(memory_sign_extend_out),
+          .sel(memory_cu_mem_to_reg_out && memory_registers.data_cache_data_ready_out),
+          .in0(memory_sign_extend_out),
+          .in1(memory_dst_reg_data),
 
           // Out
           .out(rf_write_data)
@@ -614,14 +621,14 @@ reg [7:0] branch_pc_value;
 // Main pipeline execution
 always @(negedge clk)
 begin
-
   take_jump = decode_registers.cu_branch_out &
               decode_registers.instruction_out[6:0] === 7'b1100111;
   take_branch = decode_registers.cu_branch_out &
                 decode_registers.instruction_out[6:0] === 7'b1100011 & alu_zero;
   increment_pc = icache_data_ready & ~stall &
                  execution_op_done &
-                 ~(execution_cu_d_cache_access_out & ~dcache_op_done);
+                 ~(memory_registers.cu_d_cache_access_out & ~memory_registers.data_cache_data_ready_out);
+
   branch_pc_value = {execution_registers.instruction_in[31],
                      execution_registers.instruction_in[7],
                      execution_registers.instruction_in[30:25],

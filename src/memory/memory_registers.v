@@ -27,7 +27,10 @@ module MemoryRegisters (
     input wire cu_mem_to_reg_in,
     input wire cu_reg_write_in,
     input wire [REGISTER_INDEX_WIDTH-1:0] destination_register_in,
+    input wire data_cache_data_ready_in,
     input wire [WORD_WIDTH-1:0] dst_reg_data_in,
+    input wire cu_d_cache_access_in,
+    input wire dcache_op_done_in,
 
     // Out
     output reg [WORD_WIDTH-1:0] instruction_out,
@@ -35,7 +38,10 @@ module MemoryRegisters (
     output reg [WORD_WIDTH-1:0] extended_inmediate_out,
     output reg cu_mem_to_reg_out,
     output reg cu_reg_write_out,
-    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out
+    output reg [REGISTER_INDEX_WIDTH-1:0] destination_register_out,
+    output reg data_cache_data_ready_out,
+    output reg cu_d_cache_access_out,
+    output reg dcache_op_done_out
 
   );
 `include "src/parameters.v"
@@ -48,6 +54,9 @@ module MemoryRegisters (
     cu_reg_write_out <= 0;
     destination_register_out <= 0;
     dst_reg_data_out <= 0;
+    data_cache_data_ready_out <= 0;
+    cu_d_cache_access_out <= 0;
+    dcache_op_done_out <= 0;
   end
 
   always @(negedge clk)
@@ -58,5 +67,8 @@ module MemoryRegisters (
     cu_reg_write_out <= cu_reg_write_in;
     destination_register_out <= destination_register_in;
     dst_reg_data_out <= dst_reg_data_in;
+    data_cache_data_ready_out <= data_cache_data_ready_in;
+    cu_d_cache_access_out <= cu_d_cache_access_in;
+    dcache_op_done_out <= dcache_op_done_in;
   end
 endmodule

@@ -53,7 +53,7 @@ module BufferSum_tb();
     $dumpvars(0, uut);
     $dumpvars(0, BufferSum_tb);
 
-    #150;
+    #1000;
 
     print_info("Testing finised");
 
